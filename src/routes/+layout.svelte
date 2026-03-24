@@ -74,11 +74,9 @@
 			{@render children()}
 		</main>
 
-		{#if chatOpen}
-			<aside class="chat-panel" class:expanded={chatExpanded}>
-				<ChatPanel docId={currentDocId.value} expanded={chatExpanded} onToggleExpand={() => chatExpanded = !chatExpanded} />
-			</aside>
-		{/if}
+		<aside class="chat-panel" class:expanded={chatExpanded} class:hidden={!chatOpen}>
+			<ChatPanel docId={currentDocId.value} expanded={chatExpanded} onToggleExpand={() => chatExpanded = !chatExpanded} />
+		</aside>
 	</div>
 </div>
 
@@ -178,6 +176,10 @@
 		display: flex;
 		flex-direction: column;
 		transition: width 0.2s ease;
+	}
+
+	.chat-panel.hidden {
+		display: none;
 	}
 
 	.chat-panel.expanded {
