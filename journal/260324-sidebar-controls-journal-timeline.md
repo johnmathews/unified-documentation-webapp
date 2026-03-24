@@ -23,6 +23,12 @@ Created a new `/journal` route that aggregates all journal entries from every so
 
 A link to "All Journal Entries" was added to the sidebar toolbar row (same row as expand/collapse) so it's always accessible from the navigation.
 
+### 3. Test Suite & CI/CD
+
+- Added vitest with jsdom environment as the project's first test suite
+- 16 tests covering URL encoding, display helpers, date formatting, journal entry sorting/grouping, and API fetch behavior
+- Created GitHub Actions workflow (`docker-publish.yml`) to build and push Docker images to `ghcr.io/johnmathews/documentation-ui` on push to main
+
 ## Decisions
 
 - Used `$derived.by()` for the grouped entries computation since it depends on the sorted entries array and needs procedural logic.
