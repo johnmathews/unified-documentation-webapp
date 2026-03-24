@@ -1,0 +1,40 @@
+services:
+  docserver:
+    image: ghcr.io/johnmathews/documentation-mcp-server:latest
+    container_name: documentation-mcp-server
+    restart: unless-stopped
+    stop_grace_period: 30s
+    mem_limit: 1536m
+    ports:
+      - "8085:8080"
+    volumes:
+      - docserver-data:/data
+      - ./config/sources.yaml:/config/sources.yaml:ro
+      - /srv/infra/mkdocs/docs:/repos/home-server-docs:ro
+    environment:
+      - DOCSERVER_POLL_INTERVAL=300
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  documentation-ui:
+    image: ghcr.io/johnmathews/documentation-ui:latest
+    container_name: documentation-ui
+    restart: unless-stopped
+    ports:
+      - "3002:3000"
+    environment:
+      - API_URL=http://docserver:8080
+    depends_on:
+      - docserver
+    logging:
+      driver: json-file
+      options:
+        max-size: "5m"
+        max-file: "3"
+
+volumes:
+  docserver-data:

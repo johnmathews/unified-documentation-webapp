@@ -8,7 +8,7 @@
 	let loading = $state(true);
 	let error = $state('');
 
-	let currentId = $derived(decodeURIComponent(page.params.id));
+	let currentId = $derived(decodeURIComponent(page.params.id ?? ''));
 
 	$effect(() => {
 		const id = currentId;
