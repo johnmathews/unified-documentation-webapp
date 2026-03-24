@@ -400,7 +400,7 @@
 		background: none;
 		border: none;
 		color: var(--text);
-		font-size: 0.85rem;
+		font-size: 0.9rem;
 		font-weight: 600;
 		text-align: left;
 		cursor: pointer;
@@ -416,7 +416,7 @@
 		font-weight: 500;
 		color: var(--text-muted);
 		padding-left: 1.5rem;
-		font-size: 0.8rem;
+		font-size: 0.85rem;
 		text-transform: uppercase;
 		letter-spacing: 0.03em;
 	}
@@ -431,7 +431,7 @@
 	}
 
 	.source-tag {
-		font-size: 0.72rem;
+		font-size: 0.8rem;
 		font-weight: 600;
 		padding: 0.1rem 0.45rem;
 		border-radius: 4px;
@@ -463,7 +463,7 @@
 		gap: 0.5rem;
 		padding: 0.35rem 0.75rem 0.35rem 2.5rem;
 		color: var(--text-muted);
-		font-size: 0.82rem;
+		font-size: 0.9rem;
 		text-decoration: none;
 		transition: all 0.1s;
 		border-left: 2px solid transparent;

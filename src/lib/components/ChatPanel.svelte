@@ -12,10 +12,36 @@
 		onToggleExpand?: () => void;
 	} = $props();
 
-	let messages: ChatMessage[] = $state([]);
+	const STORAGE_KEY = 'doc-chat-messages';
+	const PREV_STORAGE_KEY = 'doc-chat-messages-prev';
+
+	let messages: ChatMessage[] = $state(loadMessages());
 	let input = $state('');
 	let sending = $state(false);
 	let messagesEl: HTMLDivElement | undefined = $state();
+	let confirmingClear = $state(false);
+	let hasPrevious = $state(!!localStorage.getItem(PREV_STORAGE_KEY));
+
+	function loadMessages(): ChatMessage[] {
+		try {
+			const stored = localStorage.getItem(STORAGE_KEY);
+			return stored ? JSON.parse(stored) : [];
+		} catch {
+			return [];
+		}
+	}
+
+	function saveMessages() {
+		try {
+			localStorage.setItem(STORAGE_KEY, JSON.stringify(messages));
+		} catch { /* quota exceeded — ignore */ }
+	}
+
+	$effect(() => {
+		// Read messages.length to track mutations (push/splice/reassignment)
+		void messages.length;
+		saveMessages();
+	});
 
 	async function handleSubmit(e: Event) {
 		e.preventDefault();
@@ -49,7 +75,27 @@
 	}
 
 	function clearChat() {
+		try {
+			localStorage.setItem(PREV_STORAGE_KEY, JSON.stringify(messages));
+		} catch { /* ignore */ }
 		messages = [];
+		confirmingClear = false;
+		hasPrevious = true;
+	}
+
+	function restorePrevious() {
+		try {
+			const stored = localStorage.getItem(PREV_STORAGE_KEY);
+			if (stored) {
+				messages = JSON.parse(stored);
+				localStorage.removeItem(PREV_STORAGE_KEY);
+				hasPrevious = false;
+			}
+		} catch { /* ignore */ }
+	}
+
+	function cancelClear() {
+		confirmingClear = false;
 	}
 
 	function formatContent(content: string): string {
@@ -74,11 +120,31 @@
 			</span>
 		{/if}
 		<div class="header-actions">
-			{#if messages.length > 0}
-				<button class="header-btn" onclick={clearChat} title="Clear chat">
+			{#if confirmingClear}
+				<span class="confirm-clear">
+					<span class="confirm-label">Clear?</span>
+					<button class="header-btn confirm-yes" onclick={clearChat} title="Confirm clear">
+						<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+							<polyline points="20 6 9 17 4 12" />
+						</svg>
+					</button>
+					<button class="header-btn confirm-no" onclick={cancelClear} title="Cancel">
+						<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+							<line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+						</svg>
+					</button>
+				</span>
+			{:else if messages.length > 0}
+				<button class="header-btn" onclick={() => confirmingClear = true} title="Clear chat">
 					<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
 						<polyline points="3 6 5 6 21 6" />
 						<path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+					</svg>
+				</button>
+			{:else if hasPrevious}
+				<button class="header-btn" onclick={restorePrevious} title="Restore previous chat">
+					<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+						<polyline points="1 4 1 10 7 10" /><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10" />
 					</svg>
 				</button>
 			{/if}
@@ -195,6 +261,26 @@
 
 	.header-btn:hover {
 		background: var(--bg-hover);
+		color: var(--text);
+	}
+
+	.confirm-clear {
+		display: flex;
+		align-items: center;
+		gap: 0.2rem;
+	}
+
+	.confirm-label {
+		font-size: 0.7rem;
+		color: var(--text-dim);
+		margin-right: 0.15rem;
+	}
+
+	.confirm-yes:hover {
+		color: var(--error, #ef4444);
+	}
+
+	.confirm-no:hover {
 		color: var(--text);
 	}
 
