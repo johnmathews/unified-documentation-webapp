@@ -34,7 +34,8 @@
 	}
 
 	function displayTitle(doc: TreeDocument): string {
-		return doc.title || doc.file_path.split('/').pop() || doc.file_path;
+		const filename = doc.file_path.split('/').pop() || doc.file_path;
+		return filename.replace(/\.[^.]+$/, '');
 	}
 
 	function formatDate(dateStr: string | null): string {

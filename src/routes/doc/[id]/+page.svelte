@@ -2,6 +2,7 @@
 	import { page } from '$app/state';
 	import { fetchDocument, type FullDocument } from '$lib/api';
 	import { currentDocId } from '$lib/stores.svelte';
+	import { sourceColor } from '$lib/colors';
 	import Breadcrumbs from '$lib/components/Breadcrumbs.svelte';
 	import { marked } from 'marked';
 
@@ -79,7 +80,11 @@
 		/>
 		<header class="doc-header">
 			<div class="doc-meta">
-				<a href="/source/{encodeURIComponent(doc.source)}" class="source-badge">{doc.source}</a>
+				<a
+					href="/source/{encodeURIComponent(doc.source)}"
+					class="source-badge"
+					style="background: {sourceColor(doc.source).bg}; color: {sourceColor(doc.source).text}"
+				>{doc.source}</a>
 				<span class="file-path">{doc.file_path}</span>
 			</div>
 			{#if doc.title}
@@ -152,14 +157,17 @@
 	}
 
 	.source-badge {
-		font-size: 0.75rem;
+		font-size: 0.72rem;
 		font-weight: 600;
-		color: var(--accent);
-		background: var(--accent-dim);
-		padding: 0.15rem 0.5rem;
+		padding: 0.1rem 0.45rem;
 		border-radius: 4px;
-		text-transform: uppercase;
-		letter-spacing: 0.03em;
+		white-space: nowrap;
+		text-decoration: none;
+		transition: opacity 0.15s;
+	}
+
+	.source-badge:hover {
+		opacity: 0.8;
 	}
 
 	.file-path {

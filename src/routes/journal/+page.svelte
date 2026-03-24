@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { fetchTree, type TreeDocument } from '$lib/api';
 	import { currentDocId } from '$lib/stores.svelte';
+	import { sourceColor } from '$lib/colors';
 
 	interface JournalEntry extends TreeDocument {
 		source: string;
@@ -42,7 +43,8 @@
 	}
 
 	function displayTitle(doc: JournalEntry): string {
-		return doc.title || doc.file_path.split('/').pop() || doc.file_path;
+		const filename = doc.file_path.split('/').pop() || doc.file_path;
+		return filename.replace(/\.[^.]+$/, '');
 	}
 
 	function formatDate(dateStr: string | null): string {
@@ -119,7 +121,10 @@
 										<span class="entry-title">{displayTitle(entry)}</span>
 										<span class="entry-date">{formatDate(entry.created_at || entry.modified_at)}</span>
 									</div>
-									<span class="entry-source">{entry.source}</span>
+									<span
+										class="entry-source"
+										style="background: {sourceColor(entry.source).bg}; color: {sourceColor(entry.source).text}"
+									>{entry.source}</span>
 								</a>
 							{/each}
 						</div>
@@ -252,12 +257,12 @@
 	}
 
 	.entry-source {
-		font-size: 0.75rem;
-		color: var(--text-muted);
-		background: var(--bg-hover);
-		padding: 0.1rem 0.5rem;
-		border-radius: 10px;
+		font-size: 0.72rem;
+		font-weight: 600;
+		padding: 0.1rem 0.45rem;
+		border-radius: 4px;
 		width: fit-content;
+		white-space: nowrap;
 	}
 
 	@media (max-width: 640px) {

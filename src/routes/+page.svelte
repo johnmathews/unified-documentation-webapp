@@ -26,7 +26,8 @@
 	}
 
 	function displayTitle(doc: { title: string | null; file_path: string }): string {
-		return doc.title || doc.file_path.split('/').pop() || doc.file_path;
+		const filename = doc.file_path.split('/').pop() || doc.file_path;
+		return filename.replace(/\.[^.]+$/, '');
 	}
 </script>
 

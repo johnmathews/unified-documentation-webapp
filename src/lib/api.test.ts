@@ -1,6 +1,28 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { sourceColor } from '$lib/colors';
 
 // Test the pure utility logic that the API module and components share
+
+describe('sourceColor', () => {
+	it('returns an object with bg and text properties', () => {
+		const color = sourceColor('test-source');
+		expect(color).toHaveProperty('bg');
+		expect(color).toHaveProperty('text');
+		expect(color.bg).toContain('rgba');
+		expect(color.text).toContain('rgb');
+	});
+
+	it('returns the same color for the same source name', () => {
+		expect(sourceColor('my-repo')).toEqual(sourceColor('my-repo'));
+	});
+
+	it('returns different colors for different source names', () => {
+		const a = sourceColor('alpha');
+		const b = sourceColor('beta');
+		// Not guaranteed to differ, but these specific strings do hash differently
+		expect(a.bg !== b.bg || a.text !== b.text).toBe(true);
+	});
+});
 
 describe('docUrl', () => {
 	function docUrl(docId: string): string {
@@ -20,19 +42,24 @@ describe('docUrl', () => {
 
 describe('displayTitle', () => {
 	function displayTitle(doc: { title: string | null; file_path: string }): string {
-		return doc.title || doc.file_path.split('/').pop() || doc.file_path;
+		const filename = doc.file_path.split('/').pop() || doc.file_path;
+		return filename.replace(/\.[^.]+$/, '');
 	}
 
-	it('returns title when present', () => {
-		expect(displayTitle({ title: 'My Doc', file_path: 'docs/my-doc.md' })).toBe('My Doc');
+	it('returns filename without extension regardless of title', () => {
+		expect(displayTitle({ title: 'My Doc', file_path: 'docs/my-doc.md' })).toBe('my-doc');
 	});
 
-	it('falls back to filename when title is null', () => {
-		expect(displayTitle({ title: null, file_path: 'docs/my-doc.md' })).toBe('my-doc.md');
+	it('strips extension when title is null', () => {
+		expect(displayTitle({ title: null, file_path: 'docs/my-doc.md' })).toBe('my-doc');
 	});
 
-	it('falls back to full path when no slash', () => {
-		expect(displayTitle({ title: null, file_path: 'readme.md' })).toBe('readme.md');
+	it('handles file at root with no directory', () => {
+		expect(displayTitle({ title: null, file_path: 'readme.md' })).toBe('readme');
+	});
+
+	it('handles filenames with multiple dots', () => {
+		expect(displayTitle({ title: null, file_path: 'docs/250321-fix.stuff.md' })).toBe('250321-fix.stuff');
 	});
 });
 
