@@ -36,6 +36,20 @@ with `[]` before the load effect runs on mount.
 Added a prominent "Restore previous chat" button in the empty state area (center of the chat
 panel) in addition to the small icon in the header, making it much easier to find.
 
+### Markdown rendering in chat
+
+Replaced the hand-rolled `formatContent` function (only handled bold, inline code, and newlines)
+with `marked.parse()` — the same library already used by the doc page viewer. Added the global
+`markdown-content` class to assistant message bubbles, with scoped `:global()` CSS overrides to
+keep margins and spacing compact for chat context (headings, lists, code blocks, blockquotes).
+
+## Duplicate CI/CD workflow
+
+Found two workflows (`build-and-push.yml` and `docker-publish.yml`) both triggering on push to
+main and pushing Docker images to ghcr.io. Deleted `docker-publish.yml`. Updated the `/done`
+skill to prevent this — Phase 1 now requires reading all workflow file contents (not checking
+for a specific filename) and includes explicit duplicate consolidation instructions.
+
 ## Sidebar Font Size
 
 Increased font sizes across the sidebar for better readability:
