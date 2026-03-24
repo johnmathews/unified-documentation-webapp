@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { sendChat, type ChatMessage } from '$lib/api';
 	import { tick } from 'svelte';
+	import { browser } from '$app/environment';
 
 	let {
 		docId = null,
@@ -15,32 +16,30 @@
 	const STORAGE_KEY = 'doc-chat-messages';
 	const PREV_STORAGE_KEY = 'doc-chat-messages-prev';
 
-	let messages: ChatMessage[] = $state(loadMessages());
+	let messages: ChatMessage[] = $state([]);
 	let input = $state('');
 	let sending = $state(false);
 	let messagesEl: HTMLDivElement | undefined = $state();
 	let confirmingClear = $state(false);
-	let hasPrevious = $state(!!localStorage.getItem(PREV_STORAGE_KEY));
+	let hasPrevious = $state(false);
 
-	function loadMessages(): ChatMessage[] {
+	// Load from localStorage on mount (browser only)
+	$effect(() => {
+		if (!browser) return;
 		try {
 			const stored = localStorage.getItem(STORAGE_KEY);
-			return stored ? JSON.parse(stored) : [];
-		} catch {
-			return [];
-		}
-	}
+			if (stored) messages = JSON.parse(stored);
+		} catch { /* ignore */ }
+		hasPrevious = !!localStorage.getItem(PREV_STORAGE_KEY);
+	});
 
-	function saveMessages() {
+	// Persist messages to localStorage on change (browser only)
+	$effect(() => {
+		if (!browser) return;
+		void messages.length;
 		try {
 			localStorage.setItem(STORAGE_KEY, JSON.stringify(messages));
 		} catch { /* quota exceeded — ignore */ }
-	}
-
-	$effect(() => {
-		// Read messages.length to track mutations (push/splice/reassignment)
-		void messages.length;
-		saveMessages();
 	});
 
 	async function handleSubmit(e: Event) {
