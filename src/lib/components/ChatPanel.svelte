@@ -169,7 +169,14 @@
 					<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
 				</svg>
 				<p>Ask questions about the documentation.</p>
-				{#if docId}
+				{#if hasPrevious}
+					<button class="restore-hint" onclick={restorePrevious}>
+						<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+							<polyline points="1 4 1 10 7 10" /><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10" />
+						</svg>
+						Restore previous chat
+					</button>
+				{:else if docId}
 					<p class="context-hint">The assistant can see the page you're viewing.</p>
 				{/if}
 			</div>
@@ -312,6 +319,25 @@
 	.context-hint {
 		font-size: 0.75rem;
 		color: var(--text-dim);
+	}
+
+	.restore-hint {
+		display: flex;
+		align-items: center;
+		gap: 0.4rem;
+		font-size: 0.8rem;
+		color: var(--accent);
+		background: none;
+		border: 1px solid var(--border);
+		border-radius: var(--radius);
+		padding: 0.4rem 0.75rem;
+		cursor: pointer;
+		transition: all 0.15s;
+	}
+
+	.restore-hint:hover {
+		background: var(--bg-hover);
+		border-color: var(--accent);
 	}
 
 	.message {
