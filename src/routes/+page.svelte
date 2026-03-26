@@ -225,13 +225,13 @@
 			font-size: 0.875rem;
 		}
 		.doc-section li {
-			padding: 0.5rem 0;
+			padding: 0.2rem 0;
 		}
 		.doc-section a {
-			min-height: 44px;
+			min-height: 36px;
 			display: inline-flex;
 			align-items: center;
-			font-size: 1rem;
+			font-size: 0.95rem;
 		}
 		.more {
 			font-size: 0.875rem;

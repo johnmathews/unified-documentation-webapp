@@ -5,6 +5,7 @@
 	import ChatPanel from '$lib/components/ChatPanel.svelte';
 	import { currentDocId } from '$lib/stores.svelte';
 	import { MediaQuery } from 'svelte/reactivity';
+	import { onMount } from 'svelte';
 
 	let { children } = $props();
 
@@ -46,6 +47,10 @@
 		}
 	}
 
+	onMount(() => {
+		if (isMobile.current) sidebarOpen = false;
+	});
+
 	$effect(() => {
 		darkMode = document.documentElement.dataset.theme !== 'light';
 	});
@@ -70,7 +75,7 @@
 	<header class="top-bar">
 		<div class="top-bar-left">
 			<button class="icon-btn" onclick={() => sidebarOpen = !sidebarOpen} title="Toggle sidebar">
-				<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+				<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
 					<line x1="3" y1="6" x2="21" y2="6" /><line x1="3" y1="12" x2="21" y2="12" /><line x1="3" y1="18" x2="21" y2="18" />
 				</svg>
 			</button>
@@ -79,17 +84,17 @@
 		<div class="top-bar-right">
 			<button class="icon-btn" onclick={toggleTheme} title={darkMode ? 'Switch to light mode' : 'Switch to dark mode'}>
 				{#if darkMode}
-					<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+					<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
 						<circle cx="12" cy="12" r="5" /><line x1="12" y1="1" x2="12" y2="3" /><line x1="12" y1="21" x2="12" y2="23" /><line x1="4.22" y1="4.22" x2="5.64" y2="5.64" /><line x1="18.36" y1="18.36" x2="19.78" y2="19.78" /><line x1="1" y1="12" x2="3" y2="12" /><line x1="21" y1="12" x2="23" y2="12" /><line x1="4.22" y1="19.78" x2="5.64" y2="18.36" /><line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
 					</svg>
 				{:else}
-					<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+					<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
 						<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
 					</svg>
 				{/if}
 			</button>
 			<button class="icon-btn" class:active={chatOpen} onclick={() => { chatOpen = !chatOpen; if (!chatOpen) chatExpanded = false; }} title="Toggle chat">
-				<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+				<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
 					<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
 				</svg>
 				<span class="btn-label">Chat</span>
@@ -144,11 +149,12 @@
 		justify-content: space-between;
 		padding: 0 1rem;
 		padding-top: env(safe-area-inset-top, 0);
-		height: 48px;
+		height: 56px;
 		background: var(--bg-surface);
 		border-bottom: 1px solid var(--border);
 		flex-shrink: 0;
-		z-index: 10;
+		z-index: 101;
+		position: relative;
 	}
 
 	.top-bar-left {
@@ -164,8 +170,8 @@
 	}
 
 	.app-title {
-		font-size: 1rem;
-		font-weight: 600;
+		font-size: 1.25rem;
+		font-weight: 700;
 		color: var(--text);
 		text-decoration: none;
 	}
@@ -174,9 +180,9 @@
 		display: flex;
 		align-items: center;
 		gap: 0.4rem;
-		padding: 0.4rem;
+		padding: 0.5rem;
 		background: none;
-		border: none;
+		border: 1px solid var(--border);
 		color: var(--text-muted);
 		border-radius: var(--radius);
 		transition: all 0.15s;
@@ -193,7 +199,8 @@
 	}
 
 	.btn-label {
-		font-size: 0.8rem;
+		font-size: 0.85rem;
+		font-weight: 500;
 	}
 
 	.main-area {
@@ -248,7 +255,7 @@
 	.backdrop {
 		position: fixed;
 		inset: 0;
-		top: calc(48px + env(safe-area-inset-top, 0));
+		top: calc(56px + env(safe-area-inset-top, 0));
 		background: rgba(0, 0, 0, 0.5);
 		z-index: 99;
 		border: none;
@@ -265,7 +272,7 @@
 	@media (max-width: 1024px) {
 		.sidebar {
 			position: fixed;
-			top: calc(48px + env(safe-area-inset-top, 0));
+			top: calc(56px + env(safe-area-inset-top, 0));
 			left: 0;
 			bottom: 0;
 			z-index: 100;
@@ -284,7 +291,7 @@
 
 		.chat-panel {
 			position: fixed;
-			top: calc(48px + env(safe-area-inset-top, 0));
+			top: calc(56px + env(safe-area-inset-top, 0));
 			right: 0;
 			bottom: 0;
 			z-index: 100;

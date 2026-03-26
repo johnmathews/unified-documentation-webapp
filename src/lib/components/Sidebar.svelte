@@ -156,25 +156,9 @@
 			<div class="tree-header">
 				<span class="tree-header-label">Documents</span>
 				<div class="expand-collapse">
-					{#if allExpanded}
-						<button class="tree-action-btn" onclick={collapseAll} title="Collapse all">
-							<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-								<polyline points="4 14 10 14 10 20" />
-								<polyline points="20 10 14 10 14 4" />
-								<line x1="14" y1="10" x2="21" y2="3" />
-								<line x1="3" y1="21" x2="10" y2="14" />
-							</svg>
-						</button>
-					{:else}
-						<button class="tree-action-btn" onclick={expandAll} title="Expand all">
-							<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-								<polyline points="15 3 21 3 21 9" />
-								<polyline points="9 21 3 21 3 15" />
-								<line x1="21" y1="3" x2="14" y2="10" />
-								<line x1="3" y1="21" x2="10" y2="14" />
-							</svg>
-						</button>
-					{/if}
+					<button class="tree-text-btn" class:active={allExpanded} onclick={expandAll}>expand all</button>
+					<span class="tree-text-sep">|</span>
+					<button class="tree-text-btn" class:active={!allExpanded} onclick={collapseAll}>collapse all</button>
 				</div>
 			</div>
 			{#each tree as source}
@@ -330,7 +314,7 @@
 		border: 1px solid var(--border);
 		border-radius: var(--radius);
 		color: var(--text);
-		font-size: 0.85rem;
+		font-size: 0.9rem;
 		outline: none;
 		transition: border-color 0.15s;
 	}
@@ -373,7 +357,7 @@
 	}
 
 	.tree-header-label {
-		font-size: 0.7rem;
+		font-size: 0.75rem;
 		font-weight: 600;
 		text-transform: uppercase;
 		letter-spacing: 0.05em;
@@ -382,26 +366,29 @@
 
 	.expand-collapse {
 		display: flex;
-		gap: 0.25rem;
-	}
-
-	.tree-action-btn {
-		display: flex;
 		align-items: center;
-		justify-content: center;
-		padding: 0.3rem;
-		background: none;
-		border: 1px solid var(--border);
-		border-radius: var(--radius);
-		color: var(--text-muted);
-		cursor: pointer;
-		transition: all 0.15s;
+		gap: 0.3rem;
 	}
 
-	.tree-action-btn:hover {
-		background: var(--bg-hover);
-		color: var(--text);
-		border-color: var(--text-dim);
+	.tree-text-btn {
+		background: none;
+		border: none;
+		padding: 0.15rem 0.25rem;
+		font-size: 0.65rem;
+		color: var(--text-dim);
+		cursor: pointer;
+		transition: color 0.15s;
+		text-transform: lowercase;
+	}
+
+	.tree-text-btn:hover {
+		color: var(--accent);
+	}
+
+	.tree-text-sep {
+		font-size: 0.65rem;
+		color: var(--text-dim);
+		user-select: none;
 	}
 
 	.loading-msg, .error-msg {
@@ -497,7 +484,7 @@
 		gap: 0.5rem;
 		padding: 0.35rem 0.75rem 0.35rem 2.5rem;
 		color: var(--text-muted);
-		font-size: 0.9rem;
+		font-size: 0.95rem;
 		text-decoration: none;
 		transition: all 0.1s;
 		border-left: 2px solid transparent;
@@ -557,10 +544,14 @@
 			min-height: 44px;
 			font-size: 1rem;
 		}
-		.tree-action-btn {
+		.tree-text-btn {
+			font-size: 0.75rem;
 			min-height: 44px;
-			min-width: 44px;
-			padding: 0.5rem;
+			display: inline-flex;
+			align-items: center;
+		}
+		.tree-text-sep {
+			font-size: 0.75rem;
 		}
 		.search-box input {
 			min-height: 44px;
