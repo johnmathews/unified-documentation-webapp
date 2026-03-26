@@ -296,15 +296,11 @@
 
 	@media (max-width: 600px) {
 		.sidebar {
-			width: 85%;
-			max-width: 320px;
-			transform: translateX(0);
-			transition: transform 250ms cubic-bezier(0.4, 0, 0.2, 1);
+			width: 100%;
+			max-width: none;
 		}
 		.chat-panel {
 			width: 100%;
-			transform: translateX(0);
-			transition: transform 250ms cubic-bezier(0.4, 0, 0.2, 1);
 		}
 		.content { padding: 1rem; }
 		.btn-label { display: none; }
