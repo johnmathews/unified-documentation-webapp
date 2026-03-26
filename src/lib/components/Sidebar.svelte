@@ -1,588 +1,594 @@
 <script lang="ts">
-	import { fetchTree, searchDocuments, type TreeSource, type SearchResult } from '$lib/api';
-	import { currentDocId } from '$lib/stores.svelte';
-	import { sourceColor } from '$lib/colors';
-	import { page } from '$app/state';
+ import { fetchTree, searchDocuments, type TreeSource, type SearchResult } from "$lib/api";
+ import { currentDocId } from "$lib/stores.svelte";
+ import { sourceColor } from "$lib/colors";
+ import { page } from "$app/state";
 
-	let { onNavigate = () => {} }: { onNavigate?: () => void } = $props();
+ let { onNavigate = () => {} }: { onNavigate?: () => void } = $props();
 
-	let tree: TreeSource[] = $state([]);
-	let loading = $state(true);
-	let error = $state('');
-	let expandedSources: Record<string, boolean> = $state({});
-	let expandedCategories: Record<string, boolean> = $state({});
+ let tree: TreeSource[] = $state([]);
+ let loading = $state(true);
+ let error = $state("");
+ let expandedSources: Record<string, boolean> = $state({});
+ let expandedCategories: Record<string, boolean> = $state({});
 
-	let searchQuery = $state('');
-	let searchResults: SearchResult[] = $state([]);
-	let searching = $state(false);
-	let searchTimeout: ReturnType<typeof setTimeout> | undefined;
+ let searchQuery = $state("");
+ let searchResults: SearchResult[] = $state([]);
+ let searching = $state(false);
+ let searchTimeout: ReturnType<typeof setTimeout> | undefined;
 
-	$effect(() => {
-		loadTree();
-	});
+ $effect(() => {
+  loadTree();
+ });
 
-	async function loadTree() {
-		try {
-			tree = await fetchTree();
-			// Expand all sources by default
-			for (const s of tree) {
-				expandedSources[s.source] = true;
-				expandedCategories[`${s.source}:docs`] = true;
-				expandedCategories[`${s.source}:journal`] = true;
-				expandedCategories[`${s.source}:engineering_team`] = true;
-			}
-		} catch (e) {
-			error = e instanceof Error ? e.message : 'Failed to load';
-		} finally {
-			loading = false;
-		}
-	}
+ async function loadTree() {
+  try {
+   tree = await fetchTree();
+   // Expand all sources by default
+   for (const s of tree) {
+    expandedSources[s.source] = true;
+    expandedCategories[`${s.source}:docs`] = true;
+    expandedCategories[`${s.source}:journal`] = true;
+    expandedCategories[`${s.source}:engineering_team`] = true;
+   }
+  } catch (e) {
+   error = e instanceof Error ? e.message : "Failed to load";
+  } finally {
+   loading = false;
+  }
+ }
 
-	function toggleSource(source: string) {
-		expandedSources[source] = !expandedSources[source];
-	}
+ function toggleSource(source: string) {
+  expandedSources[source] = !expandedSources[source];
+ }
 
-	function toggleCategory(key: string) {
-		expandedCategories[key] = !expandedCategories[key];
-	}
+ function toggleCategory(key: string) {
+  expandedCategories[key] = !expandedCategories[key];
+ }
 
-	function expandAll() {
-		for (const s of tree) {
-			expandedSources[s.source] = true;
-			expandedCategories[`${s.source}:docs`] = true;
-			expandedCategories[`${s.source}:journal`] = true;
-			expandedCategories[`${s.source}:engineering_team`] = true;
-		}
-	}
+ function expandAll() {
+  for (const s of tree) {
+   expandedSources[s.source] = true;
+   expandedCategories[`${s.source}:docs`] = true;
+   expandedCategories[`${s.source}:journal`] = true;
+   expandedCategories[`${s.source}:engineering_team`] = true;
+  }
+ }
 
-	function collapseAll() {
-		for (const s of tree) {
-			expandedSources[s.source] = false;
-			expandedCategories[`${s.source}:docs`] = false;
-			expandedCategories[`${s.source}:journal`] = false;
-			expandedCategories[`${s.source}:engineering_team`] = false;
-		}
-	}
+ function collapseAll() {
+  for (const s of tree) {
+   expandedSources[s.source] = false;
+   expandedCategories[`${s.source}:docs`] = false;
+   expandedCategories[`${s.source}:journal`] = false;
+   expandedCategories[`${s.source}:engineering_team`] = false;
+  }
+ }
 
-	let allExpanded = $derived(tree.length > 0 && tree.every(s => expandedSources[s.source]));
+ let allExpanded = $derived(tree.length > 0 && tree.every((s) => expandedSources[s.source]));
 
-	function handleSearch() {
-		clearTimeout(searchTimeout);
-		if (!searchQuery.trim()) {
-			searchResults = [];
-			return;
-		}
-		searching = true;
-		searchTimeout = setTimeout(async () => {
-			try {
-				searchResults = await searchDocuments(searchQuery);
-			} catch {
-				searchResults = [];
-			} finally {
-				searching = false;
-			}
-		}, 300);
-	}
+ function handleSearch() {
+  clearTimeout(searchTimeout);
+  if (!searchQuery.trim()) {
+   searchResults = [];
+   return;
+  }
+  searching = true;
+  searchTimeout = setTimeout(async () => {
+   try {
+    searchResults = await searchDocuments(searchQuery);
+   } catch {
+    searchResults = [];
+   } finally {
+    searching = false;
+   }
+  }, 300);
+ }
 
-	function docUrl(docId: string): string {
-		return `/doc/${encodeURIComponent(docId)}`;
-	}
+ function docUrl(docId: string): string {
+  return `/doc/${encodeURIComponent(docId)}`;
+ }
 
-	function isActive(docId: string): boolean {
-		return currentDocId.value === docId;
-	}
+ function isActive(docId: string): boolean {
+  return currentDocId.value === docId;
+ }
 
-	function displayTitle(doc: { title: string | null; file_path: string }): string {
-		const filename = doc.file_path.split('/').pop() || doc.file_path;
-		return filename.replace(/\.[^.]+$/, '');
-	}
+ function displayTitle(doc: { title: string | null; file_path: string }): string {
+  const filename = doc.file_path.split("/").pop() || doc.file_path;
+  return filename.replace(/\.[^.]+$/, "");
+ }
 
-	function totalDocs(source: TreeSource): number {
-		return source.root_docs.length + source.docs.length + source.journal.length + (source.engineering_team?.length ?? 0);
-	}
+ function totalDocs(source: TreeSource): number {
+  return source.root_docs.length + source.docs.length + source.journal.length + (source.engineering_team?.length ?? 0);
+ }
 </script>
 
 <div class="sidebar-inner">
-	<div class="search-box">
-		<input
-			type="text"
-			placeholder="Search documentation..."
-			bind:value={searchQuery}
-			oninput={handleSearch}
-		/>
-	</div>
+ <div class="search-box">
+  <input type="text" placeholder="Search documentation..." bind:value={searchQuery} oninput={handleSearch} />
+ </div>
 
-	{#if searchQuery.trim()}
-		<div class="search-results">
-			{#if searching}
-				<div class="loading-msg">Searching...</div>
-			{:else if searchResults.length === 0}
-				<div class="loading-msg">No results found</div>
-			{:else}
-				{#each searchResults as result}
-					<a
-						href={docUrl(result.doc_id)}
-						class="tree-item search-result-item"
-						class:active={isActive(result.doc_id)}
-						onclick={onNavigate}
-					>
-						<span class="item-title">{displayTitle(result)}</span>
-						<span
-							class="source-tag"
-							style="background: {sourceColor(result.source).bg}; color: {sourceColor(result.source).text}"
-						>{result.source}</span>
-						<span class="item-snippet">{result.snippet}</span>
-					</a>
-				{/each}
-			{/if}
-		</div>
-	{:else if loading}
-		<div class="loading-msg">Loading sources...</div>
-	{:else if error}
-		<div class="error-msg">{error}</div>
-	{:else}
-		<div class="tree-actions">
-			<a href="/journal" class="journal-link" onclick={onNavigate}>
-				<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-					<rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
-					<line x1="16" y1="2" x2="16" y2="6" />
-					<line x1="8" y1="2" x2="8" y2="6" />
-					<line x1="3" y1="10" x2="21" y2="10" />
-				</svg>
-				All Journal Entries
-			</a>
-		</div>
-		<nav class="tree">
-			<div class="tree-header">
-				<span class="tree-header-label">Documents</span>
-				<div class="expand-collapse">
-					<button class="tree-text-btn" class:active={allExpanded} onclick={expandAll}>expand all</button>
-					<span class="tree-text-sep">|</span>
-					<button class="tree-text-btn" class:active={!allExpanded} onclick={collapseAll}>collapse all</button>
-				</div>
-			</div>
-			{#each tree as source}
-				<div class="tree-source">
-					<button class="tree-toggle" onclick={() => toggleSource(source.source)}>
-						<svg class="chevron" class:expanded={expandedSources[source.source]} width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-							<polyline points="9 18 15 12 9 6" />
-						</svg>
-						<span
-							class="source-tag"
-							style="background: {sourceColor(source.source).bg}; color: {sourceColor(source.source).text}"
-						>{source.source}</span>
-						<span class="count">{totalDocs(source)}</span>
-					</button>
+ {#if searchQuery.trim()}
+  <div class="search-results">
+   {#if searching}
+    <div class="loading-msg">Searching...</div>
+   {:else if searchResults.length === 0}
+    <div class="loading-msg">No results found</div>
+   {:else}
+    {#each searchResults as result}
+     <a
+      href={docUrl(result.doc_id)}
+      class="tree-item search-result-item"
+      class:active={isActive(result.doc_id)}
+      onclick={onNavigate}
+     >
+      <span class="item-title">{displayTitle(result)}</span>
+      <span
+       class="source-tag"
+       style="background: {sourceColor(result.source).bg}; color: {sourceColor(result.source).text}"
+       >{result.source}</span
+      >
+      <span class="item-snippet">{result.snippet}</span>
+     </a>
+    {/each}
+   {/if}
+  </div>
+ {:else if loading}
+  <div class="loading-msg">Loading sources...</div>
+ {:else if error}
+  <div class="error-msg">{error}</div>
+ {:else}
+  <nav class="tree">
+   <div class="tree-header">
+    <span class="tree-header-label"></span>
+    <div class="expand-collapse">
+     <button class="tree-text-btn" class:active={allExpanded} onclick={expandAll}>expand all</button>
+     <span class="tree-text-sep">|</span>
+     <button class="tree-text-btn" class:active={!allExpanded} onclick={collapseAll}>collapse all</button>
+    </div>
+   </div>
+   {#each tree as source}
+    <div class="tree-source">
+     <button class="tree-toggle" onclick={() => toggleSource(source.source)}>
+      <svg
+       class="chevron"
+       class:expanded={expandedSources[source.source]}
+       width="14"
+       height="14"
+       viewBox="0 0 24 24"
+       fill="none"
+       stroke="currentColor"
+       stroke-width="2"
+      >
+       <polyline points="9 18 15 12 9 6" />
+      </svg>
+      <span
+       class="source-tag"
+       style="background: {sourceColor(source.source).bg}; color: {sourceColor(source.source).text}"
+       >{source.source}</span
+      >
+      <span class="count">{totalDocs(source)}</span>
+     </button>
 
-					{#if expandedSources[source.source]}
-						{#if source.root_docs.length > 0}
-							<div class="tree-items root-docs">
-								{#each source.root_docs as doc}
-									<a
-										href={docUrl(doc.doc_id)}
-										class="tree-item"
-										class:active={isActive(doc.doc_id)}
-										onclick={onNavigate}
-									>
-										<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-											<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-											<polyline points="14 2 14 8 20 8" />
-										</svg>
-										<span class="item-title">{displayTitle(doc)}</span>
-									</a>
-								{/each}
-							</div>
-						{/if}
+     {#if expandedSources[source.source]}
+      {#if source.root_docs.length > 0}
+       <div class="tree-items root-docs">
+        {#each source.root_docs as doc}
+         <a href={docUrl(doc.doc_id)} class="tree-item" class:active={isActive(doc.doc_id)} onclick={onNavigate}>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+           <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+           <polyline points="14 2 14 8 20 8" />
+          </svg>
+          <span class="item-title">{displayTitle(doc)}</span>
+         </a>
+        {/each}
+       </div>
+      {/if}
 
-						{#if source.docs.length > 0}
-							<div class="tree-category">
-								<button class="tree-toggle category-toggle" onclick={() => toggleCategory(`${source.source}:docs`)}>
-									<svg class="chevron" class:expanded={expandedCategories[`${source.source}:docs`]} width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-										<polyline points="9 18 15 12 9 6" />
-									</svg>
-									<span>Documentation</span>
-									<span class="count">{source.docs.length}</span>
-								</button>
+      {#if source.docs.length > 0}
+       <div class="tree-category">
+        <button class="tree-toggle category-toggle" onclick={() => toggleCategory(`${source.source}:docs`)}>
+         <svg
+          class="chevron"
+          class:expanded={expandedCategories[`${source.source}:docs`]}
+          width="12"
+          height="12"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+         >
+          <polyline points="9 18 15 12 9 6" />
+         </svg>
+         <span>Documentation</span>
+         <span class="count">{source.docs.length}</span>
+        </button>
 
-								{#if expandedCategories[`${source.source}:docs`]}
-									<div class="tree-items">
-										{#each source.docs as doc}
-											<a
-												href={docUrl(doc.doc_id)}
-												class="tree-item"
-												class:active={isActive(doc.doc_id)}
-												onclick={onNavigate}
-											>
-												<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-													<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-													<polyline points="14 2 14 8 20 8" />
-												</svg>
-												<span class="item-title">{displayTitle(doc)}</span>
-											</a>
-										{/each}
-									</div>
-								{/if}
-							</div>
-						{/if}
+        {#if expandedCategories[`${source.source}:docs`]}
+         <div class="tree-items">
+          {#each source.docs as doc}
+           <a href={docUrl(doc.doc_id)} class="tree-item" class:active={isActive(doc.doc_id)} onclick={onNavigate}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+             <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+             <polyline points="14 2 14 8 20 8" />
+            </svg>
+            <span class="item-title">{displayTitle(doc)}</span>
+           </a>
+          {/each}
+         </div>
+        {/if}
+       </div>
+      {/if}
 
-						{#if source.journal.length > 0}
-							<div class="tree-category">
-								<button class="tree-toggle category-toggle" onclick={() => toggleCategory(`${source.source}:journal`)}>
-									<svg class="chevron" class:expanded={expandedCategories[`${source.source}:journal`]} width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-										<polyline points="9 18 15 12 9 6" />
-									</svg>
-									<span>Development Journal</span>
-									<span class="count">{source.journal.length}</span>
-								</button>
+      {#if source.journal.length > 0}
+       <div class="tree-category">
+        <button class="tree-toggle category-toggle" onclick={() => toggleCategory(`${source.source}:journal`)}>
+         <svg
+          class="chevron"
+          class:expanded={expandedCategories[`${source.source}:journal`]}
+          width="12"
+          height="12"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+         >
+          <polyline points="9 18 15 12 9 6" />
+         </svg>
+         <span>Development Journal</span>
+         <span class="count">{source.journal.length}</span>
+        </button>
 
-								{#if expandedCategories[`${source.source}:journal`]}
-									<div class="tree-items">
-										{#each source.journal as doc}
-											<a
-												href={docUrl(doc.doc_id)}
-												class="tree-item"
-												class:active={isActive(doc.doc_id)}
-												onclick={onNavigate}
-											>
-												<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-													<rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
-													<line x1="16" y1="2" x2="16" y2="6" />
-													<line x1="8" y1="2" x2="8" y2="6" />
-													<line x1="3" y1="10" x2="21" y2="10" />
-												</svg>
-												<span class="item-title">{displayTitle(doc)}</span>
-											</a>
-										{/each}
-									</div>
-								{/if}
-							</div>
-						{/if}
+        {#if expandedCategories[`${source.source}:journal`]}
+         <div class="tree-items">
+          {#each source.journal as doc}
+           <a href={docUrl(doc.doc_id)} class="tree-item" class:active={isActive(doc.doc_id)} onclick={onNavigate}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+             <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+             <line x1="16" y1="2" x2="16" y2="6" />
+             <line x1="8" y1="2" x2="8" y2="6" />
+             <line x1="3" y1="10" x2="21" y2="10" />
+            </svg>
+            <span class="item-title">{displayTitle(doc)}</span>
+           </a>
+          {/each}
+         </div>
+        {/if}
+       </div>
+      {/if}
 
-						{#if (source.engineering_team?.length ?? 0) > 0}
-							<div class="tree-category">
-								<button class="tree-toggle category-toggle" onclick={() => toggleCategory(`${source.source}:engineering_team`)}>
-									<svg class="chevron" class:expanded={expandedCategories[`${source.source}:engineering_team`]} width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-										<polyline points="9 18 15 12 9 6" />
-									</svg>
-									<span>Engineering Analysis</span>
-									<span class="count">{source.engineering_team?.length ?? 0}</span>
-								</button>
+      {#if (source.engineering_team?.length ?? 0) > 0}
+       <div class="tree-category">
+        <button class="tree-toggle category-toggle" onclick={() => toggleCategory(`${source.source}:engineering_team`)}>
+         <svg
+          class="chevron"
+          class:expanded={expandedCategories[`${source.source}:engineering_team`]}
+          width="12"
+          height="12"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+         >
+          <polyline points="9 18 15 12 9 6" />
+         </svg>
+         <span>Engineering Analysis</span>
+         <span class="count">{source.engineering_team?.length ?? 0}</span>
+        </button>
 
-								{#if expandedCategories[`${source.source}:engineering_team`]}
-									<div class="tree-items">
-										{#each (source.engineering_team ?? []) as doc}
-											<a
-												href={docUrl(doc.doc_id)}
-												class="tree-item"
-												class:active={isActive(doc.doc_id)}
-												onclick={onNavigate}
-											>
-												<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-													<circle cx="12" cy="12" r="3" />
-													<path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
-												</svg>
-												<span class="item-title">{displayTitle(doc)}</span>
-											</a>
-										{/each}
-									</div>
-								{/if}
-							</div>
-						{/if}
-					{/if}
-				</div>
-			{/each}
-		</nav>
-	{/if}
+        {#if expandedCategories[`${source.source}:engineering_team`]}
+         <div class="tree-items">
+          {#each source.engineering_team ?? [] as doc}
+           <a href={docUrl(doc.doc_id)} class="tree-item" class:active={isActive(doc.doc_id)} onclick={onNavigate}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+             <circle cx="12" cy="12" r="3" />
+             <path
+              d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"
+             />
+            </svg>
+            <span class="item-title">{displayTitle(doc)}</span>
+           </a>
+          {/each}
+         </div>
+        {/if}
+       </div>
+      {/if}
+     {/if}
+    </div>
+   {/each}
+  </nav>
+ {/if}
 </div>
 
 <style>
-	.sidebar-inner {
-		display: flex;
-		flex-direction: column;
-		height: 100%;
-	}
+ .sidebar-inner {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+ }
 
-	.search-box {
-		padding: 0.75rem;
-		border-bottom: 1px solid var(--border);
-	}
+ .search-box {
+  padding: 0.75rem;
+  border-bottom: 1px solid var(--border);
+ }
 
-	.search-box input {
-		width: 100%;
-		padding: 0.5rem 0.75rem;
-		background: var(--bg);
-		border: 1px solid var(--border);
-		border-radius: var(--radius);
-		color: var(--text);
-		font-size: 0.9rem;
-		outline: none;
-		transition: border-color 0.15s;
-	}
+ .search-box input {
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text);
+  font-size: 0.9rem;
+  outline: none;
+  transition: border-color 0.15s;
+ }
 
-	.search-box input:focus {
-		border-color: var(--accent);
-	}
+ .search-box input:focus {
+  border-color: var(--accent);
+ }
 
-	.search-box input::placeholder {
-		color: var(--text-dim);
-	}
+ .search-box input::placeholder {
+  color: var(--text-dim);
+ }
 
-	.tree-actions {
-		display: flex;
-		align-items: center;
-		justify-content: space-between;
-		padding: 0.5rem 0.75rem;
-		border-bottom: 1px solid var(--border);
-	}
+ .tree-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.5rem 0.75rem;
+  border-bottom: 1px solid var(--border);
+ }
 
-	.journal-link {
-		display: flex;
-		align-items: center;
-		gap: 0.4rem;
-		color: var(--text-muted);
-		font-size: 0.8rem;
-		text-decoration: none;
-		transition: color 0.15s;
-	}
+ .journal-link {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  text-decoration: none;
+  transition: color 0.15s;
+ }
 
-	.journal-link:hover {
-		color: var(--accent);
-	}
+ .journal-link:hover {
+  color: var(--accent);
+ }
 
-	.tree-header {
-		display: flex;
-		align-items: center;
-		justify-content: space-between;
-		padding: 0.4rem 0.75rem;
-	}
+ .tree-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.4rem 0.75rem;
+ }
 
-	.tree-header-label {
-		font-size: 0.75rem;
-		font-weight: 600;
-		text-transform: uppercase;
-		letter-spacing: 0.05em;
-		color: var(--text-dim);
-	}
+ .tree-header-label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-dim);
+ }
 
-	.expand-collapse {
-		display: flex;
-		align-items: center;
-		gap: 0.3rem;
-	}
+ .expand-collapse {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+ }
 
-	.tree-text-btn {
-		background: none;
-		border: none;
-		padding: 0.15rem 0.25rem;
-		font-size: 0.65rem;
-		color: var(--text-dim);
-		cursor: pointer;
-		transition: color 0.15s;
-		text-transform: lowercase;
-	}
+ .tree-text-btn {
+  background: none;
+  border: none;
+  padding: 0.15rem 0.25rem;
+  font-size: 0.65rem;
+  color: var(--text-dim);
+  cursor: pointer;
+  transition: color 0.15s;
+  text-transform: lowercase;
+ }
 
-	.tree-text-btn:hover {
-		color: var(--accent);
-	}
+ .tree-text-btn:hover {
+  color: var(--accent);
+ }
 
-	.tree-text-sep {
-		font-size: 0.65rem;
-		color: var(--text-dim);
-		user-select: none;
-	}
+ .tree-text-sep {
+  font-size: 0.65rem;
+  color: var(--text-dim);
+  user-select: none;
+ }
 
-	.loading-msg, .error-msg {
-		padding: 1rem;
-		color: var(--text-muted);
-		font-size: 0.85rem;
-		text-align: center;
-	}
+ .loading-msg,
+ .error-msg {
+  padding: 1rem;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  text-align: center;
+ }
 
-	.error-msg {
-		color: #f87171;
-	}
+ .error-msg {
+  color: #f87171;
+ }
 
-	.tree {
-		flex: 1;
-		overflow-y: auto;
-		padding: 0.25rem 0 0.5rem;
-	}
+ .tree {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0.25rem 0 0.5rem;
+ }
 
-	.tree-source {
-		margin-bottom: 0.25rem;
-	}
+ .tree-source {
+  margin-bottom: 0.25rem;
+ }
 
-	.tree-toggle {
-		display: flex;
-		align-items: center;
-		gap: 0.4rem;
-		width: 100%;
-		padding: 0.4rem 0.75rem;
-		background: none;
-		border: none;
-		color: var(--text);
-		font-size: 0.9rem;
-		font-weight: 600;
-		text-align: left;
-		cursor: pointer;
-		border-radius: 0;
-		transition: background 0.1s;
-	}
+ .tree-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  width: 100%;
+  padding: 0.4rem 0.75rem;
+  background: none;
+  border: none;
+  color: var(--text);
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+  border-radius: 0;
+  transition: background 0.1s;
+ }
 
-	.tree-toggle:hover {
-		background: var(--bg-hover);
-	}
+ .tree-toggle:hover {
+  background: var(--bg-hover);
+ }
 
-	.category-toggle {
-		font-weight: 500;
-		color: var(--text-muted);
-		padding-left: 1.5rem;
-		font-size: 0.85rem;
-		text-transform: uppercase;
-		letter-spacing: 0.03em;
-	}
+ .category-toggle {
+  font-weight: 800;
+  color: var(--text);
+  padding-left: 1.5rem;
+  font-size: 1rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+ }
 
-	.chevron {
-		flex-shrink: 0;
-		transition: transform 0.15s;
-	}
+ .chevron {
+  flex-shrink: 0;
+  transition: transform 0.15s;
+ }
 
-	.chevron.expanded {
-		transform: rotate(90deg);
-	}
+ .chevron.expanded {
+  transform: rotate(90deg);
+ }
 
-	.source-tag {
-		font-size: 0.8rem;
-		font-weight: 600;
-		padding: 0.1rem 0.45rem;
-		border-radius: 4px;
-		white-space: nowrap;
-		overflow: hidden;
-		text-overflow: ellipsis;
-	}
+ .source-tag {
+  font-size: 1.25rem;
+  font-weight: 800;
+  padding: 0.1rem 0.45rem;
+  border-radius: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+ }
 
-	.count {
-		font-size: 0.7rem;
-		color: var(--text-dim);
-		background: var(--bg);
-		padding: 0.1rem 0.4rem;
-		border-radius: 10px;
-		flex-shrink: 0;
-	}
+ .count {
+  font-size: 0.7rem;
+  color: var(--text-dim);
+  background: var(--bg);
+  padding: 0.1rem 0.4rem;
+  border-radius: 10px;
+  flex-shrink: 0;
+ }
 
-	.tree-items {
-		padding: 0.15rem 0;
-	}
+ .tree-items {
+  padding: 0.15rem 0;
+ }
 
-	.root-docs {
-		padding-left: 0;
-	}
+ .root-docs {
+  padding-left: 0;
+ }
 
-	.tree-item {
-		display: flex;
-		align-items: center;
-		gap: 0.5rem;
-		padding: 0.35rem 0.75rem 0.35rem 2.5rem;
-		color: var(--text-muted);
-		font-size: 0.95rem;
-		text-decoration: none;
-		transition: all 0.1s;
-		border-left: 2px solid transparent;
-	}
+ .tree-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.35rem 0.75rem 0.35rem 2.5rem;
+  color: var(--text);
+  font-size: 0.95rem;
+  text-decoration: none;
+  transition: all 0.1s;
+  border-left: 2px solid transparent;
+ }
 
-	.tree-item:hover {
-		background: var(--bg-hover);
-		color: var(--text);
-	}
+ .tree-item:hover {
+  background: var(--bg-hover);
+  color: var(--text);
+ }
 
-	.tree-item.active {
-		background: var(--accent-dim);
-		color: var(--accent);
-		border-left-color: var(--accent);
-	}
+ .tree-item.active {
+  background: var(--accent-dim);
+  color: var(--accent);
+  border-left-color: var(--accent);
+ }
 
-	.item-title {
-		overflow: hidden;
-		text-overflow: ellipsis;
-		white-space: nowrap;
-	}
+ .item-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+ }
 
-	.search-result-item {
-		flex-direction: column;
-		align-items: flex-start;
-		gap: 0.2rem;
-		padding-left: 1rem;
-	}
+ .search-result-item {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.2rem;
+  padding-left: 1rem;
+ }
 
-	.item-snippet {
-		font-size: 0.75rem;
-		color: var(--text-dim);
-		overflow: hidden;
-		text-overflow: ellipsis;
-		white-space: nowrap;
-		width: 100%;
-	}
+ .item-snippet {
+  font-size: 0.75rem;
+  color: var(--text-dim);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  width: 100%;
+ }
 
-	.search-results {
-		flex: 1;
-		overflow-y: auto;
-	}
+ .search-results {
+  flex: 1;
+  overflow-y: auto;
+ }
 
-	@media (max-width: 600px) {
-		.tree-toggle {
-			padding: 0.75rem;
-			min-height: 44px;
-			font-size: 1rem;
-		}
-		.category-toggle {
-			padding-left: 1.5rem;
-			min-height: 44px;
-			font-size: 0.9rem;
-		}
-		.tree-item {
-			padding: 0.75rem 0.75rem 0.75rem 2.5rem;
-			min-height: 44px;
-			font-size: 1rem;
-		}
-		.tree-text-btn {
-			font-size: 0.75rem;
-			min-height: 44px;
-			display: inline-flex;
-			align-items: center;
-		}
-		.tree-text-sep {
-			font-size: 0.75rem;
-		}
-		.search-box input {
-			min-height: 44px;
-			font-size: 16px; /* Explicit 16px prevents iOS Safari auto-zoom on focus */
-		}
-		.journal-link {
-			min-height: 44px;
-			display: inline-flex;
-			align-items: center;
-			font-size: 1rem;
-		}
-		.source-tag {
-			font-size: 0.875rem;
-			padding: 0.15rem 0.5rem;
-		}
-		.count {
-			font-size: 0.8rem;
-			padding: 0.15rem 0.5rem;
-		}
-		.tree-header-label {
-			font-size: 0.8rem;
-		}
-		.item-snippet {
-			font-size: 0.85rem;
-		}
-		.search-result-item {
-			padding: 0.75rem 1rem;
-			min-height: 44px;
-		}
-		.loading-msg, .error-msg {
-			font-size: 1rem;
-		}
-	}
+ @media (max-width: 600px) {
+  .tree-toggle {
+   padding: 0.75rem;
+   min-height: 44px;
+   font-size: 1rem;
+  }
+  .category-toggle {
+   padding-left: 1.5rem;
+   min-height: 44px;
+   font-size: 0.9rem;
+  }
+  .tree-item {
+   padding: 0.75rem 0.75rem 0.75rem 2.5rem;
+   min-height: 44px;
+   font-size: 1rem;
+  }
+  .tree-text-btn {
+   font-size: 0.75rem;
+   min-height: 44px;
+   display: inline-flex;
+   align-items: center;
+  }
+  .tree-text-sep {
+   font-size: 0.75rem;
+  }
+  .search-box input {
+   min-height: 44px;
+   font-size: 16px; /* Explicit 16px prevents iOS Safari auto-zoom on focus */
+  }
+  .journal-link {
+   min-height: 44px;
+   display: inline-flex;
+   align-items: center;
+   font-size: 1rem;
+  }
+  .source-tag {
+   font-size: 0.875rem;
+   padding: 0.15rem 0.5rem;
+  }
+  .count {
+   font-size: 0.8rem;
+   padding: 0.15rem 0.5rem;
+  }
+  .tree-header-label {
+   font-size: 0.8rem;
+  }
+  .item-snippet {
+   font-size: 0.85rem;
+  }
+  .search-result-item {
+   padding: 0.75rem 1rem;
+   min-height: 44px;
+  }
+  .loading-msg,
+  .error-msg {
+   font-size: 1rem;
+  }
+ }
 </style>
