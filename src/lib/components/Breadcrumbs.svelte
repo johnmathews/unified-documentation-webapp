@@ -57,4 +57,16 @@
 		color: var(--text);
 		font-weight: 500;
 	}
+
+	@media (max-width: 600px) {
+		.breadcrumbs {
+			font-size: 0.9rem;
+		}
+		.breadcrumbs a {
+			padding: 0.4rem 0.25rem;
+			min-height: 44px;
+			display: inline-flex;
+			align-items: center;
+		}
+	}
 </style>

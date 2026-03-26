@@ -466,4 +466,27 @@
 	.send-btn:not(:disabled):hover {
 		background: var(--accent-hover);
 	}
+
+	@media (max-width: 600px) {
+		.header-btn {
+			min-height: 44px;
+			min-width: 44px;
+			padding: 0.5rem;
+		}
+		.send-btn {
+			min-height: 44px;
+			min-width: 44px;
+		}
+		.chat-input input {
+			min-height: 44px;
+			font-size: 1rem;
+		}
+		.restore-hint {
+			min-height: 44px;
+			padding: 0.6rem 1rem;
+		}
+		.chat-input {
+			padding-bottom: calc(0.75rem + env(safe-area-inset-bottom, 0));
+		}
+	}
 </style>

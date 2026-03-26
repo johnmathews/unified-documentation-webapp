@@ -24,7 +24,8 @@
 - **Server-side proxy** — SvelteKit server routes proxy `/api/*` to the MCP server backend, configured via `API_URL` env var at runtime
 - **No CORS needed** — Browser talks to same origin, server proxies to backend
 - **Dark theme** with CSS custom properties
-- **Responsive** — Desktop (3 panels), tablet (overlapping), phone (full-width)
+- **Responsive** — Desktop (3 panels), tablet (overlay drawers), phone (85%-width sidebar with backdrop, swipe gestures, 44px touch targets, safe-area-insets)
+- **Document categories** — root\_docs, docs, journal, engineering\_team
 
 ## Backend Dependency
 

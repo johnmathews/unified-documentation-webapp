@@ -4,6 +4,7 @@
 	import Sidebar from '$lib/components/Sidebar.svelte';
 	import ChatPanel from '$lib/components/ChatPanel.svelte';
 	import { currentDocId } from '$lib/stores.svelte';
+	import { MediaQuery } from 'svelte/reactivity';
 
 	let { children } = $props();
 
@@ -11,6 +12,39 @@
 	let chatOpen = $state(false);
 	let chatExpanded = $state(false);
 	let darkMode = $state(true);
+
+	const isMobile = new MediaQuery('max-width: 600px');
+
+	let touchStartX = 0;
+	let touchStartY = 0;
+	let touchStartTime = 0;
+	const SWIPE_THRESHOLD = 50;
+	const EDGE_ZONE = 30;
+
+	function handleTouchStart(e: TouchEvent) {
+		touchStartX = e.touches[0].clientX;
+		touchStartY = e.touches[0].clientY;
+		touchStartTime = Date.now();
+	}
+
+	function handleTouchEnd(e: TouchEvent) {
+		const dx = e.changedTouches[0].clientX - touchStartX;
+		const dy = e.changedTouches[0].clientY - touchStartY;
+		const dt = Date.now() - touchStartTime;
+
+		// Only count as swipe if horizontal movement dominates and is fast enough
+		if (Math.abs(dx) < SWIPE_THRESHOLD || Math.abs(dy) > Math.abs(dx) || dt > 500) return;
+
+		if (dx > 0) {
+			// Swipe right
+			if (chatOpen) { chatOpen = false; chatExpanded = false; }
+			else if (touchStartX < EDGE_ZONE && !sidebarOpen) { sidebarOpen = true; }
+		} else {
+			// Swipe left
+			if (sidebarOpen && isMobile.current) { sidebarOpen = false; }
+			else if (touchStartX > window.innerWidth - EDGE_ZONE && !chatOpen) { chatOpen = true; }
+		}
+	}
 
 	$effect(() => {
 		darkMode = document.documentElement.dataset.theme !== 'light';
@@ -63,12 +97,19 @@
 		</div>
 	</header>
 
-	<div class="main-area">
-		{#if sidebarOpen}
-			<aside class="sidebar">
-				<Sidebar onNavigate={() => { if (window.innerWidth <= 640) sidebarOpen = false; }} />
-			</aside>
-		{/if}
+	{#if (sidebarOpen || chatOpen) && isMobile.current}
+		<button
+			class="backdrop"
+			onclick={() => { sidebarOpen = false; chatOpen = false; chatExpanded = false; }}
+			aria-label="Close panel"
+		></button>
+	{/if}
+
+	<!-- svelte-ignore a11y_no_static_element_interactions -->
+	<div class="main-area" ontouchstart={handleTouchStart} ontouchend={handleTouchEnd}>
+		<aside class="sidebar" class:open={sidebarOpen} aria-hidden={!sidebarOpen}>
+			<Sidebar onNavigate={() => { if (window.innerWidth <= 600) sidebarOpen = false; }} />
+		</aside>
 
 		<main class="content">
 			{@render children()}
@@ -78,13 +119,22 @@
 			<ChatPanel docId={currentDocId.value} expanded={chatExpanded} onToggleExpand={() => chatExpanded = !chatExpanded} />
 		</aside>
 	</div>
+
 </div>
+
+<svelte:window onkeydown={(e) => {
+	if (e.key === 'Escape') {
+		if (chatOpen) { chatOpen = false; chatExpanded = false; }
+		else if (sidebarOpen && isMobile.current) { sidebarOpen = false; }
+	}
+}} />
 
 <style>
 	.app-layout {
 		display: flex;
 		flex-direction: column;
 		height: 100vh;
+		height: 100dvh;
 		overflow: hidden;
 	}
 
@@ -93,6 +143,7 @@
 		align-items: center;
 		justify-content: space-between;
 		padding: 0 1rem;
+		padding-top: env(safe-area-inset-top, 0);
 		height: 48px;
 		background: var(--bg-surface);
 		border-bottom: 1px solid var(--border);
@@ -158,6 +209,12 @@
 		border-right: 1px solid var(--border);
 		overflow-y: auto;
 		overflow-x: hidden;
+		display: flex;
+		flex-direction: column;
+	}
+
+	.sidebar:not(.open) {
+		display: none;
 	}
 
 	.content {
@@ -186,22 +243,49 @@
 		width: var(--chat-width-expanded);
 	}
 
+	.backdrop {
+		position: fixed;
+		inset: 0;
+		top: calc(48px + env(safe-area-inset-top, 0));
+		background: rgba(0, 0, 0, 0.5);
+		z-index: 99;
+		border: none;
+		padding: 0;
+		cursor: default;
+		animation: fadeIn 200ms ease;
+	}
+
+	@keyframes fadeIn {
+		from { opacity: 0; }
+		to { opacity: 1; }
+	}
+
 	@media (max-width: 1024px) {
 		.sidebar {
 			position: fixed;
-			top: 48px;
+			top: calc(48px + env(safe-area-inset-top, 0));
 			left: 0;
 			bottom: 0;
-			z-index: 20;
+			z-index: 100;
 			box-shadow: 4px 0 20px rgba(0, 0, 0, 0.3);
+			transform: translateX(-100%);
+			transition: transform 250ms cubic-bezier(0.4, 0, 0.2, 1);
+		}
+
+		.sidebar:not(.open) {
+			display: flex;  /* Keep in DOM for slide animation */
+		}
+
+		.sidebar.open {
+			transform: translateX(0);
 		}
 
 		.chat-panel {
 			position: fixed;
-			top: 48px;
+			top: calc(48px + env(safe-area-inset-top, 0));
 			right: 0;
 			bottom: 0;
-			z-index: 20;
+			z-index: 100;
 			box-shadow: -4px 0 20px rgba(0, 0, 0, 0.3);
 		}
 
@@ -210,10 +294,30 @@
 		}
 	}
 
-	@media (max-width: 640px) {
-		.sidebar { width: 100%; }
-		.chat-panel { width: 100%; }
+	@media (max-width: 600px) {
+		.sidebar {
+			width: 85%;
+			max-width: 320px;
+			transform: translateX(0);
+			transition: transform 250ms cubic-bezier(0.4, 0, 0.2, 1);
+		}
+		.chat-panel {
+			width: 100%;
+			transform: translateX(0);
+			transition: transform 250ms cubic-bezier(0.4, 0, 0.2, 1);
+		}
 		.content { padding: 1rem; }
 		.btn-label { display: none; }
+		.icon-btn {
+			min-height: 44px;
+			min-width: 44px;
+			padding: 0.6rem;
+		}
+		.app-title {
+			padding: 0.5rem 0;
+			min-height: 44px;
+			display: inline-flex;
+			align-items: center;
+		}
 	}
 </style>

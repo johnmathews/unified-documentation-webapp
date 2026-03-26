@@ -25,6 +25,7 @@
 			if (!source) { error = `Source "${name}" not found`; return; }
 			if (cat === 'docs') docs = source.docs;
 			else if (cat === 'journal') docs = source.journal;
+			else if (cat === 'engineering_team') docs = source.engineering_team;
 			else { error = `Unknown category "${cat}"`; return; }
 		} catch (e) {
 			error = e instanceof Error ? e.message : 'Failed to load';
@@ -51,7 +52,7 @@
 		} catch { return dateStr; }
 	}
 
-	let categoryLabel = $derived(category === 'journal' ? 'Development Journal' : 'Documentation');
+	let categoryLabel = $derived(category === 'journal' ? 'Development Journal' : category === 'engineering_team' ? 'Engineering Analysis' : 'Documentation');
 </script>
 
 <svelte:head>
@@ -95,4 +96,20 @@
 	.doc-list a { color: var(--text); font-size: 0.95rem; }
 	.doc-list a:hover { color: var(--accent); }
 	.date { font-size: 0.8rem; color: var(--text-dim); flex-shrink: 0; margin-left: 1rem; }
+
+	@media (max-width: 600px) {
+		h1 { font-size: 1.5rem; }
+		.doc-list li {
+			flex-direction: column;
+			align-items: flex-start;
+			gap: 0.25rem;
+			padding: 0.75rem 0;
+		}
+		.doc-list a {
+			min-height: 44px;
+			display: inline-flex;
+			align-items: center;
+		}
+		.date { margin-left: 0; }
+	}
 </style>

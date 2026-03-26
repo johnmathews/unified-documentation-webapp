@@ -162,6 +162,9 @@ button {
 	width: 100%;
 	border-collapse: collapse;
 	margin: 1rem 0;
+	display: block;
+	overflow-x: auto;
+	-webkit-overflow-scrolling: touch;
 }
 
 .markdown-content th, .markdown-content td {
@@ -184,4 +187,10 @@ button {
 	border: none;
 	border-top: 1px solid var(--border);
 	margin: 1.5rem 0;
+}
+
+@media (max-width: 600px) {
+	.markdown-content h1 { font-size: 1.4rem; }
+	.markdown-content h2 { font-size: 1.15rem; }
+	.markdown-content h3 { font-size: 1rem; }
 }

@@ -60,7 +60,7 @@
 	<div class="source-page">
 		<Breadcrumbs source={source.source} />
 		<h1>{source.source}</h1>
-		<p class="subtitle">{source.docs.length} docs, {source.journal.length} journal entries</p>
+		<p class="subtitle">{source.docs.length} docs, {source.journal.length} journal entries, {source.engineering_team.length} engineering analyses</p>
 
 		{#if source.docs.length > 0}
 			<section>
@@ -93,6 +93,22 @@
 				</ul>
 			</section>
 		{/if}
+
+		{#if source.engineering_team.length > 0}
+			<section>
+				<h2><a href="/source/{encodeURIComponent(source.source)}/engineering_team">Engineering Analysis</a></h2>
+				<ul class="doc-list">
+					{#each source.engineering_team as doc}
+						<li>
+							<a href={docUrl(doc.doc_id)}>{displayTitle(doc)}</a>
+							{#if doc.modified_at}
+								<span class="date">{formatDate(doc.modified_at)}</span>
+							{/if}
+						</li>
+					{/each}
+				</ul>
+			</section>
+		{/if}
 	</div>
 {/if}
 
@@ -111,4 +127,20 @@
 	.doc-list a { color: var(--text); font-size: 0.95rem; }
 	.doc-list a:hover { color: var(--accent); }
 	.date { font-size: 0.8rem; color: var(--text-dim); flex-shrink: 0; margin-left: 1rem; }
+
+	@media (max-width: 600px) {
+		h1 { font-size: 1.5rem; }
+		.doc-list li {
+			flex-direction: column;
+			align-items: flex-start;
+			gap: 0.25rem;
+			padding: 0.75rem 0;
+		}
+		.doc-list a {
+			min-height: 44px;
+			display: inline-flex;
+			align-items: center;
+		}
+		.date { margin-left: 0; }
+	}
 </style>

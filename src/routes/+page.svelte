@@ -56,6 +56,7 @@
 					<div class="stats">
 						<span>{source.docs.length} docs</span>
 						<span>{source.journal.length} journal entries</span>
+						<span>{source.engineering_team.length} engineering analyses</span>
 					</div>
 
 					{#if source.docs.length > 0}
@@ -81,6 +82,20 @@
 								{/each}
 								{#if source.journal.length > 3}
 									<li class="more">+{source.journal.length - 3} more</li>
+								{/if}
+							</ul>
+						</div>
+					{/if}
+
+					{#if source.engineering_team.length > 0}
+						<div class="doc-section">
+							<h3><a href="/source/{encodeURIComponent(source.source)}/engineering_team">Engineering Analysis</a></h3>
+							<ul>
+								{#each source.engineering_team.slice(0, 3) as doc}
+									<li><a href={docUrl(doc.doc_id)}>{displayTitle(doc)}</a></li>
+								{/each}
+								{#if source.engineering_team.length > 3}
+									<li class="more">+{source.engineering_team.length - 3} more</li>
 								{/if}
 							</ul>
 						</div>
@@ -120,7 +135,7 @@
 
 	.sources-grid {
 		display: grid;
-		grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+		grid-template-columns: repeat(auto-fill, minmax(min(380px, 100%), 1fr));
 		gap: 1.25rem;
 	}
 
@@ -193,6 +208,20 @@
 	@media (max-width: 640px) {
 		.sources-grid {
 			grid-template-columns: 1fr;
+		}
+	}
+
+	@media (max-width: 600px) {
+		h1 {
+			font-size: 1.5rem;
+		}
+		.doc-section li {
+			padding: 0.5rem 0;
+		}
+		.doc-section a {
+			min-height: 44px;
+			display: inline-flex;
+			align-items: center;
 		}
 	}
 </style>

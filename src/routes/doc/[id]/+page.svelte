@@ -75,7 +75,7 @@
 	<article class="document">
 		<Breadcrumbs
 			source={doc.source}
-			category={doc.file_path.includes('journal/') ? 'journal' : 'docs'}
+			category={doc.file_path.includes('journal/') ? 'journal' : doc.file_path.includes('.engineering-team/') ? 'engineering_team' : 'docs'}
 			title={doc.title || doc.file_path.split('/').pop() || doc.file_path}
 		/>
 		<header class="doc-header">
@@ -174,6 +174,9 @@
 		font-size: 0.8rem;
 		color: var(--text-dim);
 		font-family: var(--font-mono);
+		min-width: 0;
+		overflow-wrap: break-word;
+		word-break: break-all;
 	}
 
 	.doc-header h1 {
@@ -195,5 +198,22 @@
 	.no-content {
 		color: var(--text-muted);
 		font-style: italic;
+	}
+
+	@media (max-width: 600px) {
+		.doc-header h1 { font-size: 1.5rem; }
+		.doc-meta {
+			flex-wrap: wrap;
+		}
+		.source-badge {
+			padding: 0.4rem 0.75rem;
+			min-height: 44px;
+			display: inline-flex;
+			align-items: center;
+		}
+		.doc-dates {
+			flex-wrap: wrap;
+			gap: 0.5rem;
+		}
 	}
 </style>

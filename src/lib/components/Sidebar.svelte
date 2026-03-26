@@ -29,6 +29,7 @@
 				expandedSources[s.source] = true;
 				expandedCategories[`${s.source}:docs`] = true;
 				expandedCategories[`${s.source}:journal`] = true;
+				expandedCategories[`${s.source}:engineering_team`] = true;
 			}
 		} catch (e) {
 			error = e instanceof Error ? e.message : 'Failed to load';
@@ -50,6 +51,7 @@
 			expandedSources[s.source] = true;
 			expandedCategories[`${s.source}:docs`] = true;
 			expandedCategories[`${s.source}:journal`] = true;
+			expandedCategories[`${s.source}:engineering_team`] = true;
 		}
 	}
 
@@ -58,6 +60,7 @@
 			expandedSources[s.source] = false;
 			expandedCategories[`${s.source}:docs`] = false;
 			expandedCategories[`${s.source}:journal`] = false;
+			expandedCategories[`${s.source}:engineering_team`] = false;
 		}
 	}
 
@@ -95,7 +98,7 @@
 	}
 
 	function totalDocs(source: TreeSource): number {
-		return source.root_docs.length + source.docs.length + source.journal.length;
+		return source.root_docs.length + source.docs.length + source.journal.length + source.engineering_team.length;
 	}
 </script>
 
@@ -262,6 +265,37 @@
 													<line x1="16" y1="2" x2="16" y2="6" />
 													<line x1="8" y1="2" x2="8" y2="6" />
 													<line x1="3" y1="10" x2="21" y2="10" />
+												</svg>
+												<span class="item-title">{displayTitle(doc)}</span>
+											</a>
+										{/each}
+									</div>
+								{/if}
+							</div>
+						{/if}
+
+						{#if source.engineering_team.length > 0}
+							<div class="tree-category">
+								<button class="tree-toggle category-toggle" onclick={() => toggleCategory(`${source.source}:engineering_team`)}>
+									<svg class="chevron" class:expanded={expandedCategories[`${source.source}:engineering_team`]} width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+										<polyline points="9 18 15 12 9 6" />
+									</svg>
+									<span>Engineering Analysis</span>
+									<span class="count">{source.engineering_team.length}</span>
+								</button>
+
+								{#if expandedCategories[`${source.source}:engineering_team`]}
+									<div class="tree-items">
+										{#each source.engineering_team as doc}
+											<a
+												href={docUrl(doc.doc_id)}
+												class="tree-item"
+												class:active={isActive(doc.doc_id)}
+												onclick={onNavigate}
+											>
+												<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+													<circle cx="12" cy="12" r="3" />
+													<path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
 												</svg>
 												<span class="item-title">{displayTitle(doc)}</span>
 											</a>
@@ -505,5 +539,39 @@
 	.search-results {
 		flex: 1;
 		overflow-y: auto;
+	}
+
+	@media (max-width: 600px) {
+		.tree-toggle {
+			padding: 0.75rem;
+			min-height: 44px;
+		}
+		.category-toggle {
+			padding-left: 1.5rem;
+			min-height: 44px;
+		}
+		.tree-item {
+			padding: 0.75rem 0.75rem 0.75rem 2.5rem;
+			min-height: 44px;
+		}
+		.tree-action-btn {
+			min-height: 44px;
+			min-width: 44px;
+			padding: 0.5rem;
+		}
+		.search-box input {
+			min-height: 44px;
+			font-size: 1rem;
+		}
+		.journal-link {
+			min-height: 44px;
+			display: inline-flex;
+			align-items: center;
+			font-size: 0.9rem;
+		}
+		.search-result-item {
+			padding: 0.75rem 1rem;
+			min-height: 44px;
+		}
 	}
 </style>
