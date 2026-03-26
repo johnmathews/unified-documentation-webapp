@@ -275,4 +275,36 @@
 			order: -1;
 		}
 	}
+
+	@media (max-width: 600px) {
+		h1 {
+			font-size: 1.5rem;
+		}
+		.breadcrumbs {
+			font-size: 0.9rem;
+		}
+		.breadcrumbs a {
+			padding: 0.4rem 0.25rem;
+			min-height: 44px;
+			display: inline-flex;
+			align-items: center;
+		}
+		.month-header {
+			font-size: 0.875rem;
+		}
+		.entry-title {
+			font-size: 1rem;
+		}
+		.entry-date {
+			font-size: 0.875rem;
+		}
+		.entry-source {
+			font-size: 0.8rem;
+			padding: 0.15rem 0.5rem;
+		}
+		.entry-card {
+			min-height: 44px;
+			padding: 0.75rem 1rem;
+		}
+	}
 </style>

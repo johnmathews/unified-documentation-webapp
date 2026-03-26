@@ -148,7 +148,7 @@
 					</svg>
 				</button>
 			{/if}
-			<button class="header-btn" onclick={onToggleExpand} title={expanded ? 'Collapse' : 'Expand'}>
+			<button class="header-btn expand-btn" onclick={onToggleExpand} title={expanded ? 'Collapse' : 'Expand'}>
 				{#if expanded}
 					<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
 						<polyline points="4 14 10 14 10 20" /><polyline points="20 10 14 10 14 4" /><line x1="14" y1="10" x2="21" y2="3" /><line x1="3" y1="21" x2="10" y2="14" />
@@ -468,22 +468,44 @@
 	}
 
 	@media (max-width: 600px) {
+		.chat-header h3 {
+			font-size: 1rem;
+		}
+		.context-badge {
+			font-size: 0.8rem;
+		}
 		.header-btn {
 			min-height: 44px;
 			min-width: 44px;
 			padding: 0.5rem;
 		}
+		.header-btn.expand-btn {
+			display: none;
+		}
+		.confirm-label {
+			font-size: 0.85rem;
+		}
 		.send-btn {
 			min-height: 44px;
 			min-width: 44px;
+		}
+		.message-bubble {
+			font-size: 1rem;
 		}
 		.chat-input input {
 			min-height: 44px;
 			font-size: 16px; /* Explicit 16px prevents iOS Safari auto-zoom on focus */
 		}
+		.empty-state p {
+			font-size: 1rem;
+		}
+		.context-hint {
+			font-size: 0.85rem;
+		}
 		.restore-hint {
 			min-height: 44px;
 			padding: 0.6rem 1rem;
+			font-size: 0.9rem;
 		}
 		.chat-input {
 			padding-bottom: calc(0.75rem + env(safe-area-inset-bottom, 0));

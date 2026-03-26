@@ -206,14 +206,19 @@
 			flex-wrap: wrap;
 		}
 		.source-badge {
+			font-size: 0.85rem;
 			padding: 0.4rem 0.75rem;
 			min-height: 44px;
 			display: inline-flex;
 			align-items: center;
 		}
+		.file-path {
+			font-size: 0.875rem;
+		}
 		.doc-dates {
 			flex-wrap: wrap;
 			gap: 0.5rem;
+			font-size: 0.875rem;
 		}
 	}
 </style>

@@ -68,5 +68,8 @@
 			display: inline-flex;
 			align-items: center;
 		}
+		.current {
+			padding: 0.4rem 0;
+		}
 	}
 </style>

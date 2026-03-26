@@ -99,6 +99,7 @@
 
 	@media (max-width: 600px) {
 		h1 { font-size: 1.5rem; }
+		.subtitle { font-size: 1rem; }
 		.doc-list li {
 			flex-direction: column;
 			align-items: flex-start;
@@ -109,7 +110,8 @@
 			min-height: 44px;
 			display: inline-flex;
 			align-items: center;
+			font-size: 1rem;
 		}
-		.date { margin-left: 0; }
+		.date { margin-left: 0; font-size: 0.875rem; }
 	}
 </style>

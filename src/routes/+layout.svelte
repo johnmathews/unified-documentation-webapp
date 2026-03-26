@@ -289,6 +289,16 @@
 			bottom: 0;
 			z-index: 100;
 			box-shadow: -4px 0 20px rgba(0, 0, 0, 0.3);
+			transform: translateX(100%);
+			transition: transform 250ms cubic-bezier(0.4, 0, 0.2, 1);
+		}
+
+		.chat-panel.hidden {
+			display: flex;  /* Keep in DOM for slide animation */
+		}
+
+		.chat-panel:not(.hidden) {
+			transform: translateX(0);
 		}
 
 		.chat-panel.expanded {

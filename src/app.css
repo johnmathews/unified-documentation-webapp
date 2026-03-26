@@ -190,6 +190,9 @@ button {
 }
 
 @media (max-width: 600px) {
+	html, body {
+		font-size: 16px;
+	}
 	.markdown-content h1 { font-size: 1.4rem; }
 	.markdown-content h2 { font-size: 1.15rem; }
 	.markdown-content h3 { font-size: 1rem; }

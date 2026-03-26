@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { fetchTree, type TreeSource } from '$lib/api';
 	import { currentDocId } from '$lib/stores.svelte';
+	import { sourceColor } from '$lib/colors';
 
 	let tree: TreeSource[] = $state([]);
 	let loading = $state(true);
@@ -51,7 +52,7 @@
 	{:else}
 		<div class="sources-grid">
 			{#each tree as source}
-				<div class="source-card">
+				<div class="source-card" style="border-color: {sourceColor(source.source).text}; background: {sourceColor(source.source).bg};">
 					<h2><a href="/source/{encodeURIComponent(source.source)}">{source.source}</a></h2>
 					<div class="stats">
 						<span>{source.docs.length} docs</span>
@@ -140,8 +141,7 @@
 	}
 
 	.source-card {
-		background: var(--bg-surface);
-		border: 1px solid var(--border);
+		border: 1px solid;
 		border-radius: var(--radius-lg);
 		padding: 1.5rem;
 	}
@@ -215,6 +215,15 @@
 		h1 {
 			font-size: 1.5rem;
 		}
+		.subtitle {
+			font-size: 1rem;
+		}
+		.stats {
+			font-size: 0.875rem;
+		}
+		.doc-section h3 {
+			font-size: 0.875rem;
+		}
 		.doc-section li {
 			padding: 0.5rem 0;
 		}
@@ -222,6 +231,10 @@
 			min-height: 44px;
 			display: inline-flex;
 			align-items: center;
+			font-size: 1rem;
+		}
+		.more {
+			font-size: 0.875rem;
 		}
 	}
 </style>

@@ -55,8 +55,11 @@ test.describe('Safe area bottom handling', () => {
 		await page.goto('/');
 		await page.waitForLoadState('networkidle');
 
-		// Open chat
+		// Open chat and wait for slide animation
 		await toggleChat(page).click();
+		await chatPanel(page).evaluate(
+			(el) => new Promise((r) => el.addEventListener('transitionend', r, { once: true }))
+		);
 
 		const paddingBottom = await page.locator('.chat-input').evaluate(
 			(el) => getComputedStyle(el).paddingBottom
@@ -77,8 +80,11 @@ test.describe('Input font sizes prevent iOS zoom', () => {
 		await page.goto('/');
 		await page.waitForLoadState('networkidle');
 
-		// Open chat panel
+		// Open chat panel and wait for slide animation
 		await toggleChat(page).click();
+		await chatPanel(page).evaluate(
+			(el) => new Promise((r) => el.addEventListener('transitionend', r, { once: true }))
+		);
 
 		const fontSize = await chatInput(page).evaluate(
 			(el) => getComputedStyle(el).fontSize
@@ -130,6 +136,9 @@ test.describe('Landscape phone: full-screen modals', () => {
 		);
 
 		await toggleChat(page).click();
+		await chatPanel(page).evaluate(
+			(el) => new Promise((r) => el.addEventListener('transitionend', r, { once: true }))
+		);
 
 		const box = await chatPanel(page).boundingBox();
 		expect(box).toBeTruthy();
@@ -165,8 +174,11 @@ test.describe('Mobile chat interaction', () => {
 		await page.goto('/');
 		await page.waitForLoadState('networkidle');
 
-		// Open chat
+		// Open chat and wait for slide animation
 		await toggleChat(page).click();
+		await chatPanel(page).evaluate(
+			(el) => new Promise((r) => el.addEventListener('transitionend', r, { once: true }))
+		);
 
 		// Both input and send button should be visible
 		const inputBox = await chatInput(page).boundingBox();
@@ -185,8 +197,11 @@ test.describe('Mobile chat interaction', () => {
 		await page.goto('/');
 		await page.waitForLoadState('networkidle');
 
-		// Open chat
+		// Open chat and wait for slide animation
 		await toggleChat(page).click();
+		await chatPanel(page).evaluate(
+			(el) => new Promise((r) => el.addEventListener('transitionend', r, { once: true }))
+		);
 
 		const inputHeight = await chatInput(page).evaluate(
 			(el) => el.getBoundingClientRect().height
@@ -198,5 +213,146 @@ test.describe('Mobile chat interaction', () => {
 		// Touch targets should be at least 44px
 		expect(inputHeight).toBeGreaterThanOrEqual(44);
 		expect(btnHeight).toBeGreaterThanOrEqual(44);
+	});
+});
+
+// =================================================================================
+// Mobile typography — text must be readable on phone screens
+// =================================================================================
+
+test.describe('Mobile typography', () => {
+	test.beforeEach(async ({ page }) => {
+		await page.setViewportSize(IPHONE_PORTRAIT);
+		await page.goto('/');
+		await page.waitForLoadState('networkidle');
+	});
+
+	test('base font size is at least 16px on mobile', async ({ page }) => {
+		const fontSize = await page.evaluate(
+			() => getComputedStyle(document.body).fontSize
+		);
+		const px = parseFloat(fontSize);
+		expect(px).toBeGreaterThanOrEqual(16);
+	});
+
+	test('sidebar tree items have readable font size', async ({ page }) => {
+		// Sidebar starts open
+		const treeItems = page.locator('.tree-toggle');
+		const count = await treeItems.count();
+		if (count > 0) {
+			const fontSize = await treeItems.first().evaluate(
+				(el) => parseFloat(getComputedStyle(el).fontSize)
+			);
+			// Should be at least 16px (1rem at 16px base)
+			expect(fontSize).toBeGreaterThanOrEqual(16);
+		}
+	});
+
+	test('sidebar document links have readable font size', async ({ page }) => {
+		const treeItems = page.locator('.tree-item');
+		const count = await treeItems.count();
+		if (count > 0) {
+			const fontSize = await treeItems.first().evaluate(
+				(el) => parseFloat(getComputedStyle(el).fontSize)
+			);
+			expect(fontSize).toBeGreaterThanOrEqual(16);
+		}
+	});
+
+	test('chat message bubbles have readable font size', async ({ page }) => {
+		await toggleChat(page).click();
+		await chatPanel(page).evaluate(
+			(el) => new Promise((r) => el.addEventListener('transitionend', r, { once: true }))
+		);
+
+		// Check the empty state text as a proxy for message font size
+		const emptyText = page.locator('.empty-state p').first();
+		const fontSize = await emptyText.evaluate(
+			(el) => parseFloat(getComputedStyle(el).fontSize)
+		);
+		expect(fontSize).toBeGreaterThanOrEqual(16);
+	});
+});
+
+// =================================================================================
+// Chat panel as full-screen modal on mobile
+// =================================================================================
+
+test.describe('Mobile chat panel modal behavior', () => {
+	test.beforeEach(async ({ page }) => {
+		await page.setViewportSize(IPHONE_PORTRAIT);
+		await page.goto('/');
+		await page.waitForLoadState('networkidle');
+	});
+
+	test('expand button is hidden on mobile', async ({ page }) => {
+		// Close sidebar, open chat
+		await toggleSidebar(page).click();
+		await sidebar(page).evaluate(
+			(el) => new Promise((r) => el.addEventListener('transitionend', r, { once: true }))
+		);
+
+		await toggleChat(page).click();
+		await chatPanel(page).evaluate(
+			(el) => new Promise((r) => el.addEventListener('transitionend', r, { once: true }))
+		);
+
+		const expandBtn = page.locator('.header-btn.expand-btn');
+		const display = await expandBtn.evaluate(
+			(el) => getComputedStyle(el).display
+		);
+		expect(display).toBe('none');
+	});
+
+	test('chat panel takes full viewport width on mobile', async ({ page }) => {
+		await toggleChat(page).click();
+		await chatPanel(page).evaluate(
+			(el) => new Promise((r) => el.addEventListener('transitionend', r, { once: true }))
+		);
+
+		const box = await chatPanel(page).boundingBox();
+		expect(box).toBeTruthy();
+		expect(box!.width).toBeGreaterThanOrEqual(IPHONE_PORTRAIT.width - 2);
+	});
+
+	test('chat panel slides in and out with animation', async ({ page }) => {
+		// Chat starts hidden — verify it is off-screen
+		const hiddenTransform = await chatPanel(page).evaluate(
+			(el) => getComputedStyle(el).transform
+		);
+		// translateX(100%) computes to matrix(1, 0, 0, 1, <width>, 0)
+		if (hiddenTransform && hiddenTransform !== 'none') {
+			const match = hiddenTransform.match(/matrix\(([^)]+)\)/);
+			if (match) {
+				const tx = parseFloat(match[1].split(',')[4].trim());
+				expect(tx).toBeGreaterThan(0);
+			}
+		}
+
+		// Open — should slide to translateX(0)
+		await toggleChat(page).click();
+		await chatPanel(page).evaluate(
+			(el) => new Promise((r) => el.addEventListener('transitionend', r, { once: true }))
+		);
+
+		const openTransform = await chatPanel(page).evaluate(
+			(el) => getComputedStyle(el).transform
+		);
+		if (openTransform && openTransform !== 'none') {
+			const match = openTransform.match(/matrix\(([^)]+)\)/);
+			if (match) {
+				const tx = parseFloat(match[1].split(',')[4].trim());
+				expect(tx).toBe(0);
+			}
+		}
+	});
+
+	test('chat panel stays in DOM when hidden for slide animation', async ({ page }) => {
+		// Chat starts hidden on mobile
+		const display = await chatPanel(page).evaluate(
+			(el) => getComputedStyle(el).display
+		);
+		// Must remain display:flex for the CSS transition to animate
+		expect(display).toBe('flex');
 	});
 });

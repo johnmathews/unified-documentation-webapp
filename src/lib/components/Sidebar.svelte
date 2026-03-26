@@ -545,14 +545,17 @@
 		.tree-toggle {
 			padding: 0.75rem;
 			min-height: 44px;
+			font-size: 1rem;
 		}
 		.category-toggle {
 			padding-left: 1.5rem;
 			min-height: 44px;
+			font-size: 0.9rem;
 		}
 		.tree-item {
 			padding: 0.75rem 0.75rem 0.75rem 2.5rem;
 			min-height: 44px;
+			font-size: 1rem;
 		}
 		.tree-action-btn {
 			min-height: 44px;
@@ -567,11 +570,28 @@
 			min-height: 44px;
 			display: inline-flex;
 			align-items: center;
-			font-size: 0.9rem;
+			font-size: 1rem;
+		}
+		.source-tag {
+			font-size: 0.875rem;
+			padding: 0.15rem 0.5rem;
+		}
+		.count {
+			font-size: 0.8rem;
+			padding: 0.15rem 0.5rem;
+		}
+		.tree-header-label {
+			font-size: 0.8rem;
+		}
+		.item-snippet {
+			font-size: 0.85rem;
 		}
 		.search-result-item {
 			padding: 0.75rem 1rem;
 			min-height: 44px;
+		}
+		.loading-msg, .error-msg {
+			font-size: 1rem;
 		}
 	}
 </style>
