@@ -25,7 +25,7 @@
 			if (!source) { error = `Source "${name}" not found`; return; }
 			if (cat === 'docs') docs = source.docs;
 			else if (cat === 'journal') docs = source.journal;
-			else if (cat === 'engineering_team') docs = source.engineering_team;
+			else if (cat === 'engineering_team') docs = source.engineering_team ?? [];
 			else { error = `Unknown category "${cat}"`; return; }
 		} catch (e) {
 			error = e instanceof Error ? e.message : 'Failed to load';

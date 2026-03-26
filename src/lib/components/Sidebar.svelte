@@ -98,7 +98,7 @@
 	}
 
 	function totalDocs(source: TreeSource): number {
-		return source.root_docs.length + source.docs.length + source.journal.length + source.engineering_team.length;
+		return source.root_docs.length + source.docs.length + source.journal.length + (source.engineering_team?.length ?? 0);
 	}
 </script>
 
@@ -274,19 +274,19 @@
 							</div>
 						{/if}
 
-						{#if source.engineering_team.length > 0}
+						{#if (source.engineering_team?.length ?? 0) > 0}
 							<div class="tree-category">
 								<button class="tree-toggle category-toggle" onclick={() => toggleCategory(`${source.source}:engineering_team`)}>
 									<svg class="chevron" class:expanded={expandedCategories[`${source.source}:engineering_team`]} width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
 										<polyline points="9 18 15 12 9 6" />
 									</svg>
 									<span>Engineering Analysis</span>
-									<span class="count">{source.engineering_team.length}</span>
+									<span class="count">{source.engineering_team?.length ?? 0}</span>
 								</button>
 
 								{#if expandedCategories[`${source.source}:engineering_team`]}
 									<div class="tree-items">
-										{#each source.engineering_team as doc}
+										{#each (source.engineering_team ?? []) as doc}
 											<a
 												href={docUrl(doc.doc_id)}
 												class="tree-item"

@@ -6,7 +6,7 @@ export interface TreeSource {
 	root_docs: TreeDocument[];
 	docs: TreeDocument[];
 	journal: TreeDocument[];
-	engineering_team: TreeDocument[];
+	engineering_team?: TreeDocument[];
 }
 
 export interface TreeDocument {

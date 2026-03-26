@@ -60,7 +60,7 @@
 	<div class="source-page">
 		<Breadcrumbs source={source.source} />
 		<h1>{source.source}</h1>
-		<p class="subtitle">{source.docs.length} docs, {source.journal.length} journal entries, {source.engineering_team.length} engineering analyses</p>
+		<p class="subtitle">{source.docs.length} docs, {source.journal.length} journal entries, {source.engineering_team?.length ?? 0} engineering analyses</p>
 
 		{#if source.docs.length > 0}
 			<section>
@@ -94,11 +94,11 @@
 			</section>
 		{/if}
 
-		{#if source.engineering_team.length > 0}
+		{#if (source.engineering_team?.length ?? 0) > 0}
 			<section>
 				<h2><a href="/source/{encodeURIComponent(source.source)}/engineering_team">Engineering Analysis</a></h2>
 				<ul class="doc-list">
-					{#each source.engineering_team as doc}
+					{#each (source.engineering_team ?? []) as doc}
 						<li>
 							<a href={docUrl(doc.doc_id)}>{displayTitle(doc)}</a>
 							{#if doc.modified_at}

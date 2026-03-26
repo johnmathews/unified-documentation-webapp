@@ -56,7 +56,7 @@
 					<div class="stats">
 						<span>{source.docs.length} docs</span>
 						<span>{source.journal.length} journal entries</span>
-						<span>{source.engineering_team.length} engineering analyses</span>
+						<span>{source.engineering_team?.length ?? 0} engineering analyses</span>
 					</div>
 
 					{#if source.docs.length > 0}
@@ -87,15 +87,15 @@
 						</div>
 					{/if}
 
-					{#if source.engineering_team.length > 0}
+					{#if (source.engineering_team?.length ?? 0) > 0}
 						<div class="doc-section">
 							<h3><a href="/source/{encodeURIComponent(source.source)}/engineering_team">Engineering Analysis</a></h3>
 							<ul>
-								{#each source.engineering_team.slice(0, 3) as doc}
+								{#each (source.engineering_team ?? []).slice(0, 3) as doc}
 									<li><a href={docUrl(doc.doc_id)}>{displayTitle(doc)}</a></li>
 								{/each}
-								{#if source.engineering_team.length > 3}
-									<li class="more">+{source.engineering_team.length - 3} more</li>
+								{#if (source.engineering_team?.length ?? 0) > 3}
+									<li class="more">+{(source.engineering_team?.length ?? 0) - 3} more</li>
 								{/if}
 							</ul>
 						</div>
