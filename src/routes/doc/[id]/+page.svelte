@@ -2,7 +2,7 @@
  import { page } from "$app/state";
  import { fetchDocument, type FullDocument } from "$lib/api";
  import { currentDocId } from "$lib/stores.svelte";
- import { sourceColor } from "$lib/colors";
+ import { sourceColorClass } from "$lib/colors";
  import Breadcrumbs from "$lib/components/Breadcrumbs.svelte";
  import { marked } from "marked";
 
@@ -86,8 +86,7 @@
    <div class="doc-dates">
     <a
      href="/source/{encodeURIComponent(doc.source)}"
-     class="source-badge"
-     style="background: {sourceColor(doc.source).bg}; color: {sourceColor(doc.source).text}">{doc.source}</a
+     class="source-badge {sourceColorClass(doc.source)}">{doc.source}</a
     >
     <span class="file-path">{doc.file_path.split("/").pop()}</span>
     {#if doc.created_at}
@@ -115,20 +114,20 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 1rem;
-  padding: 4rem;
-  color: var(--text-muted);
+  gap: 15px;
+  padding: 60px;
+  color: var(--text-secondary);
  }
 
  .error {
-  color: #f87171;
+  color: var(--error);
  }
 
  .spinner {
   width: 24px;
   height: 24px;
   border: 2px solid var(--border);
-  border-top-color: var(--accent);
+  border-top-color: var(--brand);
   border-radius: 50%;
   animation: spin 0.6s linear infinite;
  }
@@ -140,13 +139,13 @@
  }
 
  .document {
-  max-width: 800px;
+  max-width: 960px;
   margin: 0 auto;
  }
 
  .doc-header {
-  margin-bottom: 2rem;
-  padding-bottom: 1rem;
+  margin-bottom: 30px;
+  padding-bottom: 15px;
   border-top: 1px solid var(--border);
   border-bottom: 1px solid var(--border);
  }
@@ -154,16 +153,16 @@
  .doc-meta {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  margin-top: 0.75rem;
-  margin-bottom: 0.75rem;
+  gap: 10px;
+  margin-top: 10px;
+  margin-bottom: 10px;
  }
 
  .source-badge {
-  font-size: 1rem;
-  font-weight: 600;
-  padding: 0.1rem 0.45rem;
-  border-radius: 4px;
+  font-size: 16px;
+  font-weight: bold;
+  padding: 2px 8px;
+  border-radius: 0;
   white-space: nowrap;
   text-decoration: none;
   transition: opacity 0.15s;
@@ -175,8 +174,8 @@
 
  .file-path {
   flex: 1;
-  font-size: 1rem;
-  color: var(--text-dim);
+  font-size: 16px;
+  color: var(--text-secondary);
   font-family: var(--font-mono);
   min-width: 0;
   overflow: hidden;
@@ -184,21 +183,13 @@
   white-space: nowrap;
  }
 
- .doc-header h1 {
-  font-size: 2rem;
-  font-weight: 700;
-  line-height: 1.3;
-  color: var(--text);
-  margin: 0;
- }
-
  .doc-dates {
   display: flex;
   align-items: baseline;
-  gap: 1.5rem;
-  margin-top: 0.75rem;
-  font-size: 1rem;
-  color: var(--text-dim);
+  gap: 20px;
+  margin-top: 10px;
+  font-size: 16px;
+  color: var(--text-secondary);
  }
 
  .doc-dates > span:not(.file-path) {
@@ -207,31 +198,28 @@
  }
 
  .no-content {
-  color: var(--text-muted);
+  color: var(--text-secondary);
   font-style: italic;
  }
 
- @media (max-width: 600px) {
-  .doc-header h1 {
-   font-size: 1.5rem;
-  }
+ @media (max-width: 640px) {
   .doc-meta {
    flex-wrap: wrap;
   }
   .source-badge {
-   font-size: 0.85rem;
-   padding: 0.4rem 0.75rem;
+   font-size: 16px;
+   padding: 2px 8px;
    min-height: 44px;
    display: inline-flex;
    align-items: center;
   }
   .file-path {
-   font-size: 0.875rem;
+   font-size: 14px;
   }
   .doc-dates {
    flex-wrap: wrap;
-   gap: 0.5rem;
-   font-size: 0.875rem;
+   gap: 10px;
+   font-size: 14px;
   }
  }
 </style>

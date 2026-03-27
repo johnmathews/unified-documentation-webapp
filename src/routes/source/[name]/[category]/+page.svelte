@@ -38,10 +38,7 @@
 		return `/doc/${encodeURIComponent(docId)}`;
 	}
 
-	function displayTitle(doc: TreeDocument): string {
-		const filename = doc.file_path.split('/').pop() || doc.file_path;
-		return filename.replace(/\.[^.]+$/, '');
-	}
+	import { displayTitle } from "$lib/titles";
 
 	function formatDate(dateStr: string | null): string {
 		if (!dateStr) return '';
@@ -85,33 +82,33 @@
 {/if}
 
 <style>
-	.category-page { max-width: 800px; margin: 0 auto; }
-	.status { padding: 4rem; text-align: center; color: var(--text-muted); }
-	.error { color: #f87171; }
-	h1 { font-size: 2rem; font-weight: 700; margin-bottom: 0.25rem; }
-	.subtitle { color: var(--text-muted); margin-bottom: 2rem; font-size: 1.5rem; }
-	.empty { color: var(--text-dim); font-style: italic; }
+	.category-page { max-width: 960px; margin: 0 auto; }
+	.status { padding: 60px; text-align: center; color: var(--text-secondary); }
+	.error { color: var(--error); }
+	h1 { font-size: 48px; font-weight: 700; margin-bottom: 5px; }
+	.subtitle { color: var(--text-secondary); margin-bottom: 30px; font-size: 16px; }
+	.empty { color: var(--text-muted); font-style: italic; }
 	.doc-list { list-style: none; }
-	.doc-list li { display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0; border-bottom: 1px solid var(--border); }
-	.doc-list a { color: var(--text); font-size: 1.25rem; }
-	.doc-list a:hover { color: var(--accent); }
-	.date { font-size: 1rem; color: var(--text-dim); flex-shrink: 0; margin-left: 1rem; }
+	.doc-list li { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--border); }
+	.doc-list a { color: var(--link); font-size: 16px; }
+	.doc-list a:hover { color: var(--link-hover); }
+	.date { font-size: 16px; color: var(--text-secondary); flex-shrink: 0; margin-left: 15px; }
 
-	@media (max-width: 600px) {
-		h1 { font-size: 1.5rem; }
-		.subtitle { font-size: 1rem; }
+	@media (max-width: 640px) {
+		h1 { font-size: 32px; }
+		.subtitle { font-size: 16px; }
 		.doc-list li {
 			flex-direction: column;
 			align-items: flex-start;
-			gap: 0.25rem;
-			padding: 0.75rem 0;
+			gap: 5px;
+			padding: 10px 0;
 		}
 		.doc-list a {
 			min-height: 44px;
 			display: inline-flex;
 			align-items: center;
-			font-size: 1rem;
+			font-size: 16px;
 		}
-		.date { margin-left: 0; font-size: 0.875rem; }
+		.date { margin-left: 0; font-size: 14px; }
 	}
 </style>

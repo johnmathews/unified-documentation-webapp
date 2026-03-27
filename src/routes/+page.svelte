@@ -1,7 +1,7 @@
 <script lang="ts">
  import { fetchTree, type TreeSource } from "$lib/api";
  import { currentDocId } from "$lib/stores.svelte";
- import { sourceColor } from "$lib/colors";
+ import { sourceColorClass } from "$lib/colors";
 
  let tree: TreeSource[] = $state([]);
  let loading = $state(true);
@@ -26,19 +26,22 @@
   return `/doc/${encodeURIComponent(docId)}`;
  }
 
- function displayTitle(doc: { title: string | null; file_path: string }): string {
-  const filename = doc.file_path.split("/").pop() || doc.file_path;
-  return filename.replace(/\.[^.]+$/, "");
- }
+ import { displayTitle } from "$lib/titles";
 </script>
 
 <svelte:head>
  <title>Documentation</title>
 </svelte:head>
 
+<!-- GOV.UK-style masthead hero -->
+<div class="masthead">
+ <div class="masthead__inner">
+  <h1 class="masthead__title">Browse all documentation sources</h1>
+  <p class="masthead__description">Search across all indexed documentation, journal entries and engineering analyses. Use the chat to ask questions about your docs.</p>
+ </div>
+</div>
+
 <div class="home">
- <h1>All documents</h1>
- <p class="subtitle">Browse documentation from all indexed sources, or use the chat to ask questions.</p>
 
  {#if loading}
   <div class="loading">Loading sources...</div>
@@ -53,8 +56,7 @@
   <div class="sources-grid">
    {#each tree as source}
     <div
-     class="source-card"
-     style="border-color: {sourceColor(source.source).text}; background: {sourceColor(source.source).bg};"
+     class="source-card {sourceColorClass(source.source)}"
     >
      <h2><a href="/source/{encodeURIComponent(source.source)}">{source.source}</a></h2>
      <div class="stats">
@@ -111,136 +113,188 @@
 </div>
 
 <style>
- .home {
-  max-width: 800px;
+ /* GOV.UK masthead — blue hero section */
+ .masthead {
+  padding: 30px 0;
+  border-bottom: 1px solid var(--brand-dark);
+  color: #ffffff;
+  background-color: var(--brand);
+  margin: -40px -30px 0;
+  padding-left: 30px;
+  padding-right: 30px;
+ }
+
+ @media (min-width: 641px) {
+  .masthead {
+   padding-top: 60px;
+   padding-bottom: 60px;
+  }
+ }
+
+ .masthead__inner {
+  max-width: 960px;
   margin: 0 auto;
  }
 
- h1 {
+ .masthead__title {
+  color: #ffffff;
   font-size: 2rem;
+  line-height: 1.09375;
   font-weight: 700;
-  margin-bottom: 0.25rem;
+  margin-bottom: 20px;
  }
 
- .subtitle {
-  color: var(--text-muted);
-  margin-bottom: 2rem;
-  font-size: 1.5rem;
+ @media (min-width: 641px) {
+  .masthead__title {
+   font-size: 3rem;
+   line-height: 1.0416666667;
+   margin-bottom: 30px;
+  }
+ }
+
+ .masthead__description {
+  color: #ffffff;
+  font-size: 1.1875rem;
+  line-height: 1.3157894737;
+  margin-bottom: 0;
+ }
+
+ @media (min-width: 641px) {
+  .masthead__description {
+   font-size: 1.5rem;
+   line-height: 1.25;
+  }
+ }
+
+ .home {
+  max-width: 960px;
+  margin: 0 auto;
+  padding-top: 40px;
  }
 
  .loading,
  .error,
  .empty {
-  padding: 2rem;
+  padding: 30px;
   text-align: center;
-  color: var(--text-muted);
+  color: var(--text-secondary);
  }
 
  .error {
-  color: #f87171;
+  color: var(--error);
  }
 
  .sources-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(min(380px, 100%), 1fr));
-  gap: 1.25rem;
+  gap: 20px;
  }
 
  .source-card {
-  border: 1px solid;
-  border-radius: var(--radius-lg);
-  padding: 1.5rem;
+  background: var(--bg-body);
+  border: 1px solid var(--border);
+  border-radius: 0;
+  padding: 25px;
  }
 
  .source-card h2 {
-  font-size: 1.6rem;
-  font-weight: 600;
-  margin-bottom: 0.5rem;
+  font-size: 24px;
+  font-weight: 700;
+  margin-bottom: 10px;
  }
 
  .source-card h2 a {
-  color: var(--text);
+  color: var(--link);
+  text-decoration: underline;
+  text-decoration-thickness: max(1px, .0625rem);
+  text-underline-offset: .1578em;
  }
 
  .source-card h2 a:hover {
-  color: var(--accent);
+  color: var(--link-hover);
+  text-decoration-thickness: max(3px, .1875rem, .12em);
  }
 
  .stats {
   display: flex;
-  gap: 1rem;
-  font-size: 0.8rem;
-  color: var(--text-dim);
-  margin-bottom: 1rem;
+  gap: 15px;
+  font-size: 16px;
+  color: var(--text-secondary);
+  margin-bottom: 15px;
  }
 
  .doc-section {
-  margin-top: 1rem;
+  margin-top: 20px;
+  padding-top: 15px;
+  border-top: 1px solid var(--border);
  }
 
  .doc-section h3 {
-  font-size: 0.8rem;
-  font-weight: 600;
-  color: var(--text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
-  margin-bottom: 0.5rem;
+  font-size: 19px;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 10px;
+ }
+
+ .doc-section h3 a {
+  color: var(--link);
+  font-weight: 700;
+ }
+
+ .doc-section h3 a:hover {
+  color: var(--link-hover);
  }
 
  .doc-section ul {
-  list-style: none;
-  padding: 0;
+  list-style: disc;
+  padding-left: 20px;
+  margin: 0;
  }
 
  .doc-section li {
-  padding: 0.3rem 0;
+  padding: 3px 0;
+  font-size: 16px;
+  line-height: 1.25;
  }
 
  .doc-section a {
-  font-size: 0.9rem;
-  color: var(--text);
-  transition: color 0.1s;
- }
-
- .doc-section a:hover {
-  color: var(--accent);
+  font-size: 16px;
  }
 
  .more {
-  font-size: 0.8rem;
-  color: var(--text-dim);
+  font-size: 16px;
+  color: var(--text-secondary);
+  list-style: none;
+  margin-left: -20px;
  }
 
  @media (max-width: 640px) {
+  .masthead {
+   margin: -20px -15px 0;
+   padding-left: 15px;
+   padding-right: 15px;
+  }
+
   .sources-grid {
    grid-template-columns: 1fr;
   }
- }
-
- @media (max-width: 600px) {
-  h1 {
-   font-size: 1.5rem;
-  }
-  .subtitle {
-   font-size: 1rem;
-  }
   .stats {
-   font-size: 0.875rem;
+   font-size: 16px;
   }
   .doc-section h3 {
-   font-size: 0.875rem;
+   font-size: 16px;
   }
   .doc-section li {
-   padding: 0.2rem 0;
+   padding: 5px 0;
   }
   .doc-section a {
    min-height: 36px;
    display: inline-flex;
    align-items: center;
-   font-size: 0.95rem;
+   font-size: 16px;
   }
   .more {
-   font-size: 0.875rem;
+   font-size: 14px;
   }
  }
 </style>

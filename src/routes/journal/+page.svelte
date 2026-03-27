@@ -1,7 +1,7 @@
 <script lang="ts">
  import { fetchTree, type TreeDocument } from "$lib/api";
  import { currentDocId } from "$lib/stores.svelte";
- import { sourceColor } from "$lib/colors";
+ import { sourceColorClass } from "$lib/colors";
 
  interface JournalEntry extends TreeDocument {
   source: string;
@@ -42,10 +42,7 @@
   return `/doc/${encodeURIComponent(docId)}`;
  }
 
- function displayTitle(doc: JournalEntry): string {
-  const filename = doc.file_path.split("/").pop() || doc.file_path;
-  return filename.replace(/\.[^.]+$/, "");
- }
+ import { displayTitle } from "$lib/titles";
 
  function formatDate(dateStr: string | null): string {
   if (!dateStr) return "";
@@ -100,18 +97,21 @@
   <a href="/">Back to home</a>
  </div>
 {:else}
+ <div class="masthead">
+  <div class="masthead__inner">
+   <h1 class="masthead__title">Journal Timeline</h1>
+   <p class="masthead__description">
+    All development journal entries across {new Set(entries.map((e) => e.source)).size} projects &middot; {entries.length} entries
+   </p>
+  </div>
+ </div>
+
  <div class="journal-page">
   <nav class="breadcrumbs" aria-label="Breadcrumb">
    <a href="/">Home</a>
    <span class="sep">/</span>
    <span class="current">Journal Timeline</span>
   </nav>
-
-  <h1>Journal Timeline</h1>
-  <p class="subtitle">
-   All development journal entries across {new Set(entries.map((e) => e.source)).size} projects &middot; {entries.length}
-   entries
-  </p>
 
   {#if entries.length === 0}
    <p class="empty">No journal entries found.</p>
@@ -127,8 +127,7 @@
           <div>
            <span class="entry-title">{displayTitle(entry)}</span>
            <span
-            class="entry-source"
-            style="background: {sourceColor(entry.source).bg}; color: {sourceColor(entry.source).text}"
+            class="entry-source {sourceColorClass(entry.source)}"
             >{entry.source}</span
            >
           </div>
@@ -145,114 +144,152 @@
 {/if}
 
 <style>
+ .masthead {
+  padding: 30px 0;
+  border-bottom: 1px solid var(--brand-dark);
+  color: #ffffff;
+  background-color: var(--brand);
+  margin: -40px -30px 0;
+  padding-left: 30px;
+  padding-right: 30px;
+ }
+
+ @media (min-width: 641px) {
+  .masthead { padding-top: 60px; padding-bottom: 60px; }
+ }
+
+ .masthead__inner { max-width: 960px; margin: 0 auto; }
+
+ .masthead__title {
+  color: #ffffff;
+  font-size: 2rem;
+  line-height: 1.09375;
+  font-weight: 700;
+  margin-bottom: 15px;
+ }
+
+ @media (min-width: 641px) {
+  .masthead__title { font-size: 3rem; line-height: 1.0416666667; }
+ }
+
+ .masthead__description {
+  color: #ffffff;
+  font-size: 1.1875rem;
+  line-height: 1.3157894737;
+  margin-bottom: 0;
+ }
+
+ @media (min-width: 641px) {
+  .masthead__description { font-size: 1.5rem; line-height: 1.25; }
+ }
+
+ @media (max-width: 640px) {
+  .masthead { margin: -20px -15px 0; padding-left: 15px; padding-right: 15px; }
+ }
+
  .journal-page {
-  max-width: 800px;
+  max-width: 960px;
   margin: 0 auto;
+  padding-top: 30px;
  }
 
  .status {
-  padding: 4rem;
+  padding: 60px;
   text-align: center;
-  color: var(--text-muted);
+  color: var(--text-secondary);
  }
 
  .error {
-  color: #f87171;
+  color: var(--error);
  }
 
  .breadcrumbs {
   display: flex;
   align-items: center;
-  gap: 0.4rem;
-  font-size: 1.25rem;
+  gap: 5px;
+  font-size: 16px;
+  line-height: 1.25;
   flex-wrap: wrap;
-  margin-bottom: 2rem;
+  margin-bottom: 30px;
  }
 
  .breadcrumbs a {
-  color: var(--text-muted);
+  color: var(--text);
+  text-decoration: none;
   transition: color 0.1s;
  }
 
  .breadcrumbs a:hover {
-  color: var(--accent);
+  color: var(--text);
+  text-decoration: underline;
+ }
+
+ .breadcrumbs a:visited {
+  color: var(--text);
  }
 
  .sep {
-  color: var(--text-dim);
+  color: var(--text-secondary);
  }
 
  .current {
   color: var(--text);
-  font-weight: 500;
+  font-weight: normal;
  }
 
- h1 {
-  font-size: 2rem;
-  font-weight: 700;
-  margin-bottom: 0.25rem;
- }
-
- .subtitle {
-  color: var(--text-muted);
-  margin-bottom: 2rem;
-  font-size: 1.5rem;
- }
 
  .empty {
-  color: var(--text-dim);
+  color: var(--text-muted);
   font-style: italic;
  }
 
  .timeline {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: 25px;
  }
 
  .month-header {
-  font-size: 1.2rem;
-  font-weight: 600;
-  color: var(--text-dim);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  padding-bottom: 0.5rem;
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--text);
+  padding-bottom: 10px;
   border-bottom: 1px solid var(--border);
-  margin-bottom: 0.5rem;
+  margin-bottom: 10px;
  }
 
  .entries {
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
+  gap: 5px;
  }
 
  .entry-card {
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
-  padding: 0.75rem 0.2rem;
-  border-radius: var(--radius);
+  gap: 5px;
+  padding: 10px 15px;
+  border-radius: 0;
   text-decoration: none;
-  transition: background 0.15s;
-  border-left: 2px solid transparent;
+  transition: background 0.15s, border-left-color 0.15s;
+  border-left: 3px solid transparent;
  }
 
  .entry-card:hover {
   background: var(--bg-surface);
-  border-left-color: var(--accent);
+  border-left-color: var(--brand);
  }
 
  .entry-header {
   display: flex;
   justify-content: space-between;
   align-items: baseline;
-  gap: 1rem;
+  gap: 15px;
  }
 
  .entry-title {
   color: var(--text);
-  font-size: 1.1rem;
+  font-size: 19px;
   font-weight: 500;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -261,60 +298,55 @@
  }
 
  .entry-date {
-  font-size: 1rem;
-  color: var(--text-dim);
+  font-size: 16px;
+  color: var(--text-secondary);
   flex-shrink: 0;
  }
 
  .entry-source {
-  font-size: 1rem;
-  font-weight: 800;
-  padding: 0.1rem 0.45rem;
-  border-radius: 4px;
+  font-size: 16px;
+  font-weight: bold;
+  padding: 2px 8px;
+  border-radius: 0;
   width: fit-content;
   white-space: nowrap;
  }
 
  @media (max-width: 640px) {
-  .entry-header {
-   flex-direction: column;
-   gap: 0.15rem;
-  }
-
-  .entry-date {
-   order: -1;
-  }
- }
-
- @media (max-width: 600px) {
   h1 {
-   font-size: 1.5rem;
+   font-size: 32px;
   }
   .breadcrumbs {
-   font-size: 0.9rem;
+   font-size: 16px;
   }
   .breadcrumbs a {
-   padding: 0.4rem 0.25rem;
+   padding: 5px;
    min-height: 44px;
    display: inline-flex;
    align-items: center;
   }
   .month-header {
-   font-size: 0.875rem;
+   font-size: 21px;
+   font-weight: 700;
+  }
+  .entry-header {
+   flex-direction: column;
+   gap: 5px;
   }
   .entry-title {
-   font-size: 1rem;
+   font-size: 16px;
   }
   .entry-date {
-   font-size: 0.875rem;
+   order: -1;
+   font-size: 14px;
   }
   .entry-source {
-   font-size: 0.8rem;
-   padding: 0.15rem 0.5rem;
+   font-size: 16px;
+   padding: 2px 8px;
   }
   .entry-card {
    min-height: 44px;
-   padding: 0.75rem 1rem;
+   padding: 10px 15px;
   }
  }
 </style>
