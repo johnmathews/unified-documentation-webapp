@@ -1,7 +1,7 @@
 <script lang="ts">
  import { fetchTree, searchDocuments, type TreeSource, type SearchResult } from "$lib/api";
  import { currentDocId } from "$lib/stores.svelte";
- import { sourceColor } from "$lib/colors";
+ import { sourceColorClass } from "$lib/colors";
  import { page } from "$app/state";
 
  let { onNavigate = () => {} }: { onNavigate?: () => void } = $props();
@@ -92,10 +92,7 @@
   return currentDocId.value === docId;
  }
 
- function displayTitle(doc: { title: string | null; file_path: string }): string {
-  const filename = doc.file_path.split("/").pop() || doc.file_path;
-  return filename.replace(/\.[^.]+$/, "");
- }
+ import { displayTitle } from "$lib/titles";
 
  function totalDocs(source: TreeSource): number {
   return source.root_docs.length + source.docs.length + source.journal.length + (source.engineering_team?.length ?? 0);
@@ -123,8 +120,7 @@
      >
       <span class="item-title">{displayTitle(result)}</span>
       <span
-       class="source-tag"
-       style="background: {sourceColor(result.source).bg}; color: {sourceColor(result.source).text}"
+       class="source-tag {sourceColorClass(result.source)}"
        >{result.source}</span
       >
       <span class="item-snippet">{result.snippet}</span>
@@ -162,8 +158,7 @@
        <polyline points="9 18 15 12 9 6" />
       </svg>
       <span
-       class="source-tag"
-       style="background: {sourceColor(source.source).bg}; color: {sourceColor(source.source).text}"
+       class="source-tag {sourceColorClass(source.source)}"
        >{source.source}</span
       >
       <span class="count">{totalDocs(source)}</span>
@@ -304,130 +299,134 @@
   display: flex;
   flex-direction: column;
   height: 100%;
+  background: var(--bg-surface);
  }
 
  .search-box {
-  padding: 0.75rem;
+  padding: 15px;
   border-bottom: 1px solid var(--border);
  }
 
  .search-box input {
   width: 100%;
-  padding: 0.5rem 0.75rem;
-  background: var(--bg);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
+  padding: 10px 15px;
+  background: var(--bg-body);
+  border: 2px solid var(--border-strong);
+  border-radius: 0;
   color: var(--text);
-  font-size: 0.9rem;
+  font-size: 16px;
   outline: none;
   transition: border-color 0.15s;
  }
 
  .search-box input:focus {
-  border-color: var(--accent);
+  outline: 3px solid var(--focus);
+  outline-offset: 0;
+  box-shadow: inset 0 0 0 2px var(--border-strong);
  }
 
  .search-box input::placeholder {
-  color: var(--text-dim);
+  color: var(--text-muted);
  }
 
  .tree-actions {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0.5rem 0.75rem;
+  padding: 10px 15px;
   border-bottom: 1px solid var(--border);
  }
 
  .journal-link {
   display: flex;
   align-items: center;
-  gap: 0.4rem;
-  color: var(--text-muted);
-  font-size: 0.8rem;
+  gap: 5px;
+  color: var(--text-secondary);
+  font-size: 16px;
   text-decoration: none;
   transition: color 0.15s;
  }
 
  .journal-link:hover {
-  color: var(--accent);
+  color: var(--text);
+  text-decoration: underline;
  }
 
  .tree-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0.4rem 0.75rem;
+  padding: 10px 15px;
  }
 
  .tree-header-label {
-  font-size: 0.85rem;
-  font-weight: 600;
+  font-size: 16px;
+  font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  color: var(--text-dim);
+  color: var(--text-secondary);
  }
 
  .expand-collapse {
   display: flex;
   align-items: center;
-  gap: 0.3rem;
+  gap: 5px;
  }
 
  .tree-text-btn {
   background: none;
   border: none;
-  padding: 0.15rem 0.25rem;
-  font-size: 0.65rem;
-  color: var(--text-dim);
+  padding: 5px;
+  font-size: 14px;
+  color: var(--text-muted);
   cursor: pointer;
   transition: color 0.15s;
   text-transform: lowercase;
  }
 
  .tree-text-btn:hover {
-  color: var(--accent);
+  color: var(--text);
  }
 
  .tree-text-sep {
-  font-size: 0.65rem;
-  color: var(--text-dim);
+  font-size: 14px;
+  color: var(--text-muted);
   user-select: none;
  }
 
  .loading-msg,
  .error-msg {
-  padding: 1rem;
-  color: var(--text-muted);
-  font-size: 0.85rem;
+  padding: 20px;
+  color: var(--text-secondary);
+  font-size: 16px;
   text-align: center;
  }
 
  .error-msg {
-  color: #f87171;
+  color: var(--error);
  }
 
  .tree {
   flex: 1;
   overflow-y: auto;
-  padding: 0.25rem 0 0.5rem;
+  padding: 5px 0 10px;
  }
 
  .tree-source {
-  margin-bottom: 0.25rem;
+  margin-bottom: 5px;
  }
 
  .tree-toggle {
   display: flex;
   align-items: center;
-  gap: 0.4rem;
+  gap: 5px;
   width: 100%;
-  padding: 0.4rem 0.75rem;
+  padding: 10px 15px;
   background: none;
   border: none;
   color: var(--text);
-  font-size: 0.9rem;
-  font-weight: 600;
+  font-size: 16px;
+  font-weight: 700;
   text-align: left;
   cursor: pointer;
   border-radius: 0;
@@ -439,12 +438,12 @@
  }
 
  .category-toggle {
-  font-weight: 800;
-  color: var(--text);
-  padding-left: 1.5rem;
-  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  padding-left: 30px;
+  font-size: 16px;
   text-transform: uppercase;
-  letter-spacing: 0.03em;
+  letter-spacing: 0.05em;
  }
 
  .chevron {
@@ -457,26 +456,26 @@
  }
 
  .source-tag {
-  font-size: 1.25rem;
-  font-weight: 800;
-  padding: 0.1rem 0.45rem;
-  border-radius: 4px;
+  font-size: 16px;
+  font-weight: bold;
+  padding: 2px 8px;
+  border-radius: 0;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
  }
 
  .count {
-  font-size: 0.7rem;
-  color: var(--text-dim);
-  background: var(--bg);
-  padding: 0.1rem 0.4rem;
-  border-radius: 10px;
+  font-size: 14px;
+  color: var(--text-secondary);
+  background: var(--bg-body);
+  padding: 2px 8px;
+  border-radius: 0;
   flex-shrink: 0;
  }
 
  .tree-items {
-  padding: 0.15rem 0;
+  padding: 0;
  }
 
  .root-docs {
@@ -486,13 +485,13 @@
  .tree-item {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.35rem 0.75rem 0.35rem 2.5rem;
+  gap: 10px;
+  padding: 10px 15px 10px 50px;
   color: var(--text);
-  font-size: 0.95rem;
+  font-size: 16px;
   text-decoration: none;
   transition: all 0.1s;
-  border-left: 2px solid transparent;
+  border-left: 4px solid transparent;
  }
 
  .tree-item:hover {
@@ -501,9 +500,12 @@
  }
 
  .tree-item.active {
-  background: var(--accent-dim);
-  color: var(--accent);
-  border-left-color: var(--accent);
+  margin-left: -14px;
+  padding-left: calc(50px + 10px);
+  border-left: 4px solid var(--brand);
+  background: var(--bg-body);
+  color: var(--text);
+  font-weight: bold;
  }
 
  .item-title {
@@ -515,13 +517,13 @@
  .search-result-item {
   flex-direction: column;
   align-items: flex-start;
-  gap: 0.2rem;
-  padding-left: 1rem;
+  gap: 5px;
+  padding-left: 20px;
  }
 
  .item-snippet {
-  font-size: 0.75rem;
-  color: var(--text-dim);
+  font-size: 14px;
+  color: var(--text-muted);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -533,30 +535,30 @@
   overflow-y: auto;
  }
 
- @media (max-width: 600px) {
+ @media (max-width: 768px) {
   .tree-toggle {
-   padding: 0.75rem;
+   padding: 15px;
    min-height: 44px;
-   font-size: 1rem;
+   font-size: 16px;
   }
   .category-toggle {
-   padding-left: 1.5rem;
+   padding-left: 30px;
    min-height: 44px;
-   font-size: 0.9rem;
+   font-size: 16px;
   }
   .tree-item {
-   padding: 0.75rem 0.75rem 0.75rem 2.5rem;
+   padding: 15px 15px 15px 50px;
    min-height: 44px;
-   font-size: 1rem;
+   font-size: 16px;
   }
   .tree-text-btn {
-   font-size: 0.75rem;
+   font-size: 14px;
    min-height: 44px;
    display: inline-flex;
    align-items: center;
   }
   .tree-text-sep {
-   font-size: 0.75rem;
+   font-size: 14px;
   }
   .search-box input {
    min-height: 44px;
@@ -566,29 +568,29 @@
    min-height: 44px;
    display: inline-flex;
    align-items: center;
-   font-size: 1rem;
+   font-size: 16px;
   }
   .source-tag {
-   font-size: 0.875rem;
-   padding: 0.15rem 0.5rem;
+   font-size: 16px;
+   padding: 2px 8px;
   }
   .count {
-   font-size: 0.8rem;
-   padding: 0.15rem 0.5rem;
+   font-size: 14px;
+   padding: 2px 10px;
   }
   .tree-header-label {
-   font-size: 0.8rem;
+   font-size: 16px;
   }
   .item-snippet {
-   font-size: 0.85rem;
+   font-size: 14px;
   }
   .search-result-item {
-   padding: 0.75rem 1rem;
+   padding: 15px 20px;
    min-height: 44px;
   }
   .loading-msg,
   .error-msg {
-   font-size: 1rem;
+   font-size: 16px;
   }
  }
 </style>

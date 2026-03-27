@@ -223,47 +223,50 @@
 		display: flex;
 		flex-direction: column;
 		height: 100%;
+		background: var(--bg-surface);
 	}
 
 	.chat-header {
 		display: flex;
 		align-items: center;
-		gap: 0.5rem;
-		padding: 0.75rem 1rem;
+		gap: 10px;
+		padding: 15px 20px;
 		border-bottom: 1px solid var(--border);
 		flex-shrink: 0;
 	}
 
 	.chat-header h3 {
-		font-size: 0.85rem;
-		font-weight: 600;
+		font-size: 19px;
+		font-weight: 700;
 		margin: 0;
+		color: var(--text);
 	}
 
 	.context-badge {
 		display: flex;
 		align-items: center;
-		gap: 0.3rem;
-		font-size: 0.7rem;
+		gap: 5px;
+		font-size: 14px;
 		color: var(--success);
-		background: rgba(74, 222, 128, 0.1);
-		padding: 0.15rem 0.5rem;
-		border-radius: 10px;
+		background: var(--bg-body);
+		padding: 2px 8px;
+		border-radius: 0;
+		border: 1px solid var(--border);
 		flex-shrink: 0;
 	}
 
 	.header-actions {
 		margin-left: auto;
 		display: flex;
-		gap: 0.25rem;
+		gap: 5px;
 	}
 
 	.header-btn {
-		padding: 0.3rem;
+		padding: 5px;
 		background: none;
 		border: none;
-		color: var(--text-dim);
-		border-radius: var(--radius);
+		color: var(--text-secondary);
+		border-radius: 0;
 	}
 
 	.header-btn:hover {
@@ -274,17 +277,17 @@
 	.confirm-clear {
 		display: flex;
 		align-items: center;
-		gap: 0.2rem;
+		gap: 5px;
 	}
 
 	.confirm-label {
-		font-size: 0.7rem;
-		color: var(--text-dim);
-		margin-right: 0.15rem;
+		font-size: 14px;
+		color: var(--text-muted);
+		margin-right: 5px;
 	}
 
 	.confirm-yes:hover {
-		color: var(--error, #ef4444);
+		color: var(--error);
 	}
 
 	.confirm-no:hover {
@@ -294,10 +297,10 @@
 	.messages {
 		flex: 1;
 		overflow-y: auto;
-		padding: 1rem;
+		padding: 20px;
 		display: flex;
 		flex-direction: column;
-		gap: 0.75rem;
+		gap: 15px;
 	}
 
 	.empty-state {
@@ -305,39 +308,38 @@
 		flex-direction: column;
 		align-items: center;
 		justify-content: center;
-		gap: 0.5rem;
+		gap: 10px;
 		height: 100%;
-		color: var(--text-dim);
+		color: var(--text-muted);
 		text-align: center;
-		padding: 2rem;
+		padding: 40px;
 	}
 
 	.empty-state p {
-		font-size: 0.85rem;
+		font-size: 16px;
 	}
 
 	.context-hint {
-		font-size: 0.75rem;
-		color: var(--text-dim);
+		font-size: 14px;
+		color: var(--text-muted);
 	}
 
 	.restore-hint {
 		display: flex;
 		align-items: center;
-		gap: 0.4rem;
-		font-size: 0.8rem;
-		color: var(--accent);
+		gap: 5px;
+		font-size: 14px;
+		color: var(--link);
 		background: none;
-		border: 1px solid var(--border);
-		border-radius: var(--radius);
-		padding: 0.4rem 0.75rem;
+		border: 2px solid var(--border-strong);
+		border-radius: 0;
+		padding: 10px 15px;
 		cursor: pointer;
 		transition: all 0.15s;
 	}
 
 	.restore-hint:hover {
 		background: var(--bg-hover);
-		border-color: var(--accent);
 	}
 
 	.message {
@@ -350,63 +352,66 @@
 
 	.message-bubble {
 		max-width: 85%;
-		padding: 0.6rem 0.85rem;
-		border-radius: var(--radius-lg);
-		font-size: 0.9rem;
-		line-height: 1.55;
+		padding: 15px;
+		border-radius: 0;
+		font-size: 16px;
+		line-height: 1.3157894737;
 		word-break: break-word;
 	}
 
 	.user .message-bubble {
-		background: var(--accent);
+		background: var(--brand);
 		color: white;
-		border-bottom-right-radius: 2px;
 	}
 
 	.assistant .message-bubble {
-		background: var(--bg);
+		background: var(--bg-body);
 		color: var(--text);
-		border: 1px solid var(--border);
-		border-bottom-left-radius: 2px;
+		border: none;
+		border-left: 5px solid var(--border);
+		padding: 15px;
 	}
 
 	/* Compact markdown overrides for chat bubbles */
 	.message-bubble :global(p:first-child) { margin-top: 0; }
 	.message-bubble :global(p:last-child) { margin-bottom: 0; }
-	.message-bubble :global(p) { margin: 0.4rem 0; }
+	.message-bubble :global(p) { margin: 10px 0; }
 	.message-bubble :global(h1),
 	.message-bubble :global(h2),
 	.message-bubble :global(h3) {
-		font-size: 0.95rem;
-		margin: 0.6rem 0 0.3rem;
+		font-size: 16px;
+		font-weight: 700;
+		margin: 15px 0 5px;
 	}
 	.message-bubble :global(ul),
 	.message-bubble :global(ol) {
-		margin: 0.3rem 0;
-		padding-left: 1.2rem;
+		margin: 5px 0;
+		padding-left: 20px;
 	}
-	.message-bubble :global(li) { margin: 0.15rem 0; }
+	.message-bubble :global(li) { margin: 5px 0; }
 	.message-bubble :global(pre) {
-		margin: 0.4rem 0;
-		padding: 0.5rem 0.7rem;
+		margin: 10px 0;
+		padding: 10px 15px;
 		font-size: 0.8em;
 		overflow-x: auto;
+		background: var(--bg-code);
 	}
 	.message-bubble :global(blockquote) {
-		margin: 0.4rem 0;
-		padding-left: 0.75rem;
+		margin: 10px 0;
+		padding-left: 15px;
+		border-left: 5px solid var(--border);
 	}
 
 	.typing {
 		display: flex;
-		gap: 0.3rem;
-		padding: 0.75rem 1rem;
+		gap: 5px;
+		padding: 15px 20px;
 	}
 
 	.dot {
 		width: 6px;
 		height: 6px;
-		background: var(--text-dim);
+		background: var(--text-muted);
 		border-radius: 50%;
 		animation: bounce 1.2s infinite;
 	}
@@ -421,94 +426,111 @@
 
 	.chat-input {
 		display: flex;
-		gap: 0.5rem;
-		padding: 0.75rem;
+		gap: 10px;
+		padding: 15px;
 		border-top: 1px solid var(--border);
 		flex-shrink: 0;
 	}
 
 	.chat-input input {
 		flex: 1;
-		padding: 0.5rem 0.75rem;
-		background: var(--bg);
-		border: 1px solid var(--border);
-		border-radius: var(--radius);
+		padding: 10px 15px;
+		background: var(--bg-body);
+		border: 2px solid var(--border-strong);
+		border-radius: 0;
 		color: var(--text);
-		font-size: 0.85rem;
+		font-size: 16px;
 		outline: none;
 	}
 
 	.chat-input input:focus {
-		border-color: var(--accent);
+		outline: 3px solid var(--focus);
+		outline-offset: 0;
+		box-shadow: inset 0 0 0 2px var(--border-strong);
 	}
 
 	.chat-input input::placeholder {
-		color: var(--text-dim);
+		color: var(--text-muted);
 	}
 
 	.send-btn {
-		padding: 0.5rem;
-		background: var(--accent);
-		border: none;
-		border-radius: var(--radius);
+		padding: 8px 15px 5px;
+		background: var(--success);
+		border: 2px solid transparent;
+		border-radius: 0;
 		color: white;
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		transition: opacity 0.15s;
+		box-shadow: 0 3px 0 #083d29;
+		font-weight: 700;
+		cursor: pointer;
 	}
 
 	.send-btn:disabled {
-		opacity: 0.4;
+		opacity: 0.5;
 		cursor: not-allowed;
 	}
 
 	.send-btn:not(:disabled):hover {
-		background: var(--accent-hover);
+		background: #0b5c3e;
 	}
 
-	@media (max-width: 600px) {
+	.send-btn:not(:disabled):active {
+		top: 3px;
+		box-shadow: none;
+		position: relative;
+	}
+
+	.send-btn:focus:not(:active) {
+		border-color: var(--focus);
+		color: var(--focus-text);
+		background: var(--focus);
+		box-shadow: 0 3px 0 var(--focus-text);
+	}
+
+	@media (max-width: 768px) {
 		.chat-header h3 {
-			font-size: 1rem;
+			font-size: 19px;
 		}
 		.context-badge {
-			font-size: 0.8rem;
+			font-size: 14px;
 		}
 		.header-btn {
 			min-height: 44px;
 			min-width: 44px;
-			padding: 0.5rem;
+			padding: 10px;
 		}
 		.header-btn.expand-btn {
 			display: none;
 		}
 		.confirm-label {
-			font-size: 0.85rem;
+			font-size: 14px;
 		}
 		.send-btn {
 			min-height: 44px;
 			min-width: 44px;
 		}
 		.message-bubble {
-			font-size: 1rem;
+			font-size: 16px;
 		}
 		.chat-input input {
 			min-height: 44px;
 			font-size: 16px; /* Explicit 16px prevents iOS Safari auto-zoom on focus */
 		}
 		.empty-state p {
-			font-size: 1rem;
+			font-size: 16px;
 		}
 		.context-hint {
-			font-size: 0.85rem;
+			font-size: 14px;
 		}
 		.restore-hint {
 			min-height: 44px;
-			padding: 0.6rem 1rem;
-			font-size: 0.9rem;
+			padding: 10px 20px;
+			font-size: 16px;
 		}
 		.chat-input {
-			padding-bottom: calc(0.75rem + env(safe-area-inset-bottom, 0));
+			padding-bottom: calc(15px + env(safe-area-inset-bottom, 0));
 		}
 	}
 </style>

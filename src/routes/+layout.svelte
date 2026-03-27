@@ -4,6 +4,7 @@
  import Sidebar from "$lib/components/Sidebar.svelte";
  import ChatPanel from "$lib/components/ChatPanel.svelte";
  import { currentDocId } from "$lib/stores.svelte";
+ import { page } from "$app/state";
  import { MediaQuery } from "svelte/reactivity";
  import { onMount } from "svelte";
 
@@ -12,9 +13,9 @@
  let sidebarOpen = $state(false);
  let chatOpen = $state(false);
  let chatExpanded = $state(false);
- let darkMode = $state(true);
+ let darkMode = $state(false);
 
- const isMobile = new MediaQuery("max-width: 600px");
+ const isMobile = new MediaQuery("max-width: 768px");
 
  let touchStartX = 0;
  let touchStartY = 0;
@@ -33,11 +34,9 @@
   const dy = e.changedTouches[0].clientY - touchStartY;
   const dt = Date.now() - touchStartTime;
 
-  // Only count as swipe if horizontal movement dominates and is fast enough
   if (Math.abs(dx) < SWIPE_THRESHOLD || Math.abs(dy) > Math.abs(dx) || dt > 500) return;
 
   if (dx > 0) {
-   // Swipe right
    if (chatOpen) {
     chatOpen = false;
     chatExpanded = false;
@@ -45,7 +44,6 @@
     sidebarOpen = true;
    }
   } else {
-   // Swipe left
    if (sidebarOpen && isMobile.current) {
     sidebarOpen = false;
    } else if (touchStartX > window.innerWidth - EDGE_ZONE && !chatOpen) {
@@ -56,22 +54,31 @@
 
  onMount(() => {
   if (isMobile.current) sidebarOpen = false;
+  // Measure actual header height and set CSS variable
+  const header = document.querySelector('.govuk-header');
+  const nav = document.querySelector('.govuk-service-nav');
+  if (header && nav) {
+   const h = header.getBoundingClientRect().height + nav.getBoundingClientRect().height;
+   document.documentElement.style.setProperty('--header-height', `${h}px`);
+  }
  });
 
  $effect(() => {
-  darkMode = document.documentElement.dataset.theme !== "light";
+  darkMode = document.documentElement.dataset.theme === "dark";
  });
 
  function toggleTheme() {
   darkMode = !darkMode;
   if (darkMode) {
-   delete document.documentElement.dataset.theme;
-   localStorage.removeItem("theme");
+   document.documentElement.dataset.theme = "dark";
+   localStorage.setItem("theme", "dark");
   } else {
-   document.documentElement.dataset.theme = "light";
+   delete document.documentElement.dataset.theme;
    localStorage.setItem("theme", "light");
   }
  }
+
+ let currentPath = $derived(page.url.pathname);
 </script>
 
 <svelte:head>
@@ -79,56 +86,68 @@
 </svelte:head>
 
 <div class="app-layout">
- <header class="top-bar">
-  <div class="top-bar-left">
-   <a href="/" class="top-bar-link"> All Documents </a>
-   <a href="/journal" class="top-bar-link"> Journal Entries </a>
-   <button class="top-bar-link" onclick={() => (sidebarOpen = !sidebarOpen)}> File Picker </button>
-  </div>
-
-  <div class="top-bar-center">
-   <a href="/" class="app-title">Documentation</a>
-  </div>
-  <div class="top-bar-right">
-   <button class="icon-btn" onclick={toggleTheme} title={darkMode ? "Switch to light mode" : "Switch to dark mode"}>
-    {#if darkMode}
-     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-      <circle cx="12" cy="12" r="5" /><line x1="12" y1="1" x2="12" y2="3" /><line x1="12" y1="21" x2="12" y2="23" /><line
-       x1="4.22"
-       y1="4.22"
-       x2="5.64"
-       y2="5.64"
-      /><line x1="18.36" y1="18.36" x2="19.78" y2="19.78" /><line x1="1" y1="12" x2="3" y2="12" /><line
-       x1="21"
-       y1="12"
-       x2="23"
-       y2="12"
-      /><line x1="4.22" y1="19.78" x2="5.64" y2="18.36" /><line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
+ <!-- Band 1: Header with logo/product name -->
+ <header class="govuk-header">
+  <div class="govuk-header__container">
+   <div class="govuk-header__logo">
+    <a href="/" class="govuk-header__link govuk-header__link--homepage">
+     <span class="govuk-header__product-name">Documentation</span>
+    </a>
+   </div>
+   <div class="govuk-header__actions">
+    <button class="govuk-header__action-btn" onclick={toggleTheme} title={darkMode ? "Light mode" : "Dark mode"}>
+     {#if darkMode}
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+       <circle cx="12" cy="12" r="5" /><line x1="12" y1="1" x2="12" y2="3" /><line x1="12" y1="21" x2="12" y2="23" /><line x1="4.22" y1="4.22" x2="5.64" y2="5.64" /><line x1="18.36" y1="18.36" x2="19.78" y2="19.78" /><line x1="1" y1="12" x2="3" y2="12" /><line x1="21" y1="12" x2="23" y2="12" /><line x1="4.22" y1="19.78" x2="5.64" y2="18.36" /><line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
+      </svg>
+     {:else}
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+       <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+      </svg>
+     {/if}
+    </button>
+    <button
+     class="govuk-header__action-btn"
+     class:active={chatOpen}
+     onclick={() => {
+      chatOpen = !chatOpen;
+      if (!chatOpen) chatExpanded = false;
+     }}
+     title="Toggle chat"
+    >
+     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
      </svg>
-    {:else}
-     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-      <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
-     </svg>
-    {/if}
-   </button>
-   <button
-    class="icon-btn"
-    class:active={chatOpen}
-    onclick={() => {
-     chatOpen = !chatOpen;
-     if (!chatOpen) chatExpanded = false;
-    }}
-    title="Toggle chat"
-   >
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-     <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-    </svg>
-    <span class="btn-label">Chat</span>
-   </button>
+     <span class="govuk-header__btn-label">Chat</span>
+    </button>
+   </div>
   </div>
  </header>
 
- {#if (sidebarOpen || chatOpen) && isMobile.current}
+ <!-- Band 2: Service navigation -->
+ <nav class="govuk-service-nav" aria-label="Service navigation">
+  <div class="govuk-service-nav__container">
+   <ul class="govuk-service-nav__list">
+    <li class="govuk-service-nav__item" class:govuk-service-nav__item--active={currentPath === '/'}>
+     <a href="/" class="govuk-service-nav__link">
+      {#if currentPath === '/'}<strong>All Documents</strong>{:else}All Documents{/if}
+     </a>
+    </li>
+    <li class="govuk-service-nav__item" class:govuk-service-nav__item--active={currentPath === '/journal'}>
+     <a href="/journal" class="govuk-service-nav__link">
+      {#if currentPath === '/journal'}<strong>Journal Entries</strong>{:else}Journal Entries{/if}
+     </a>
+    </li>
+    <li class="govuk-service-nav__item">
+     <button class="govuk-service-nav__link govuk-service-nav__link--btn" onclick={() => (sidebarOpen = !sidebarOpen)}>
+      File Picker
+     </button>
+    </li>
+   </ul>
+  </div>
+ </nav>
+
+ {#if sidebarOpen || chatOpen}
   <button
    class="backdrop"
    onclick={() => {
@@ -142,23 +161,24 @@
 
  <!-- svelte-ignore a11y_no_static_element_interactions -->
  <div class="main-area" ontouchstart={handleTouchStart} ontouchend={handleTouchEnd}>
-  <aside class="sidebar" class:open={sidebarOpen} aria-hidden={!sidebarOpen}>
-   <Sidebar
-    onNavigate={() => {
-     if (window.innerWidth <= 600) sidebarOpen = false;
-    }}
-   />
-  </aside>
-
   <main class="content">
    {@render children()}
   </main>
-
-  <aside class="chat-panel" class:expanded={chatExpanded} class:hidden={!chatOpen}>
-   <ChatPanel docId={currentDocId.value} expanded={chatExpanded} onToggleExpand={() => (chatExpanded = !chatExpanded)} />
-  </aside>
  </div>
 </div>
+
+<!-- Panels outside the layout flow — fixed overlays at viewport level -->
+<aside class="sidebar" class:open={sidebarOpen} aria-hidden={!sidebarOpen}>
+ <Sidebar
+  onNavigate={() => {
+   if (window.innerWidth <= 768) sidebarOpen = false;
+  }}
+ />
+</aside>
+
+<aside class="chat-panel" class:expanded={chatExpanded} class:hidden={!chatOpen}>
+ <ChatPanel docId={currentDocId.value} expanded={chatExpanded} onToggleExpand={() => (chatExpanded = !chatExpanded)} />
+</aside>
 
 <svelte:window
  onkeydown={(e) => {
@@ -182,97 +202,205 @@
   overflow: hidden;
  }
 
- .top-bar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 1rem;
-  padding-top: env(safe-area-inset-top, 0);
-  height: 56px;
-  background: var(--bg-surface);
-  border-bottom: 1px solid var(--border);
+ /* ============================================================
+    Band 1: Header — GOV.UK blue bar with product name
+    ============================================================ */
+ .govuk-header {
+  background: var(--brand);
+  color: #fff;
+  border-bottom: 10px solid var(--brand-dark);
   flex-shrink: 0;
   z-index: 101;
   position: relative;
  }
 
- .top-bar-left {
+ .govuk-header__container {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
+  justify-content: space-between;
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 10px 15px;
  }
 
- .top-bar-center {
-  position: absolute;
-  left: 50%;
-  transform: translateX(-50%);
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  pointer-events: auto;
+ @media (min-width: 641px) {
+  .govuk-header__container {
+   padding: 10px 30px;
+  }
  }
 
- .top-bar-right {
+ .govuk-header__logo {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
  }
 
- .top-bar-link {
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-  color: var(--text-muted);
-  font-size: 1.25rem;
+ .govuk-header__link--homepage {
+  font-size: 30px;
+  font-weight: 700;
+  color: #fff;
   text-decoration: none;
+  letter-spacing: -0.015em;
+ }
+
+ .govuk-header__link--homepage:visited,
+ .govuk-header__link--homepage:hover {
+  color: #fff;
+  text-decoration: underline;
+ }
+
+ .govuk-header__link--homepage:focus {
+  color: var(--focus-text);
+  background: var(--focus);
+  box-shadow: none;
+  text-decoration: none;
+ }
+
+ .govuk-header__product-name {
+  display: inline-block;
+ }
+
+ .govuk-header__actions {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+ }
+
+ .govuk-header__action-btn {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 8px 10px;
   background: none;
   border: none;
+  color: #fff;
+  font-size: 16px;
   cursor: pointer;
-  padding: 0.5rem 0.5rem;
-  border-radius: var(--radius);
-  transition:
-   color 0.15s,
-   background 0.15s;
  }
 
- .top-bar-link:hover {
-  color: var(--accent);
+ .govuk-header__action-btn:hover {
+  background: rgba(255, 255, 255, 0.15);
  }
 
- .app-title {
-  font-size: 2rem;
-  font-weight: 700;
-  color: var(--text);
+ .govuk-header__action-btn.active {
+  background: rgba(255, 255, 255, 0.2);
+ }
+
+ .govuk-header__action-btn:focus {
+  color: var(--focus-text);
+  background: var(--focus);
+  outline: none;
+ }
+
+ .govuk-header__btn-label {
+  font-size: 16px;
+  font-weight: 400;
+  color: inherit;
+ }
+
+ /* ============================================================
+    Band 2: Service navigation — GOV.UK nav bar
+    ============================================================ */
+ .govuk-service-nav {
+  background: var(--brand);
+  color: #fff;
+  flex-shrink: 0;
+  z-index: 101;
+  position: relative;
+ }
+
+ .govuk-service-nav__container {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 0 15px;
+  border-top: 1px solid var(--brand-surface-border);
+ }
+
+ @media (min-width: 641px) {
+  .govuk-service-nav__container {
+   padding: 0 30px;
+  }
+ }
+
+ .govuk-service-nav__list {
+  display: flex;
+  flex-wrap: wrap;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  gap: 0;
+ }
+
+ .govuk-service-nav__item {
+  margin-right: 20px;
+ }
+
+ .govuk-service-nav__link {
+  display: inline-block;
+  padding: 15px 0 12px;
+  color: #fff;
+  font-size: 19px;
+  line-height: 1.3157894737;
+  text-decoration: none;
+  border-bottom: 5px solid transparent;
+  font-family: inherit;
+ }
+
+ .govuk-service-nav__link:visited {
+  color: #fff;
+ }
+
+ .govuk-service-nav__link:hover {
+  color: #fff;
+  text-decoration: underline;
+ }
+
+ .govuk-service-nav__link:focus {
+  color: var(--focus-text);
+  background: var(--focus);
+  box-shadow: none;
   text-decoration: none;
  }
 
- .icon-btn {
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-  padding: 0.5rem;
+ .govuk-service-nav__link--btn {
   background: none;
-  border: 1px solid var(--border);
-  color: var(--text-muted);
-  border-radius: var(--radius);
-  transition: all 0.15s;
+  border: none;
+  border-bottom: 5px solid transparent;
+  padding: 15px 0 12px;
+  color: #fff;
+  font-size: 19px;
+  line-height: 1.3157894737;
+  cursor: pointer;
+  font-family: inherit;
  }
 
- .icon-btn:hover {
-  background: var(--bg-hover);
-  color: var(--text);
+ .govuk-service-nav__link--btn:hover {
+  color: #fff;
+  text-decoration: underline;
  }
 
- .icon-btn.active {
-  color: var(--accent);
-  background: var(--accent-dim);
+ .govuk-service-nav__link--btn:focus {
+  color: var(--focus-text);
+  background: var(--focus);
+  box-shadow: none;
+  text-decoration: none;
+  outline: none;
+  border-bottom-color: transparent;
+  padding: 15px 5px 12px;
  }
 
- .btn-label {
-  font-size: 0.85rem;
-  font-weight: 500;
+ .govuk-service-nav__item--active .govuk-service-nav__link {
+  border-bottom-color: #fff;
+  font-weight: 700;
  }
 
+ /* Add bottom border on service nav to separate from content below */
+ .govuk-service-nav {
+  border-bottom: 1px solid var(--brand-dark);
+ }
+
+ /* ============================================================
+    Main area: sidebar + content + chat
+    ============================================================ */
  .main-area {
   display: flex;
   flex: 1;
@@ -280,42 +408,50 @@
  }
 
  .sidebar {
+  position: fixed;
+  top: var(--header-height);
+  left: 0;
+  bottom: 0;
   width: var(--sidebar-width);
-  flex-shrink: 0;
+  z-index: 200;
   background: var(--bg-surface);
   border-right: 1px solid var(--border);
   overflow-y: auto;
   overflow-x: hidden;
-  display: flex;
+  display: none;
   flex-direction: column;
   padding-bottom: env(safe-area-inset-bottom, 0);
  }
 
- .sidebar:not(.open) {
-  display: none;
+ .sidebar.open {
+  display: flex;
  }
 
  .content {
   flex: 1;
   overflow-y: auto;
-  padding: 2rem;
-  padding-bottom: calc(2rem + env(safe-area-inset-bottom, 0));
+  padding: 40px 30px;
+  padding-bottom: calc(40px + env(safe-area-inset-bottom, 0));
   min-width: 0;
+  background: var(--bg-body);
  }
 
  .chat-panel {
+  position: fixed;
+  top: var(--header-height);
+  right: 0;
+  bottom: 0;
   width: var(--chat-width);
-  flex-shrink: 0;
+  z-index: 200;
   background: var(--bg-surface);
   border-left: 1px solid var(--border);
   overflow: hidden;
-  display: flex;
+  display: none;
   flex-direction: column;
-  transition: width 0.2s ease;
  }
 
- .chat-panel.hidden {
-  display: none;
+ .chat-panel:not(.hidden) {
+  display: flex;
  }
 
  .chat-panel.expanded {
@@ -325,9 +461,9 @@
  .backdrop {
   position: fixed;
   inset: 0;
-  top: calc(56px + env(safe-area-inset-top, 0));
-  background: rgba(0, 0, 0, 0.5);
-  z-index: 99;
+  top: var(--header-height);
+  background: var(--backdrop);
+  z-index: 199;
   border: none;
   padding: 0;
   cursor: default;
@@ -335,88 +471,59 @@
  }
 
  @keyframes fadeIn {
-  from {
-   opacity: 0;
-  }
-  to {
-   opacity: 1;
-  }
+  from { opacity: 0; }
+  to { opacity: 1; }
  }
 
- @media (max-width: 1024px) {
+
+ /* Below 769px: full-width overlays + mobile sizing */
+ @media (max-width: 768px) {
   .sidebar {
-   position: fixed;
-   top: calc(56px + env(safe-area-inset-top, 0));
-   left: 0;
-   bottom: 0;
-   z-index: 100;
-   box-shadow: 4px 0 20px rgba(0, 0, 0, 0.3);
-   transform: translateX(-100%);
-   transition: transform 250ms cubic-bezier(0.4, 0, 0.2, 1);
-  }
-
-  .sidebar:not(.open) {
-   display: flex; /* Keep in DOM for slide animation */
-  }
-
-  .sidebar.open {
-   transform: translateX(0);
+   width: 100%;
+   max-width: none;
   }
 
   .chat-panel {
-   position: fixed;
-   top: calc(56px + env(safe-area-inset-top, 0));
-   right: 0;
-   bottom: 0;
-   z-index: 100;
-   box-shadow: -4px 0 20px rgba(0, 0, 0, 0.3);
-   transform: translateX(100%);
-   transition: transform 250ms cubic-bezier(0.4, 0, 0.2, 1);
-  }
-
-  .chat-panel.hidden {
-   display: flex; /* Keep in DOM for slide animation */
-  }
-
-  .chat-panel:not(.hidden) {
-   transform: translateX(0);
+   width: 100%;
   }
 
   .chat-panel.expanded {
    width: 100%;
   }
- }
 
- @media (max-width: 600px) {
-  .sidebar {
-   width: 100%;
-   max-width: none;
-  }
-  .chat-panel {
-   width: 100%;
-  }
   .content {
-   padding: 1rem;
-   padding-bottom: calc(1rem + env(safe-area-inset-bottom, 0));
+   padding: 20px 15px;
+   padding-bottom: calc(20px + env(safe-area-inset-bottom, 0));
   }
-  .btn-label {
+
+  .govuk-header__btn-label {
    display: none;
   }
-  .icon-btn {
+
+  .govuk-header__action-btn {
    min-height: 44px;
    min-width: 44px;
-   padding: 0.6rem;
+   padding: 10px;
   }
-  .app-title {
-   padding: 0.5rem 0;
+
+  .govuk-header__link--homepage {
+   font-size: 24px;
    min-height: 44px;
    display: inline-flex;
    align-items: center;
   }
+
+  .govuk-service-nav__link {
+   font-size: 16px;
+   padding: 10px 0 8px;
+  }
+
+  .govuk-service-nav__item {
+   margin-right: 15px;
+  }
  }
 
- /* Landscape phones: short viewport means sidebar/chat should be full-screen modals */
- @media (max-height: 500px) and (max-width: 1024px) {
+ @media (max-height: 500px) and (max-width: 1199px) {
   .sidebar {
    width: 100%;
    max-width: none;
