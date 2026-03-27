@@ -1,27 +1,25 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import type { TreeSource, TreeDocument } from '$lib/api';
-import { sourceColor } from '$lib/colors';
+import { sourceColorClass } from '$lib/colors';
+import { displayTitle } from '$lib/titles';
 
 // Test the pure utility logic that the API module and components share
 
-describe('sourceColor', () => {
-	it('returns an object with bg and text properties', () => {
-		const color = sourceColor('test-source');
-		expect(color).toHaveProperty('bg');
-		expect(color).toHaveProperty('text');
-		expect(color.bg).toContain('rgba');
-		expect(color.text).toContain('rgb');
+describe('sourceColorClass', () => {
+	it('returns a tag-* CSS class name', () => {
+		const cls = sourceColorClass('test-source');
+		expect(cls).toMatch(/^tag-/);
 	});
 
-	it('returns the same color for the same source name', () => {
-		expect(sourceColor('my-repo')).toEqual(sourceColor('my-repo'));
+	it('returns the same class for the same source name', () => {
+		expect(sourceColorClass('my-repo')).toBe(sourceColorClass('my-repo'));
 	});
 
-	it('returns different colors for different source names', () => {
-		const a = sourceColor('alpha');
-		const b = sourceColor('beta');
+	it('returns different classes for different source names', () => {
+		const a = sourceColorClass('alpha');
+		const b = sourceColorClass('beta');
 		// Not guaranteed to differ, but these specific strings do hash differently
-		expect(a.bg !== b.bg || a.text !== b.text).toBe(true);
+		expect(a !== b).toBe(true);
 	});
 });
 
@@ -42,25 +40,32 @@ describe('docUrl', () => {
 });
 
 describe('displayTitle', () => {
-	function displayTitle(doc: { title: string | null; file_path: string }): string {
-		const filename = doc.file_path.split('/').pop() || doc.file_path;
-		return filename.replace(/\.[^.]+$/, '');
-	}
-
-	it('returns filename without extension regardless of title', () => {
-		expect(displayTitle({ title: 'My Doc', file_path: 'docs/my-doc.md' })).toBe('my-doc');
+	it('uses title when it looks like a real title', () => {
+		expect(displayTitle({ title: 'My Doc', file_path: 'docs/my-doc.md' })).toBe('My Doc');
 	});
 
-	it('strips extension when title is null', () => {
-		expect(displayTitle({ title: null, file_path: 'docs/my-doc.md' })).toBe('my-doc');
+	it('normalises filename when title is null', () => {
+		expect(displayTitle({ title: null, file_path: 'docs/my-doc.md' })).toBe('My Doc');
 	});
 
-	it('handles file at root with no directory', () => {
-		expect(displayTitle({ title: null, file_path: 'readme.md' })).toBe('readme');
+	it('handles file at root', () => {
+		expect(displayTitle({ title: null, file_path: 'readme.md' })).toBe('Readme');
 	});
 
-	it('handles filenames with multiple dots', () => {
-		expect(displayTitle({ title: null, file_path: 'docs/250321-fix.stuff.md' })).toBe('250321-fix.stuff');
+	it('strips date prefix and normalises', () => {
+		expect(displayTitle({ title: null, file_path: 'docs/250321-fix-stuff.md' })).toBe('Fix Stuff');
+	});
+
+	it('converts underscored ALL_CAPS to Title Case', () => {
+		expect(displayTitle({ title: null, file_path: 'SDK_DEEP_DIVE.md' })).toBe('SDK Deep Dive');
+	});
+
+	it('keeps short acronyms uppercase', () => {
+		expect(displayTitle({ title: null, file_path: 'API_DOCS.md' })).toBe('API Docs');
+	});
+
+	it('normalises hyphenated names', () => {
+		expect(displayTitle({ title: null, file_path: 'apple-container-networking.md' })).toBe('Apple Container Networking');
 	});
 });
 
