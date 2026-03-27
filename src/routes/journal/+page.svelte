@@ -42,7 +42,7 @@
   return `/doc/${encodeURIComponent(docId)}`;
  }
 
- import { displayTitle } from "$lib/titles";
+ import { displayTitle, displaySource } from "$lib/titles";
 
  function formatDate(dateStr: string | null): string {
   if (!dateStr) return "";
@@ -128,7 +128,7 @@
            <span class="entry-title">{displayTitle(entry)}</span>
            <span
             class="entry-source {sourceColorClass(entry.source)}"
-            >{entry.source}</span
+            >{displaySource(entry.source)}</span
            >
           </div>
           <span class="entry-date">{formatDate(entry.created_at || entry.modified_at)}</span>

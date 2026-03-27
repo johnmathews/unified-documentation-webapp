@@ -1,4 +1,6 @@
 <script lang="ts">
+ import { displaySource } from "$lib/titles";
+
  let {
   source,
   category,
@@ -17,10 +19,10 @@
   </li>
   {#if title || category}
    <li class="govuk-breadcrumbs__list-item">
-    <a class="govuk-breadcrumbs__link" href="/source/{encodeURIComponent(source)}">{source}</a>
+    <a class="govuk-breadcrumbs__link" href="/source/{encodeURIComponent(source)}">{displaySource(source)}</a>
    </li>
   {:else}
-   <li class="govuk-breadcrumbs__list-item" aria-current="page">{source}</li>
+   <li class="govuk-breadcrumbs__list-item" aria-current="page">{displaySource(source)}</li>
   {/if}
 
   {#if category}

@@ -1,4 +1,27 @@
 /**
+ * Format a source/project name for display.
+ * Replaces hyphens and underscores with spaces, applies Title Case,
+ * preserves short all-caps words (e.g., API, DNS).
+ */
+export function displaySource(name: string): string {
+	let display = name
+		.replace(/[_-]/g, ' ')
+		.replace(/\s+/g, ' ')
+		.trim();
+
+	display = display
+		.split(' ')
+		.map(word => {
+			if (word.length === 0) return word;
+			if (word === word.toUpperCase() && word.length <= 4) return word;
+			return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+		})
+		.join(' ');
+
+	return display || name;
+}
+
+/**
  * Format a document title for display.
  * Normalises filenames by removing extensions, replacing separators with spaces,
  * stripping date prefixes (YYMMDD-), and converting to Title Case.

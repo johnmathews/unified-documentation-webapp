@@ -38,7 +38,7 @@
 		return `/doc/${encodeURIComponent(docId)}`;
 	}
 
-	import { displayTitle } from "$lib/titles";
+	import { displayTitle, displaySource } from "$lib/titles";
 
 	function formatDate(dateStr: string | null): string {
 		if (!dateStr) return '';
@@ -53,7 +53,7 @@
 </script>
 
 <svelte:head>
-	<title>{categoryLabel} - {sourceName} - Documentation</title>
+	<title>{categoryLabel} - {displaySource(sourceName)} - Documentation</title>
 </svelte:head>
 
 {#if loading}
@@ -64,7 +64,7 @@
 	<div class="category-page">
 		<Breadcrumbs source={sourceName} {category} />
 		<h1>{categoryLabel}</h1>
-		<p class="subtitle">{sourceName} &middot; {docs.length} {docs.length === 1 ? 'document' : 'documents'}</p>
+		<p class="subtitle">{displaySource(sourceName)} &middot; {docs.length} {docs.length === 1 ? 'document' : 'documents'}</p>
 
 		{#if docs.length === 0}
 			<p class="empty">No documents in this category.</p>

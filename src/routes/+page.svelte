@@ -26,7 +26,7 @@
   return `/doc/${encodeURIComponent(docId)}`;
  }
 
- import { displayTitle } from "$lib/titles";
+ import { displayTitle, displaySource } from "$lib/titles";
 </script>
 
 <svelte:head>
@@ -58,7 +58,7 @@
     <div
      class="source-card {sourceColorClass(source.source)}"
     >
-     <h2><a href="/source/{encodeURIComponent(source.source)}">{source.source}</a></h2>
+     <h2><a href="/source/{encodeURIComponent(source.source)}">{displaySource(source.source)}</a></h2>
      <div class="stats">
       <span>{source.docs.length} docs</span>
       <span>{source.journal.length} journal entries</span>

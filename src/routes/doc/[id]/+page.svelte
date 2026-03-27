@@ -4,6 +4,7 @@
  import { currentDocId } from "$lib/stores.svelte";
  import { sourceColorClass } from "$lib/colors";
  import Breadcrumbs from "$lib/components/Breadcrumbs.svelte";
+ import { displaySource } from "$lib/titles";
  import { marked } from "marked";
 
  let doc: FullDocument | null = $state(null);
@@ -86,9 +87,9 @@
    <div class="doc-dates">
     <a
      href="/source/{encodeURIComponent(doc.source)}"
-     class="source-badge {sourceColorClass(doc.source)}">{doc.source}</a
+     class="source-badge {sourceColorClass(doc.source)}">{displaySource(doc.source)}</a
     >
-    <span class="file-path">{doc.file_path.split("/").pop()}</span>
+    <span class="file-path">{doc.file_path}</span>
     {#if doc.created_at}
      <span>Created: {formatDate(doc.created_at)}</span>
     {/if}

@@ -2,6 +2,7 @@
  import { fetchTree, searchDocuments, type TreeSource, type SearchResult } from "$lib/api";
  import { currentDocId } from "$lib/stores.svelte";
  import { sourceColorClass } from "$lib/colors";
+ import { displaySource } from "$lib/titles";
 
 
  let { onNavigate = () => {} }: { onNavigate?: () => void } = $props();
@@ -65,6 +66,7 @@
  }
 
  let allExpanded = $derived(tree.length > 0 && tree.every((s) => expandedSources[s.source]));
+ let allCollapsed = $derived(tree.length > 0 && tree.every((s) => !expandedSources[s.source]));
 
  function handleSearch() {
   clearTimeout(searchTimeout);
@@ -121,7 +123,7 @@
       <span class="item-title">{displayTitle(result)}</span>
       <span
        class="source-tag {sourceColorClass(result.source)}"
-       >{result.source}</span
+       >{displaySource(result.source)}</span
       >
       <span class="item-snippet">{result.snippet}</span>
      </a>
@@ -137,9 +139,15 @@
    <div class="tree-header">
     <span class="tree-header-label"></span>
     <div class="expand-collapse">
-     <button class="tree-text-btn" class:active={allExpanded} onclick={expandAll}>expand all</button>
-     <span class="tree-text-sep">|</span>
-     <button class="tree-text-btn" class:active={!allExpanded} onclick={collapseAll}>collapse all</button>
+     {#if !allExpanded}
+      <button class="tree-text-btn" onclick={expandAll}>expand all</button>
+     {/if}
+     {#if !allExpanded && !allCollapsed}
+      <span class="tree-text-sep">|</span>
+     {/if}
+     {#if !allCollapsed}
+      <button class="tree-text-btn" onclick={collapseAll}>collapse all</button>
+     {/if}
     </div>
    </div>
    {#each tree as source}
@@ -159,7 +167,7 @@
       </svg>
       <span
        class="source-tag {sourceColorClass(source.source)}"
-       >{source.source}</span
+       >{displaySource(source.source)}</span
       >
       <span class="count">{totalDocs(source)}</span>
      </button>
