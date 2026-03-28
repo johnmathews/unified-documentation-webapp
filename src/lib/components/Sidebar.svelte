@@ -6,7 +6,6 @@
 
  let showFilters = $state(false);
 
-
  let { onNavigate = () => {} }: { onNavigate?: () => void } = $props();
 
  let tree: TreeSource[] = $state([]);
@@ -95,14 +94,14 @@
 
  function totalDocs(source: TreeSource): number {
   let count = 0;
-  if (categoryFilters.isVisible('root_docs')) count += source.root_docs.length;
-  if (categoryFilters.isVisible('docs')) count += source.docs.length;
-  if (categoryFilters.isVisible('journal')) count += source.journal.length;
-  if (categoryFilters.isVisible('engineering_team')) count += (source.engineering_team?.length ?? 0);
+  if (categoryFilters.isVisible("root_docs")) count += source.root_docs.length;
+  if (categoryFilters.isVisible("docs")) count += source.docs.length;
+  if (categoryFilters.isVisible("journal")) count += source.journal.length;
+  if (categoryFilters.isVisible("engineering_team")) count += source.engineering_team?.length ?? 0;
   return count;
  }
 
- let activeFilterCount = $derived(CATEGORIES.filter(c => !categoryFilters.isVisible(c.key)).length);
+ let activeFilterCount = $derived(CATEGORIES.filter((c) => !categoryFilters.isVisible(c.key)).length);
 </script>
 
 <div class="sidebar-inner">
@@ -111,7 +110,7 @@
  </div>
 
  <div class="filter-section">
-  <button class="filter-toggle" onclick={() => showFilters = !showFilters}>
+  <button class="filter-toggle" onclick={() => (showFilters = !showFilters)}>
    <span class="filter-toggle-label">Filter categories</span>
    {#if activeFilterCount > 0}
     <span class="filter-badge">{activeFilterCount} hidden</span>
@@ -163,10 +162,7 @@
       onclick={onNavigate}
      >
       <span class="item-title">{displayTitle(result)}</span>
-      <span
-       class="source-tag {sourceColorClass(result.source)}"
-       >{displaySource(result.source)}</span
-      >
+      <span class="source-tag {sourceColorClass(result.source)}">{displaySource(result.source)}</span>
       <span class="item-snippet">{result.snippet}</span>
      </a>
     {/each}
@@ -207,15 +203,12 @@
       >
        <polyline points="9 18 15 12 9 6" />
       </svg>
-      <span
-       class="source-tag {sourceColorClass(source.source)}"
-       >{displaySource(source.source)}</span
-      >
+      <span class="source-tag {sourceColorClass(source.source)}">{displaySource(source.source)}</span>
       <span class="count">{totalDocs(source)}</span>
      </button>
 
      {#if expandedSources[source.source]}
-      {#if categoryFilters.isVisible('root_docs') && source.root_docs.length > 0}
+      {#if categoryFilters.isVisible("root_docs") && source.root_docs.length > 0}
        <div class="tree-category">
         <button class="tree-toggle category-toggle" onclick={() => toggleCategory(`${source.source}:root_docs`)}>
          <svg
@@ -250,7 +243,7 @@
        </div>
       {/if}
 
-      {#if categoryFilters.isVisible('docs') && source.docs.length > 0}
+      {#if categoryFilters.isVisible("docs") && source.docs.length > 0}
        <div class="tree-category">
         <button class="tree-toggle category-toggle" onclick={() => toggleCategory(`${source.source}:docs`)}>
          <svg
@@ -285,7 +278,7 @@
        </div>
       {/if}
 
-      {#if categoryFilters.isVisible('journal') && source.journal.length > 0}
+      {#if categoryFilters.isVisible("journal") && source.journal.length > 0}
        <div class="tree-category">
         <button class="tree-toggle category-toggle" onclick={() => toggleCategory(`${source.source}:journal`)}>
          <svg
@@ -322,7 +315,7 @@
        </div>
       {/if}
 
-      {#if categoryFilters.isVisible('engineering_team') && (source.engineering_team?.length ?? 0) > 0}
+      {#if categoryFilters.isVisible("engineering_team") && (source.engineering_team?.length ?? 0) > 0}
        <div class="tree-category">
         <button class="tree-toggle category-toggle" onclick={() => toggleCategory(`${source.source}:engineering_team`)}>
          <svg

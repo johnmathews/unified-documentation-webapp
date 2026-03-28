@@ -97,7 +97,8 @@
   <div class="masthead__inner">
    <h1 class="masthead__title">Journal Timeline</h1>
    <p class="masthead__description">
-    All development journal entries across {new Set(entries.map((e) => e.source)).size} projects &middot; {entries.length} entries
+    All development journal entries across {new Set(entries.map((e) => e.source)).size} projects &middot; {entries.length}
+    entries
    </p>
   </div>
  </div>
@@ -146,10 +147,16 @@
  }
 
  @media (min-width: 641px) {
-  .masthead { padding-top: 60px; padding-bottom: 60px; }
+  .masthead {
+   padding-top: 60px;
+   padding-bottom: 60px;
+  }
  }
 
- .masthead__inner { max-width: 960px; margin: 0 auto; }
+ .masthead__inner {
+  max-width: 960px;
+  margin: 0 auto;
+ }
 
  .masthead__title {
   color: #ffffff;
@@ -160,7 +167,10 @@
  }
 
  @media (min-width: 641px) {
-  .masthead__title { font-size: 3rem; line-height: 1.0416666667; }
+  .masthead__title {
+   font-size: 3rem;
+   line-height: 1.0416666667;
+  }
  }
 
  .masthead__description {
@@ -171,11 +181,18 @@
  }
 
  @media (min-width: 641px) {
-  .masthead__description { font-size: 1.5rem; line-height: 1.25; }
+  .masthead__description {
+   font-size: 1.5rem;
+   line-height: 1.25;
+  }
  }
 
  @media (max-width: 640px) {
-  .masthead { margin: -20px -15px 0; padding-left: 15px; padding-right: 15px; }
+  .masthead {
+   margin: -20px -15px 0;
+   padding-left: 15px;
+   padding-right: 15px;
+  }
  }
 
  .journal-page {
@@ -228,7 +245,6 @@
   font-weight: normal;
  }
 
-
  .empty {
   color: var(--text-muted);
   font-style: italic;
@@ -262,7 +278,9 @@
   padding: 10px 0;
   border-radius: 0;
   text-decoration: none;
-  transition: background 0.15s, border-left-color 0.15s;
+  transition:
+   background 0.15s,
+   border-left-color 0.15s;
   border-left: 3px solid transparent;
  }
 

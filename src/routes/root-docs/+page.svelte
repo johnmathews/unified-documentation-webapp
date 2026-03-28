@@ -73,7 +73,8 @@
   <div class="masthead__inner">
    <h1 class="masthead__title">Root Docs</h1>
    <p class="masthead__description">
-    Project root files (README, CLAUDE.md) across {new Set(docs.map((d) => d.source)).size} projects &middot; {docs.length} documents
+    Project root files (README, CLAUDE.md) across {new Set(docs.map((d) => d.source)).size} projects &middot; {docs.length}
+    documents
    </p>
   </div>
  </div>
@@ -121,10 +122,16 @@
  }
 
  @media (min-width: 641px) {
-  .masthead { padding-top: 60px; padding-bottom: 60px; }
+  .masthead {
+   padding-top: 60px;
+   padding-bottom: 60px;
+  }
  }
 
- .masthead__inner { max-width: 960px; margin: 0 auto; }
+ .masthead__inner {
+  max-width: 960px;
+  margin: 0 auto;
+ }
 
  .masthead__title {
   color: #ffffff;
@@ -135,7 +142,10 @@
  }
 
  @media (min-width: 641px) {
-  .masthead__title { font-size: 3rem; line-height: 1.0416666667; }
+  .masthead__title {
+   font-size: 3rem;
+   line-height: 1.0416666667;
+  }
  }
 
  .masthead__description {
@@ -146,11 +156,18 @@
  }
 
  @media (min-width: 641px) {
-  .masthead__description { font-size: 1.5rem; line-height: 1.25; }
+  .masthead__description {
+   font-size: 1.5rem;
+   line-height: 1.25;
+  }
  }
 
  @media (max-width: 640px) {
-  .masthead { margin: -20px -15px 0; padding-left: 15px; padding-right: 15px; }
+  .masthead {
+   margin: -20px -15px 0;
+   padding-left: 15px;
+   padding-right: 15px;
+  }
  }
 
  .page-content {
@@ -165,7 +182,9 @@
   color: var(--text-secondary);
  }
 
- .error { color: var(--error); }
+ .error {
+  color: var(--error);
+ }
 
  .breadcrumbs {
   display: flex;
@@ -176,12 +195,26 @@
   margin-bottom: 30px;
  }
 
- .breadcrumbs a { color: var(--text); text-decoration: none; }
- .breadcrumbs a:hover { text-decoration: underline; }
- .breadcrumbs a:visited { color: var(--text); }
- .sep { color: var(--text-secondary); }
- .current { color: var(--text); }
- .empty { color: var(--text-muted); font-style: italic; }
+ .breadcrumbs a {
+  color: var(--text);
+  text-decoration: none;
+ }
+ .breadcrumbs a:hover {
+  text-decoration: underline;
+ }
+ .breadcrumbs a:visited {
+  color: var(--text);
+ }
+ .sep {
+  color: var(--text-secondary);
+ }
+ .current {
+  color: var(--text);
+ }
+ .empty {
+  color: var(--text-muted);
+  font-style: italic;
+ }
 
  .doc-groups {
   display: flex;
@@ -225,7 +258,9 @@
   border-left-color: var(--brand);
  }
 
- .doc-card:visited { color: var(--text); }
+ .doc-card:visited {
+  color: var(--text);
+ }
 
  .doc-title {
   font-size: 19px;
@@ -245,7 +280,11 @@
    padding: 15px;
    min-height: 44px;
   }
-  .doc-title { font-size: 16px; }
-  .doc-path { font-size: 14px; }
+  .doc-title {
+   font-size: 16px;
+  }
+  .doc-path {
+   font-size: 14px;
+  }
  }
 </style>

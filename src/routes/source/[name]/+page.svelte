@@ -65,8 +65,7 @@
   <Breadcrumbs source={source.source} />
   <h1>{displaySource(source.source)}</h1>
   <p class="subtitle">
-   {source.docs.length} docs, {source.journal.length} journal entries, {source.engineering_team?.length ?? 0} engineering
-   analyses
+   {source.docs.length} docs, {source.journal.length} journal entries, {source.engineering_team?.length ?? 0} engineering analyses
   </p>
 
   {#if source.docs.length > 0}

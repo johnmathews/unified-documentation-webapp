@@ -40,13 +40,13 @@
 
   function onUp() {
    isResizing = false;
-   document.removeEventListener('mousemove', onMove);
-   document.removeEventListener('mouseup', onUp);
-   localStorage.setItem('sidebar-width', String(sidebarWidth));
+   document.removeEventListener("mousemove", onMove);
+   document.removeEventListener("mouseup", onUp);
+   localStorage.setItem("sidebar-width", String(sidebarWidth));
   }
 
-  document.addEventListener('mousemove', onMove);
-  document.addEventListener('mouseup', onUp);
+  document.addEventListener("mousemove", onMove);
+  document.addEventListener("mouseup", onUp);
  }
 
  function handleChatResizeStart(e: MouseEvent) {
@@ -61,13 +61,13 @@
 
   function onUp() {
    isChatResizing = false;
-   document.removeEventListener('mousemove', onMove);
-   document.removeEventListener('mouseup', onUp);
-   localStorage.setItem('chat-width', String(chatWidth));
+   document.removeEventListener("mousemove", onMove);
+   document.removeEventListener("mouseup", onUp);
+   localStorage.setItem("chat-width", String(chatWidth));
   }
 
-  document.addEventListener('mousemove', onMove);
-  document.addEventListener('mouseup', onUp);
+  document.addEventListener("mousemove", onMove);
+  document.addEventListener("mouseup", onUp);
  }
 
  let touchStartX = 0;
@@ -107,19 +107,19 @@
 
  onMount(() => {
   if (isMobile.current) sidebarOpen = false;
-  const header = document.querySelector('.govuk-header');
-  const nav = document.querySelector('.govuk-service-nav');
+  const header = document.querySelector(".govuk-header");
+  const nav = document.querySelector(".govuk-service-nav");
   if (header && nav) {
    const h = header.getBoundingClientRect().height + nav.getBoundingClientRect().height;
-   document.documentElement.style.setProperty('--header-height', `${h}px`);
+   document.documentElement.style.setProperty("--header-height", `${h}px`);
   }
-  const saved = localStorage.getItem('sidebar-width');
+  const saved = localStorage.getItem("sidebar-width");
   if (saved) {
    sidebarWidth = Math.max(250, Math.min(800, parseInt(saved, 10) || DEFAULT_WIDTH));
   } else if (isLargeScreen.current) {
    sidebarWidth = LARGE_DEFAULT_WIDTH;
   }
-  const savedChat = localStorage.getItem('chat-width');
+  const savedChat = localStorage.getItem("chat-width");
   if (savedChat) {
    chatWidth = Math.max(300, Math.min(900, parseInt(savedChat, 10) || CHAT_DEFAULT_WIDTH));
   }
@@ -160,7 +160,22 @@
     <button class="govuk-header__action-btn" onclick={toggleTheme} title={darkMode ? "Light mode" : "Dark mode"}>
      {#if darkMode}
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-       <circle cx="12" cy="12" r="5" /><line x1="12" y1="1" x2="12" y2="3" /><line x1="12" y1="21" x2="12" y2="23" /><line x1="4.22" y1="4.22" x2="5.64" y2="5.64" /><line x1="18.36" y1="18.36" x2="19.78" y2="19.78" /><line x1="1" y1="12" x2="3" y2="12" /><line x1="21" y1="12" x2="23" y2="12" /><line x1="4.22" y1="19.78" x2="5.64" y2="18.36" /><line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
+       <circle cx="12" cy="12" r="5" /><line x1="12" y1="1" x2="12" y2="3" /><line
+        x1="12"
+        y1="21"
+        x2="12"
+        y2="23"
+       /><line x1="4.22" y1="4.22" x2="5.64" y2="5.64" /><line x1="18.36" y1="18.36" x2="19.78" y2="19.78" /><line
+        x1="1"
+        y1="12"
+        x2="3"
+        y2="12"
+       /><line x1="21" y1="12" x2="23" y2="12" /><line x1="4.22" y1="19.78" x2="5.64" y2="18.36" /><line
+        x1="18.36"
+        y1="5.64"
+        x2="19.78"
+        y2="4.22"
+       />
       </svg>
      {:else}
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -202,24 +217,24 @@
       File Picker
      </button>
     </li>
-    <li class="govuk-service-nav__item" class:govuk-service-nav__item--active={currentPath === '/'}>
+    <li class="govuk-service-nav__item" class:govuk-service-nav__item--active={currentPath === "/"}>
      <a href="/" class="govuk-service-nav__link">
-      {#if currentPath === '/'}<strong>All Documents</strong>{:else}All Documents{/if}
+      {#if currentPath === "/"}<strong>All Documents</strong>{:else}All Documents{/if}
      </a>
     </li>
-    <li class="govuk-service-nav__item" class:govuk-service-nav__item--active={currentPath === '/root-docs'}>
+    <li class="govuk-service-nav__item" class:govuk-service-nav__item--active={currentPath === "/root-docs"}>
      <a href="/root-docs" class="govuk-service-nav__link">
-      {#if currentPath === '/root-docs'}<strong>Root Docs</strong>{:else}Root Docs{/if}
+      {#if currentPath === "/root-docs"}<strong>Root Docs</strong>{:else}Root Docs{/if}
      </a>
     </li>
-    <li class="govuk-service-nav__item" class:govuk-service-nav__item--active={currentPath === '/journal'}>
+    <li class="govuk-service-nav__item" class:govuk-service-nav__item--active={currentPath === "/journal"}>
      <a href="/journal" class="govuk-service-nav__link">
-      {#if currentPath === '/journal'}<strong>Dev Journal</strong>{:else}Dev Journal{/if}
+      {#if currentPath === "/journal"}<strong>Dev Journal</strong>{:else}Dev Journal{/if}
      </a>
     </li>
-    <li class="govuk-service-nav__item" class:govuk-service-nav__item--active={currentPath === '/engineering-team'}>
+    <li class="govuk-service-nav__item" class:govuk-service-nav__item--active={currentPath === "/engineering-team"}>
      <a href="/engineering-team" class="govuk-service-nav__link">
-      {#if currentPath === '/engineering-team'}<strong>Engineering Team</strong>{:else}Engineering Team{/if}
+      {#if currentPath === "/engineering-team"}<strong>Engineering Team</strong>{:else}Engineering Team{/if}
      </a>
     </li>
    </ul>
@@ -604,10 +619,13 @@
  }
 
  @keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+   opacity: 0;
+  }
+  to {
+   opacity: 1;
+  }
  }
-
 
  /* Below 769px: full-width overlays + mobile sizing */
  @media (max-width: 768px) {

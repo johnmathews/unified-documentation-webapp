@@ -28,10 +28,14 @@
   {#if category}
    {#if title}
     <li class="govuk-breadcrumbs__list-item">
-     <a class="govuk-breadcrumbs__link" href="/source/{encodeURIComponent(source)}/{category}">{category === "journal" ? "Journal" : "Documentation"}</a>
+     <a class="govuk-breadcrumbs__link" href="/source/{encodeURIComponent(source)}/{category}"
+      >{category === "journal" ? "Journal" : "Documentation"}</a
+     >
     </li>
    {:else}
-    <li class="govuk-breadcrumbs__list-item" aria-current="page">{category === "journal" ? "Journal" : "Documentation"}</li>
+    <li class="govuk-breadcrumbs__list-item" aria-current="page">
+     {category === "journal" ? "Journal" : "Documentation"}
+    </li>
    {/if}
   {/if}
 
@@ -95,8 +99,8 @@
  .govuk-breadcrumbs__link {
   color: var(--text);
   text-decoration: underline;
-  text-decoration-thickness: max(1px, .0625rem);
-  text-underline-offset: .1578em;
+  text-decoration-thickness: max(1px, 0.0625rem);
+  text-underline-offset: 0.1578em;
  }
 
  .govuk-breadcrumbs__link:link,
@@ -107,14 +111,16 @@
 
  .govuk-breadcrumbs__link:hover {
   color: var(--text);
-  text-decoration-thickness: max(3px, .1875rem, .12em);
+  text-decoration-thickness: max(3px, 0.1875rem, 0.12em);
  }
 
  .govuk-breadcrumbs__link:focus {
   outline: 3px solid transparent;
   color: var(--focus-text);
   background-color: var(--focus);
-  box-shadow: 0 -2px var(--focus), 0 4px var(--focus-text);
+  box-shadow:
+   0 -2px var(--focus),
+   0 4px var(--focus-text);
   text-decoration: none;
  }
 

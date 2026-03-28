@@ -37,12 +37,14 @@
 <div class="masthead">
  <div class="masthead__inner">
   <h1 class="masthead__title">Browse all documentation sources</h1>
-  <p class="masthead__description">Search across all indexed documentation, journal entries and engineering analyses. Use the chat to ask questions about your docs.</p>
+  <p class="masthead__description">
+   Search across all indexed documentation, journal entries and engineering analyses. Use the chat to ask questions about
+   your docs.
+  </p>
  </div>
 </div>
 
 <div class="home">
-
  {#if loading}
   <div class="loading">Loading sources...</div>
  {:else if error}
@@ -55,9 +57,7 @@
  {:else}
   <div class="sources-grid">
    {#each tree as source}
-    <div
-     class="source-card {sourceColorClass(source.source)}"
-    >
+    <div class="source-card {sourceColorClass(source.source)}">
      <h2><a href="/source/{encodeURIComponent(source.source)}">{displaySource(source.source)}</a></h2>
      <div class="stats">
       <span>{source.root_docs.length + source.docs.length} docs</span>
@@ -217,13 +217,13 @@
  .source-card h2 a {
   color: var(--link);
   text-decoration: underline;
-  text-decoration-thickness: max(1px, .0625rem);
-  text-underline-offset: .1578em;
+  text-decoration-thickness: max(1px, 0.0625rem);
+  text-underline-offset: 0.1578em;
  }
 
  .source-card h2 a:hover {
   color: var(--link-hover);
-  text-decoration-thickness: max(3px, .1875rem, .12em);
+  text-decoration-thickness: max(3px, 0.1875rem, 0.12em);
  }
 
  .stats {

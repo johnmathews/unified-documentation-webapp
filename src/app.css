@@ -6,462 +6,517 @@
 
 /* Light mode (default) — exact GOV.UK colours */
 :root {
-	--header-height: 130px;
-	--sidebar-width: 320px;
-	--chat-width: 432px;
-	--chat-width-expanded: 50vw;
+ --header-height: 130px;
+ --sidebar-width: 320px;
+ --chat-width: 432px;
+ --chat-width-expanded: 50vw;
 
-	/* Backgrounds */
-	--bg-body: #ffffff;
-	--bg-page: #f4f8fb;
-	--bg-surface: #f4f8fb;
-	--bg-surface-alt: #ffffff;
-	--bg-hover: #f3f3f3;
-	--bg-active: #e8e8e8;
-	--bg-code: #f3f3f3;
+ /* Backgrounds */
+ --bg-body: #ffffff;
+ --bg-page: #f4f8fb;
+ --bg-surface: #f4f8fb;
+ --bg-surface-alt: #ffffff;
+ --bg-hover: #f3f3f3;
+ --bg-active: #e8e8e8;
+ --bg-code: #f3f3f3;
 
-	/* Brand */
-	--brand: #1d70b8;
-	--brand-dark: #16548a;
-	--brand-surface-border: #8eb8dc;
+ /* Brand */
+ --brand: #1d70b8;
+ --brand-dark: #16548a;
+ --brand-surface-border: #8eb8dc;
 
-	/* Text */
-	--text: #0b0c0c;
-	--text-secondary: #484949;
-	--text-muted: #858686;
+ /* Text */
+ --text: #0b0c0c;
+ --text-secondary: #484949;
+ --text-muted: #858686;
 
-	/* Borders */
-	--border: #cecece;
-	--border-strong: #0b0c0c;
+ /* Borders */
+ --border: #cecece;
+ --border-strong: #0b0c0c;
 
-	/* Links */
-	--link: #1a65a6;
-	--link-visited: #54319f;
-	--link-hover: #0f385c;
-	--link-active: #0b0c0c;
+ /* Links */
+ --link: #1a65a6;
+ --link-visited: #54319f;
+ --link-hover: #0f385c;
+ --link-active: #0b0c0c;
 
-	/* Accent — same as brand */
-	--accent: #1d70b8;
-	--accent-hover: #16548a;
-	--accent-dim: rgba(29, 112, 184, 0.08);
+ /* Accent — same as brand */
+ --accent: #1d70b8;
+ --accent-hover: #16548a;
+ --accent-dim: rgba(29, 112, 184, 0.08);
 
-	/* Functional */
-	--error: #ca3535;
-	--success: #0f7a52;
-	--focus: #ffdd00;
-	--focus-text: #0b0c0c;
-	--backdrop: rgba(0, 0, 0, 0.5);
+ /* Functional */
+ --error: #ca3535;
+ --success: #0f7a52;
+ --focus: #ffdd00;
+ --focus-text: #0b0c0c;
+ --backdrop: rgba(0, 0, 0, 0.5);
 
-	/* Typography */
-	--font-sans: 'Inter', arial, sans-serif;
-	--font-mono: 'JetBrains Mono', 'Fira Code', Menlo, monospace;
+ /* Typography */
+ --font-sans: "Inter", arial, sans-serif;
+ --font-mono: "JetBrains Mono", "Fira Code", Menlo, monospace;
 
-	/* Radius — GOV.UK: essentially zero */
-	--radius: 0px;
-	--radius-lg: 0px;
+ /* Radius — GOV.UK: essentially zero */
+ --radius: 0px;
+ --radius-lg: 0px;
 }
 
 /* Dark mode — inverted GOV.UK palette */
 [data-theme="dark"] {
-	--bg-body: #1a1a1a;
-	--bg-page: #111111;
-	--bg-surface: #242424;
-	--bg-surface-alt: #2e2e2e;
-	--bg-hover: #333333;
-	--bg-active: #444444;
-	--bg-code: #2a2a2a;
+ --bg-body: #1a1a1a;
+ --bg-page: #111111;
+ --bg-surface: #242424;
+ --bg-surface-alt: #2e2e2e;
+ --bg-hover: #333333;
+ --bg-active: #444444;
+ --bg-code: #2a2a2a;
 
-	--brand: #1a3a5c;
-	--brand-dark: #122845;
-	--brand-surface-border: #2a5a8a;
+ --brand: #1a3a5c;
+ --brand-dark: #122845;
+ --brand-surface-border: #2a5a8a;
 
-	--text: #e8e8e8;
-	--text-secondary: #b0b0b0;
-	--text-muted: #808080;
+ --text: #e8e8e8;
+ --text-secondary: #b0b0b0;
+ --text-muted: #808080;
 
-	--border: #404040;
-	--border-strong: #808080;
+ --border: #404040;
+ --border-strong: #808080;
 
-	--link: #5694ca;
-	--link-visited: #a594d4;
-	--link-hover: #89b4fa;
-	--link-active: #e8e8e8;
+ --link: #5694ca;
+ --link-visited: #a594d4;
+ --link-hover: #89b4fa;
+ --link-active: #e8e8e8;
 
-	--accent: #5694ca;
-	--accent-hover: #89b4fa;
-	--accent-dim: rgba(86, 148, 202, 0.15);
+ --accent: #5694ca;
+ --accent-hover: #89b4fa;
+ --accent-dim: rgba(86, 148, 202, 0.15);
 
-	--error: #f38ba8;
-	--success: #6ccda5;
-	--focus: #ffdd00;
-	--focus-text: #0b0c0c;
-	--backdrop: rgba(0, 0, 0, 0.6);
+ --error: #f38ba8;
+ --success: #6ccda5;
+ --focus: #ffdd00;
+ --focus-text: #0b0c0c;
+ --backdrop: rgba(0, 0, 0, 0.6);
 }
 
 /* Source tag classes — GOV.UK tag styles (tint-80 bg, shade-50 text) */
-.tag-blue   { background: #d2e2f1; color: #0f385c; }
-.tag-green  { background: #cfe4dc; color: #083d29; }
-.tag-purple { background: #ddd6ec; color: #2a1950; }
-.tag-orange { background: #fde4d7; color: #7a3c1c; }
-.tag-teal   { background: #d0e6e7; color: #0b4144; }
-.tag-red    { background: #f4d7d7; color: #651b1b; }
+.tag-blue {
+ background: #d2e2f1;
+ color: #0f385c;
+}
+.tag-green {
+ background: #cfe4dc;
+ color: #083d29;
+}
+.tag-purple {
+ background: #ddd6ec;
+ color: #2a1950;
+}
+.tag-orange {
+ background: #fde4d7;
+ color: #7a3c1c;
+}
+.tag-teal {
+ background: #d0e6e7;
+ color: #0b4144;
+}
+.tag-red {
+ background: #f4d7d7;
+ color: #651b1b;
+}
 
-[data-theme="dark"] .tag-blue   { background: #163d6b; color: #7db8e8; }
-[data-theme="dark"] .tag-green  { background: #0d4f35; color: #6ccda5; }
-[data-theme="dark"] .tag-purple { background: #3a2570; color: #a694d4; }
-[data-theme="dark"] .tag-orange { background: #8f4a24; color: #f4b07a; }
-[data-theme="dark"] .tag-teal   { background: #105558; color: #6dd4d8; }
-[data-theme="dark"] .tag-red    { background: #7a2424; color: #f09090; }
+[data-theme="dark"] .tag-blue {
+ background: #163d6b;
+ color: #7db8e8;
+}
+[data-theme="dark"] .tag-green {
+ background: #0d4f35;
+ color: #6ccda5;
+}
+[data-theme="dark"] .tag-purple {
+ background: #3a2570;
+ color: #a694d4;
+}
+[data-theme="dark"] .tag-orange {
+ background: #8f4a24;
+ color: #f4b07a;
+}
+[data-theme="dark"] .tag-teal {
+ background: #105558;
+ color: #6dd4d8;
+}
+[data-theme="dark"] .tag-red {
+ background: #7a2424;
+ color: #f09090;
+}
 
 /* Reset */
 * {
-	margin: 0;
-	padding: 0;
-	box-sizing: border-box;
+ margin: 0;
+ padding: 0;
+ box-sizing: border-box;
 }
 
 html {
-	height: 100%;
-	background: var(--bg-page);
+ height: 100%;
+ background: var(--bg-page);
 }
 
 body {
-	height: 100%;
-	font-family: var(--font-sans);
-	background: var(--bg-body);
-	color: var(--text);
-	font-size: 19px;
-	line-height: 1.3157894737;
-	-webkit-font-smoothing: antialiased;
-	-moz-osx-font-smoothing: grayscale;
+ height: 100%;
+ font-family: var(--font-sans);
+ background: var(--bg-body);
+ color: var(--text);
+ font-size: 19px;
+ line-height: 1.3157894737;
+ -webkit-font-smoothing: antialiased;
+ -moz-osx-font-smoothing: grayscale;
 }
 
 /* Links — GOV.UK style: underlined, thickens on hover */
 a {
-	color: var(--link);
-	text-decoration: underline;
-	text-decoration-thickness: max(1px, .0625rem);
-	text-underline-offset: .1578em;
+ color: var(--link);
+ text-decoration: underline;
+ text-decoration-thickness: max(1px, 0.0625rem);
+ text-underline-offset: 0.1578em;
 }
 
 a:visited {
-	color: var(--link-visited);
+ color: var(--link-visited);
 }
 
 a:hover {
-	color: var(--link-hover);
-	text-decoration-thickness: max(3px, .1875rem, .12em);
-	text-decoration-skip-ink: none;
+ color: var(--link-hover);
+ text-decoration-thickness: max(3px, 0.1875rem, 0.12em);
+ text-decoration-skip-ink: none;
 }
 
 a:active {
-	color: var(--link-active);
+ color: var(--link-active);
 }
 
 /* GOV.UK focus style — yellow highlight + black bottom shadow */
 a:focus {
-	outline: 3px solid transparent;
-	color: var(--focus-text);
-	background-color: var(--focus);
-	box-shadow: 0 -2px var(--focus), 0 4px var(--focus-text);
-	text-decoration: none;
+ outline: 3px solid transparent;
+ color: var(--focus-text);
+ background-color: var(--focus);
+ box-shadow:
+  0 -2px var(--focus),
+  0 4px var(--focus-text);
+ text-decoration: none;
 }
 
 button {
-	font-family: inherit;
-	cursor: pointer;
+ font-family: inherit;
+ cursor: pointer;
 }
 
 :focus-visible {
-	outline: 3px solid var(--focus);
-	outline-offset: 0;
+ outline: 3px solid var(--focus);
+ outline-offset: 0;
 }
 
 /* Scrollbar styling */
 ::-webkit-scrollbar {
-	width: 6px;
-	height: 6px;
+ width: 6px;
+ height: 6px;
 }
 
 ::-webkit-scrollbar-track {
-	background: transparent;
+ background: transparent;
 }
 
 ::-webkit-scrollbar-thumb {
-	background: var(--border);
-	border-radius: 3px;
+ background: var(--border);
+ border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-	background: var(--text-muted);
+ background: var(--text-muted);
 }
 
 /* Markdown content styles — GOV.UK typography */
 .markdown-content {
-	font-size: 19px;
-	line-height: 1.3157894737;
+ font-size: 19px;
+ line-height: 1.3157894737;
 }
 
 .markdown-content h1 {
-	font-size: 2.25rem;
-	line-height: 1.1111111111;
-	font-weight: 700;
-	margin: 50px 0 20px;
-	color: var(--text);
+ font-size: 2.25rem;
+ line-height: 1.1111111111;
+ font-weight: 700;
+ margin: 50px 0 20px;
+ color: var(--text);
 }
 
 .markdown-content h2 {
-	font-size: 1.5rem;
-	line-height: 1.25;
-	font-weight: 700;
-	margin: 40px 0 15px;
-	color: var(--text);
-	padding-bottom: 8px;
-	border-bottom: 1px solid var(--border);
+ font-size: 1.5rem;
+ line-height: 1.25;
+ font-weight: 700;
+ margin: 40px 0 15px;
+ color: var(--text);
+ padding-bottom: 8px;
+ border-bottom: 1px solid var(--border);
 }
 
 .markdown-content h3 {
-	font-size: 1.1875rem;
-	line-height: 1.3157894737;
-	font-weight: 700;
-	margin: 30px 0 10px;
-	color: var(--text);
+ font-size: 1.1875rem;
+ line-height: 1.3157894737;
+ font-weight: 700;
+ margin: 30px 0 10px;
+ color: var(--text);
 }
 
 .markdown-content p {
-	margin-top: 0;
-	margin-bottom: 15px;
+ margin-top: 0;
+ margin-bottom: 15px;
 }
 
-.markdown-content ul, .markdown-content ol {
-	padding-left: 20px;
-	margin-top: 0;
-	margin-bottom: 15px;
+.markdown-content ul,
+.markdown-content ol {
+ padding-left: 20px;
+ margin-top: 0;
+ margin-bottom: 15px;
 }
 
 .markdown-content li {
-	margin-bottom: 5px;
+ margin-bottom: 5px;
 }
 
 /* Inline code */
 .markdown-content code {
-	font-family: var(--font-mono);
-	font-size: 1rem;
-	background: var(--bg-code);
-	padding: 2px 6px;
-	border: 0;
+ font-family: var(--font-mono);
+ font-size: 1rem;
+ background: var(--bg-code);
+ padding: 2px 6px;
+ border: 0;
 }
 
 /* Code blocks */
 .markdown-content pre {
-	margin-bottom: 15px;
+ margin-bottom: 15px;
 }
 
 .markdown-content pre code {
-	display: block;
-	width: 100%;
-	padding: 20px;
-	overflow-x: auto;
-	border: 0;
-	outline: 1px solid var(--border);
-	background: var(--bg-code);
-	font-size: 1rem;
-	line-height: 1.3157894737;
+ display: block;
+ width: 100%;
+ padding: 20px;
+ overflow-x: auto;
+ border: 0;
+ outline: 1px solid var(--border);
+ background: var(--bg-code);
+ font-size: 1rem;
+ line-height: 1.3157894737;
 }
 
 /* Blockquote — GOV.UK inset text */
 .markdown-content blockquote {
-	border-left: 5px solid var(--border);
-	padding: 15px;
-	margin: 20px 0;
-	color: var(--text);
-	font-size: 19px;
-	line-height: 1.3157894737;
+ border-left: 5px solid var(--border);
+ padding: 15px;
+ margin: 20px 0;
+ color: var(--text);
+ font-size: 19px;
+ line-height: 1.3157894737;
 }
 
 .markdown-content table {
-	width: 100%;
-	border-collapse: collapse;
-	margin-bottom: 20px;
-	font-size: 19px;
-	line-height: 1.3157894737;
+ width: 100%;
+ border-collapse: collapse;
+ margin-bottom: 20px;
+ font-size: 19px;
+ line-height: 1.3157894737;
 }
 
-.markdown-content th, .markdown-content td {
-	padding: 10px 20px 10px 0;
-	border-bottom: 1px solid var(--border);
-	text-align: left;
-	vertical-align: top;
+.markdown-content th,
+.markdown-content td {
+ padding: 10px 20px 10px 0;
+ border-bottom: 1px solid var(--border);
+ text-align: left;
+ vertical-align: top;
 }
 
 .markdown-content th {
-	font-weight: 700;
+ font-weight: 700;
 }
 
 .markdown-content img {
-	max-width: 100%;
+ max-width: 100%;
 }
 
 .markdown-content hr {
-	border: none;
-	border-bottom: 1px solid var(--border);
-	margin: 30px 0;
+ border: none;
+ border-bottom: 1px solid var(--border);
+ margin: 30px 0;
 }
 
 /* Print — strip chrome, compact text, show only document content + metadata */
 @media print {
-	/* Force light colours so dark-mode doesn't print reversed */
-	:root, [data-theme="dark"] {
-		--bg-body: #ffffff;
-		--bg-surface: #ffffff;
-		--bg-code: #f5f5f5;
-		--text: #000000;
-		--text-secondary: #333333;
-		--text-muted: #666666;
-		--border: #cccccc;
-		--link: #000000;
-		--link-visited: #000000;
-	}
+ /* Force light colours so dark-mode doesn't print reversed */
+ :root,
+ [data-theme="dark"] {
+  --bg-body: #ffffff;
+  --bg-surface: #ffffff;
+  --bg-code: #f5f5f5;
+  --text: #000000;
+  --text-secondary: #333333;
+  --text-muted: #666666;
+  --border: #cccccc;
+  --link: #000000;
+  --link-visited: #000000;
+ }
 
-	/* Compact base font — 12pt is standard for print */
-	body {
-		font-size: 12pt !important;
-		line-height: 1.4 !important;
-	}
+ /* Compact base font — 12pt is standard for print */
+ body {
+  font-size: 12pt !important;
+  line-height: 1.4 !important;
+ }
 
-	/* Hide all UI chrome */
-	.govuk-header,
-	.govuk-service-nav,
-	.sidebar,
-	.chat-panel,
-	.backdrop {
-		display: none !important;
-	}
+ /* Hide all UI chrome */
+ .govuk-header,
+ .govuk-service-nav,
+ .sidebar,
+ .chat-panel,
+ .backdrop {
+  display: none !important;
+ }
 
-	/* Override Svelte-scoped styles that constrain height/overflow.
+ /* Override Svelte-scoped styles that constrain height/overflow.
 	   !important needed because scoped styles have higher specificity. */
-	.app-layout {
-		display: block !important;
-		height: auto !important;
-		overflow: visible !important;
-	}
+ .app-layout {
+  display: block !important;
+  height: auto !important;
+  overflow: visible !important;
+ }
 
-	.main-area {
-		display: block !important;
-		overflow: visible !important;
-	}
+ .main-area {
+  display: block !important;
+  overflow: visible !important;
+ }
 
-	.content {
-		padding: 0 !important;
-		overflow: visible !important;
-	}
+ .content {
+  padding: 0 !important;
+  overflow: visible !important;
+ }
 
-	/* Hide breadcrumbs in print */
-	nav[aria-label="Breadcrumb"] {
-		display: none;
-	}
+ /* Hide breadcrumbs in print */
+ nav[aria-label="Breadcrumb"] {
+  display: none;
+ }
 
-	/* Metadata: 3 rows — source name, file path, dates */
-	.doc-meta-row {
-		display: flex !important;
-		flex-direction: column !important;
-		gap: 2px !important;
-	}
+ /* Metadata: 3 rows — source name, file path, dates */
+ .doc-meta-row {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 2px !important;
+ }
 
-	.doc-dates-row {
-		margin-top: 2px !important;
-	}
+ .doc-dates-row {
+  margin-top: 2px !important;
+ }
 
-	/* Strip tag badges — plain text in print */
-	.source-badge,
-	.source-tag {
-		padding: 0 !important;
-		background: none !important;
-		color: #000000 !important;
-	}
+ /* Strip tag badges — plain text in print */
+ .source-badge,
+ .source-tag {
+  padding: 0 !important;
+  background: none !important;
+  color: #000000 !important;
+ }
 
-	/* Compact markdown typography for print */
-	.markdown-content {
-		font-size: 12pt !important;
-		line-height: 1.4 !important;
-	}
+ /* Compact markdown typography for print */
+ .markdown-content {
+  font-size: 12pt !important;
+  line-height: 1.4 !important;
+ }
 
-	.markdown-content h1 {
-		font-size: 18pt !important;
-		margin: 20px 0 10px !important;
-	}
+ .markdown-content h1 {
+  font-size: 18pt !important;
+  margin: 20px 0 10px !important;
+ }
 
-	.markdown-content h2 {
-		font-size: 15pt !important;
-		margin: 16px 0 8px !important;
-	}
+ .markdown-content h2 {
+  font-size: 15pt !important;
+  margin: 16px 0 8px !important;
+ }
 
-	.markdown-content h3 {
-		font-size: 13pt !important;
-		margin: 12px 0 6px !important;
-	}
+ .markdown-content h3 {
+  font-size: 13pt !important;
+  margin: 12px 0 6px !important;
+ }
 
-	.markdown-content p {
-		margin-bottom: 8px !important;
-	}
+ .markdown-content p {
+  margin-bottom: 8px !important;
+ }
 
-	.markdown-content ul, .markdown-content ol {
-		margin-bottom: 8px !important;
-	}
+ .markdown-content ul,
+ .markdown-content ol {
+  margin-bottom: 8px !important;
+ }
 
-	.markdown-content li {
-		margin-bottom: 2px !important;
-	}
+ .markdown-content li {
+  margin-bottom: 2px !important;
+ }
 
-	.markdown-content pre code {
-		font-size: 10pt !important;
-		padding: 10px !important;
-	}
+ .markdown-content pre code {
+  font-size: 10pt !important;
+  padding: 10px !important;
+ }
 
-	.markdown-content code {
-		font-size: 10pt !important;
-	}
+ .markdown-content code {
+  font-size: 10pt !important;
+ }
 
-	.markdown-content blockquote {
-		margin: 10px 0 !important;
-		padding: 8px 12px !important;
-	}
+ .markdown-content blockquote {
+  margin: 10px 0 !important;
+  padding: 8px 12px !important;
+ }
 
-	.markdown-content table {
-		font-size: 11pt !important;
-	}
+ .markdown-content table {
+  font-size: 11pt !important;
+ }
 
-	.markdown-content th, .markdown-content td {
-		padding: 4px 10px 4px 0 !important;
-	}
+ .markdown-content th,
+ .markdown-content td {
+  padding: 4px 10px 4px 0 !important;
+ }
 
-	/* Clean up links */
-	a {
-		color: #000000 !important;
-		text-decoration: underline !important;
-	}
+ /* Clean up links */
+ a {
+  color: #000000 !important;
+  text-decoration: underline !important;
+ }
 
-	/* Avoid page breaks inside code blocks and after headings */
-	.markdown-content pre,
-	.markdown-content blockquote,
-	.markdown-content table {
-		break-inside: avoid;
-	}
+ /* Avoid page breaks inside code blocks and after headings */
+ .markdown-content pre,
+ .markdown-content blockquote,
+ .markdown-content table {
+  break-inside: avoid;
+ }
 
-	.markdown-content h1,
-	.markdown-content h2,
-	.markdown-content h3 {
-		break-after: avoid;
-	}
+ .markdown-content h1,
+ .markdown-content h2,
+ .markdown-content h3 {
+  break-after: avoid;
+ }
 }
 
 /* Mobile — GOV.UK compressed scale below 641px */
 @media (max-width: 640px) {
-	body {
-		font-size: 16px;
-	}
-	.markdown-content { font-size: 16px; }
-	.markdown-content h1 { font-size: 2rem; line-height: 1.09375; margin: 30px 0 15px; }
-	.markdown-content h2 { font-size: 1.6875rem; line-height: 1.1111111111; margin: 25px 0 10px; }
-	.markdown-content h3 { font-size: 1.1875rem; }
+ body {
+  font-size: 16px;
+ }
+ .markdown-content {
+  font-size: 16px;
+ }
+ .markdown-content h1 {
+  font-size: 2rem;
+  line-height: 1.09375;
+  margin: 30px 0 15px;
+ }
+ .markdown-content h2 {
+  font-size: 1.6875rem;
+  line-height: 1.1111111111;
+  margin: 25px 0 10px;
+ }
+ .markdown-content h3 {
+  font-size: 1.1875rem;
+ }
 }

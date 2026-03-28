@@ -85,9 +85,8 @@
   />
   <header class="doc-header">
    <div class="doc-meta-row">
-    <a
-     href="/source/{encodeURIComponent(doc.source)}"
-     class="source-badge {sourceColorClass(doc.source)}">{displaySource(doc.source)}</a
+    <a href="/source/{encodeURIComponent(doc.source)}" class="source-badge {sourceColorClass(doc.source)}"
+     >{displaySource(doc.source)}</a
     >
     <span class="file-path">{doc.file_path}</span>
    </div>

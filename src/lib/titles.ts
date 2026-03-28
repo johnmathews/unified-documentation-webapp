@@ -3,25 +3,38 @@
  * Replaces hyphens and underscores with spaces, applies Title Case,
  * preserves short all-caps words (e.g., API, DNS).
  */
-const ACRONYMS = new Set(['mcp', 'api', 'dns', 'ui', 'url', 'ssh', 'ssl', 'tls', 'http', 'tcp', 'udp', 'ip', 'vm', 'ci', 'cd']);
+const ACRONYMS = new Set([
+ "mcp",
+ "api",
+ "dns",
+ "ui",
+ "url",
+ "ssh",
+ "ssl",
+ "tls",
+ "http",
+ "tcp",
+ "udp",
+ "ip",
+ "vm",
+ "ci",
+ "cd",
+]);
 
 export function displaySource(name: string): string {
-	let display = name
-		.replace(/[_-]/g, ' ')
-		.replace(/\s+/g, ' ')
-		.trim();
+ let display = name.replace(/[_-]/g, " ").replace(/\s+/g, " ").trim();
 
-	display = display
-		.split(' ')
-		.map(word => {
-			if (word.length === 0) return word;
-			if (word === word.toUpperCase() && word.length <= 4) return word;
-			if (ACRONYMS.has(word.toLowerCase())) return word.toUpperCase();
-			return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
-		})
-		.join(' ');
+ display = display
+  .split(" ")
+  .map((word) => {
+   if (word.length === 0) return word;
+   if (word === word.toUpperCase() && word.length <= 4) return word;
+   if (ACRONYMS.has(word.toLowerCase())) return word.toUpperCase();
+   return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+  })
+  .join(" ");
 
-	return display || name;
+ return display || name;
 }
 
 /**
@@ -30,35 +43,35 @@ export function displaySource(name: string): string {
  * stripping date prefixes (YYMMDD-), and converting to Title Case.
  */
 export function displayTitle(doc: { title: string | null; file_path: string }): string {
-	// Use title if it looks like a real title (not just a filename)
-	if (doc.title && !doc.title.includes('/') && !doc.title.endsWith('.md')) {
-		return doc.title;
-	}
+ // Use title if it looks like a real title (not just a filename)
+ if (doc.title && !doc.title.includes("/") && !doc.title.endsWith(".md")) {
+  return doc.title;
+ }
 
-	const filename = doc.file_path.split('/').pop() || doc.file_path;
+ const filename = doc.file_path.split("/").pop() || doc.file_path;
 
-	let name = filename
-		// Remove file extension
-		.replace(/\.[^.]+$/, '')
-		// Strip leading date prefix like 260318- or 250321-
-		.replace(/^\d{6}-/, '')
-		// Replace underscores and hyphens with spaces
-		.replace(/[_-]/g, ' ')
-		// Collapse multiple spaces
-		.replace(/\s+/g, ' ')
-		.trim();
+ let name = filename
+  // Remove file extension
+  .replace(/\.[^.]+$/, "")
+  // Strip leading date prefix like 260318- or 250321-
+  .replace(/^\d{6}-/, "")
+  // Replace underscores and hyphens with spaces
+  .replace(/[_-]/g, " ")
+  // Collapse multiple spaces
+  .replace(/\s+/g, " ")
+  .trim();
 
-	// Title Case: capitalize first letter of each word
-	name = name
-		.split(' ')
-		.map(word => {
-			if (word.length === 0) return word;
-			// If the word is all-caps and very short (like SDK, API, DNS), keep it
-			if (word === word.toUpperCase() && word.length <= 3) return word;
-			// Otherwise, capitalize first letter and lowercase the rest
-			return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
-		})
-		.join(' ');
+ // Title Case: capitalize first letter of each word
+ name = name
+  .split(" ")
+  .map((word) => {
+   if (word.length === 0) return word;
+   // If the word is all-caps and very short (like SDK, API, DNS), keep it
+   if (word === word.toUpperCase() && word.length <= 3) return word;
+   // Otherwise, capitalize first letter and lowercase the rest
+   return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+  })
+  .join(" ");
 
-	return name || filename;
+ return name || filename;
 }
