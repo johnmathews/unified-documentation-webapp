@@ -198,7 +198,6 @@ button {
 
 /* Markdown content styles — GOV.UK typography */
 .markdown-content {
-	max-width: 38em;
 	font-size: 19px;
 	line-height: 1.3157894737;
 }
@@ -260,7 +259,7 @@ button {
 
 .markdown-content pre code {
 	display: block;
-	max-width: 38em;
+	width: 100%;
 	padding: 20px;
 	overflow-x: auto;
 	border: 0;
