@@ -24,6 +24,10 @@
  let sidebarWidth = $state(DEFAULT_WIDTH);
  let isResizing = $state(false);
 
+ const CHAT_DEFAULT_WIDTH = 432;
+ let chatWidth = $state(CHAT_DEFAULT_WIDTH);
+ let isChatResizing = $state(false);
+
  function handleResizeStart(e: MouseEvent) {
   e.preventDefault();
   isResizing = true;
@@ -39,6 +43,27 @@
    document.removeEventListener('mousemove', onMove);
    document.removeEventListener('mouseup', onUp);
    localStorage.setItem('sidebar-width', String(sidebarWidth));
+  }
+
+  document.addEventListener('mousemove', onMove);
+  document.addEventListener('mouseup', onUp);
+ }
+
+ function handleChatResizeStart(e: MouseEvent) {
+  e.preventDefault();
+  isChatResizing = true;
+  const startX = e.clientX;
+  const startWidth = chatWidth;
+
+  function onMove(ev: MouseEvent) {
+   chatWidth = Math.max(300, Math.min(900, startWidth - (ev.clientX - startX)));
+  }
+
+  function onUp() {
+   isChatResizing = false;
+   document.removeEventListener('mousemove', onMove);
+   document.removeEventListener('mouseup', onUp);
+   localStorage.setItem('chat-width', String(chatWidth));
   }
 
   document.addEventListener('mousemove', onMove);
@@ -93,6 +118,10 @@
    sidebarWidth = Math.max(250, Math.min(800, parseInt(saved, 10) || DEFAULT_WIDTH));
   } else if (isLargeScreen.current) {
    sidebarWidth = LARGE_DEFAULT_WIDTH;
+  }
+  const savedChat = localStorage.getItem('chat-width');
+  if (savedChat) {
+   chatWidth = Math.max(300, Math.min(900, parseInt(savedChat, 10) || CHAT_DEFAULT_WIDTH));
   }
  });
 
@@ -219,7 +248,17 @@
  {/if}
 </aside>
 
-<aside class="chat-panel" class:expanded={chatExpanded} class:hidden={!chatOpen}>
+<aside
+ class="chat-panel"
+ class:expanded={chatExpanded}
+ class:hidden={!chatOpen}
+ class:resizing={isChatResizing}
+ style="width: {isMobile.current ? '100%' : chatExpanded ? 'var(--chat-width-expanded)' : chatWidth + 'px'}"
+>
+ {#if !isMobile.current && !chatExpanded}
+  <!-- svelte-ignore a11y_no_static_element_interactions -->
+  <div class="chat-resize-handle" onmousedown={handleChatResizeStart}></div>
+ {/if}
  <ChatPanel docId={currentDocId.value} expanded={chatExpanded} onToggleExpand={() => (chatExpanded = !chatExpanded)} />
 </aside>
 
@@ -503,7 +542,6 @@
   top: var(--header-height);
   right: 0;
   bottom: 0;
-  width: var(--chat-width);
   z-index: 200;
   background: var(--bg-surface);
   border-left: 1px solid var(--border);
@@ -516,8 +554,24 @@
   display: flex;
  }
 
- .chat-panel.expanded {
-  width: var(--chat-width-expanded);
+ .chat-panel.resizing {
+  user-select: none;
+ }
+
+ .chat-resize-handle {
+  position: absolute;
+  top: 0;
+  left: -3px;
+  width: 6px;
+  height: 100%;
+  cursor: col-resize;
+  z-index: 201;
+ }
+
+ .chat-resize-handle:hover,
+ .chat-panel.resizing .chat-resize-handle {
+  background: var(--brand);
+  opacity: 0.4;
  }
 
  .backdrop {

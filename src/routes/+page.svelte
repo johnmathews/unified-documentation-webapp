@@ -60,10 +60,21 @@
     >
      <h2><a href="/source/{encodeURIComponent(source.source)}">{displaySource(source.source)}</a></h2>
      <div class="stats">
-      <span>{source.docs.length} docs</span>
+      <span>{source.root_docs.length + source.docs.length} docs</span>
       <span>{source.journal.length} journal entries</span>
       <span>{source.engineering_team?.length ?? 0} engineering analyses</span>
      </div>
+
+     {#if source.root_docs.length > 0}
+      <div class="doc-section">
+       <h3>Root Docs</h3>
+       <ul>
+        {#each source.root_docs as doc}
+         <li><a href={docUrl(doc.doc_id)}>{displayTitle(doc)}</a></li>
+        {/each}
+       </ul>
+      </div>
+     {/if}
 
      {#if source.docs.length > 0}
       <div class="doc-section">

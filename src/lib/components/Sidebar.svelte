@@ -45,6 +45,7 @@
  function expandAll() {
   for (const s of tree) {
    expandedSources[s.source] = true;
+   expandedCategories[`${s.source}:root_docs`] = true;
    expandedCategories[`${s.source}:docs`] = true;
    expandedCategories[`${s.source}:journal`] = true;
    expandedCategories[`${s.source}:engineering_team`] = true;
@@ -54,6 +55,7 @@
  function collapseAll() {
   for (const s of tree) {
    expandedSources[s.source] = false;
+   expandedCategories[`${s.source}:root_docs`] = false;
    expandedCategories[`${s.source}:docs`] = false;
    expandedCategories[`${s.source}:journal`] = false;
    expandedCategories[`${s.source}:engineering_team`] = false;
@@ -214,16 +216,37 @@
 
      {#if expandedSources[source.source]}
       {#if categoryFilters.isVisible('root_docs') && source.root_docs.length > 0}
-       <div class="tree-items root-docs">
-        {#each source.root_docs as doc}
-         <a href={docUrl(doc.doc_id)} class="tree-item" class:active={isActive(doc.doc_id)} onclick={onNavigate}>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-           <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-           <polyline points="14 2 14 8 20 8" />
-          </svg>
-          <span class="item-title">{displayTitle(doc)}</span>
-         </a>
-        {/each}
+       <div class="tree-category">
+        <button class="tree-toggle category-toggle" onclick={() => toggleCategory(`${source.source}:root_docs`)}>
+         <svg
+          class="chevron"
+          class:expanded={expandedCategories[`${source.source}:root_docs`]}
+          width="12"
+          height="12"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+         >
+          <polyline points="9 18 15 12 9 6" />
+         </svg>
+         <span>Root Docs</span>
+         <span class="count">{source.root_docs.length}</span>
+        </button>
+
+        {#if expandedCategories[`${source.source}:root_docs`]}
+         <div class="tree-items">
+          {#each source.root_docs as doc}
+           <a href={docUrl(doc.doc_id)} class="tree-item" class:active={isActive(doc.doc_id)} onclick={onNavigate}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+             <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+             <polyline points="14 2 14 8 20 8" />
+            </svg>
+            <span class="item-title">{displayTitle(doc)}</span>
+           </a>
+          {/each}
+         </div>
+        {/if}
        </div>
       {/if}
 
