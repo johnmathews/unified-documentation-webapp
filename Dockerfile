@@ -8,8 +8,7 @@ RUN npm run build
 FROM node:22-slim
 WORKDIR /app
 COPY --from=builder /app/build ./build
-COPY --from=builder /app/package.json /app/package-lock.json ./
-RUN npm ci --omit=dev
+RUN npm install --no-save marked
 ENV NODE_ENV=production
 ENV PORT=3000
 EXPOSE 3000

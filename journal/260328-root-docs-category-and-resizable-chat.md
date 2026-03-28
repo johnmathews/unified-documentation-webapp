@@ -95,9 +95,11 @@ service nav bar.
 
 ## Docker Image Size Reduction
 
-Replaced `COPY node_modules` with `npm ci --omit=dev` in production Dockerfile stage.
-Reduces image from ~468MB to ~318MB by excluding 19 dev dependencies (vitest, eslint,
-typescript, svelte compiler, etc.) that aren't needed at runtime.
+SvelteKit's adapter-node build output is self-contained — the only external runtime
+dependency is `marked`. The previous Dockerfile copied the entire node_modules (57MB
+including typescript, esbuild, rollup, vite, svelte compiler). Replaced with
+`npm install --no-save marked` (488KB). Image reduced from 468MB to 251MB (46%).
+The remaining 249MB is the `node:22-slim` base image.
 
 ## Chat Prompt Testing (MCP Server)
 
