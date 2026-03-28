@@ -27,10 +27,37 @@ user-resizable on desktop:
 - Follows the same resize pattern as the existing sidebar (mousedown/mousemove/mouseup,
   user-select: none during drag, brand-colored handle highlight on hover)
 
-## Files Changed
+## Print Page Feature
 
-- `src/app.css` — chat-width CSS variable 360→432px
-- `src/lib/components/Sidebar.svelte` — root_docs collapsible category, expand/collapse all
-- `src/routes/+layout.svelte` — chat resize state, handler, handle element, CSS
-- `src/routes/+page.svelte` — root docs section on home page, stats count fix
-- `docs/architecture.md` — updated sidebar and chat panel descriptions
+Added a print button (printer icon) to the top bar that calls `window.print()`. Comprehensive
+`@media print` styles in `app.css`:
+
+- Hides all UI chrome (header, nav, sidebar, chat, breadcrumbs, backdrop)
+- Forces light colours so dark mode doesn't print reversed
+- Compact 12pt base typography (headings: 18/15/13pt, code: 10pt, tables: 11pt)
+- Source badge stripped to plain text (no padding, no background colour)
+- Metadata rendered as 3 rows in print: source name, file path, dates
+- Page break control: avoids breaks inside code blocks/blockquotes and after headings
+- All critical overrides use `!important` to beat Svelte-scoped style specificity
+
+## Document Metadata Layout
+
+Split the single-row metadata bar into two rows in normal view:
+- Row 1: source badge + full file path (no truncation, wraps with `word-break: break-all`)
+- Row 2: created date + modified date
+
+In print view, this becomes 3 rows (source name, file path, dates) via `flex-direction: column`.
+
+## Duplicate Source Name Validation (MCP Server)
+
+Added validation in `_parse_sources()` in the documentation-mcp-server that raises `ValueError`
+on startup if two sources share the same name. Includes the conflicting paths in the error message.
+
+## Test Suite Expansion
+
+Added 60 new tests (43→103 total):
+- `print-css.test.ts` (36 tests): Parses app.css and asserts all critical print rules exist
+  with correct values and `!important` flags. Guards against regression.
+- `titles.test.ts` (13 tests): Tests `displaySource` (previously untested) and `displayTitle`
+  edge cases.
+- `stores.test.ts` (11 tests): Tests `CATEGORIES` constant ordering, uniqueness, and labels.

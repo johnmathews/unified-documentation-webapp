@@ -84,19 +84,23 @@
    title={doc.title || doc.file_path.split("/").pop() || doc.file_path}
   />
   <header class="doc-header">
-   <div class="doc-dates">
+   <div class="doc-meta-row">
     <a
      href="/source/{encodeURIComponent(doc.source)}"
      class="source-badge {sourceColorClass(doc.source)}">{displaySource(doc.source)}</a
     >
     <span class="file-path">{doc.file_path}</span>
-    {#if doc.created_at}
-     <span>Created: {formatDate(doc.created_at)}</span>
-    {/if}
-    {#if doc.modified_at}
-     <span>Modified: {formatDate(doc.modified_at)}</span>
-    {/if}
    </div>
+   {#if doc.created_at || doc.modified_at}
+    <div class="doc-dates-row">
+     {#if doc.created_at}
+      <span>Created: {formatDate(doc.created_at)}</span>
+     {/if}
+     {#if doc.modified_at}
+      <span>Modified: {formatDate(doc.modified_at)}</span>
+     {/if}
+    </div>
+   {/if}
   </header>
 
   {#if doc.content}
@@ -174,28 +178,29 @@
  }
 
  .file-path {
-  flex: 1;
   font-size: 16px;
   color: var(--text-secondary);
   font-family: var(--font-mono);
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  word-break: break-all;
  }
 
- .doc-dates {
+ .doc-meta-row {
   display: flex;
+  flex-wrap: wrap;
   align-items: baseline;
-  gap: 20px;
+  gap: 10px;
   margin-top: 10px;
   font-size: 16px;
   color: var(--text-secondary);
  }
 
- .doc-dates > span:not(.file-path) {
-  flex-shrink: 0;
-  white-space: nowrap;
+ .doc-dates-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  margin-top: 6px;
+  font-size: 16px;
+  color: var(--text-secondary);
  }
 
  .no-content {
@@ -204,9 +209,6 @@
  }
 
  @media (max-width: 640px) {
-  .doc-meta {
-   flex-wrap: wrap;
-  }
   .source-badge {
    font-size: 16px;
    padding: 2px 8px;
@@ -217,8 +219,7 @@
   .file-path {
    font-size: 14px;
   }
-  .doc-dates {
-   flex-wrap: wrap;
+  .doc-dates-row {
    gap: 10px;
    font-size: 14px;
   }
