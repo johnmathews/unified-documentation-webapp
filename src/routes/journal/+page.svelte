@@ -44,14 +44,10 @@
 
  import { displayTitle, displaySource } from "$lib/titles";
 
- function formatDate(dateStr: string | null): string {
+ function formatDay(dateStr: string | null): string {
   if (!dateStr) return "";
   try {
-   return new Date(dateStr).toLocaleDateString("en-GB", {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-   });
+   return new Date(dateStr).getDate().toString();
   } catch {
    return dateStr;
   }
@@ -124,14 +120,9 @@
        {#each group.entries as entry}
         <a href={docUrl(entry.doc_id)} class="entry-card">
          <div class="entry-header">
-          <div>
-           <span class="entry-title">{displayTitle(entry)}</span>
-           <span
-            class="entry-source {sourceColorClass(entry.source)}"
-            >{displaySource(entry.source)}</span
-           >
-          </div>
-          <span class="entry-date">{formatDate(entry.created_at || entry.modified_at)}</span>
+          <span class="entry-date">{formatDay(entry.created_at || entry.modified_at)}</span>
+          <span class="entry-source {sourceColorClass(entry.source)}">{displaySource(entry.source)}</span>
+          <span class="entry-title">{displayTitle(entry)}</span>
          </div>
         </a>
        {/each}
@@ -268,7 +259,7 @@
   display: flex;
   flex-direction: column;
   gap: 5px;
-  padding: 10px 15px;
+  padding: 10px 0;
   border-radius: 0;
   text-decoration: none;
   transition: background 0.15s, border-left-color 0.15s;
@@ -282,9 +273,23 @@
 
  .entry-header {
   display: flex;
-  justify-content: space-between;
   align-items: baseline;
   gap: 15px;
+ }
+
+ .entry-date {
+  font-size: 16px;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  flex-shrink: 0;
+ }
+
+ .entry-source {
+  font-size: 16px;
+  font-weight: bold;
+  padding: 2px 8px;
+  white-space: nowrap;
+  flex-shrink: 0;
  }
 
  .entry-title {
@@ -295,21 +300,8 @@
   text-overflow: ellipsis;
   white-space: nowrap;
   min-width: 0;
- }
-
- .entry-date {
-  font-size: 16px;
-  color: var(--text-secondary);
-  flex-shrink: 0;
- }
-
- .entry-source {
-  font-size: 16px;
-  font-weight: bold;
-  padding: 2px 8px;
-  border-radius: 0;
-  width: fit-content;
-  white-space: nowrap;
+  margin-left: auto;
+  text-align: right;
  }
 
  @media (max-width: 640px) {

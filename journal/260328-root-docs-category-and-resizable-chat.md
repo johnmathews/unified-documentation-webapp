@@ -63,6 +63,12 @@ Reorganized the service navigation bar:
 - Renamed "Engineering Analysis" to "Engineering Team" across all views (sidebar,
   home page, source page, category page)
 
+## Dev Journal Timeline Layout
+
+Improved the journal entry row layout to: day-of-month | app tag | title (right-aligned).
+Since entries are already grouped under month headers, the full date was redundant — now
+only shows the day number. Removed left/right padding on entry cards for tighter alignment.
+
 ## Test Suite Expansion
 
 Added 60 new tests (43→103 total):
