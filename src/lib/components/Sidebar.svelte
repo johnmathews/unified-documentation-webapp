@@ -1,8 +1,10 @@
 <script lang="ts">
  import { fetchTree, searchDocuments, type TreeSource, type SearchResult } from "$lib/api";
- import { currentDocId } from "$lib/stores.svelte";
+ import { currentDocId, categoryFilters, CATEGORIES } from "$lib/stores.svelte";
  import { sourceColorClass } from "$lib/colors";
  import { displaySource } from "$lib/titles";
+
+ let showFilters = $state(false);
 
 
  let { onNavigate = () => {} }: { onNavigate?: () => void } = $props();
@@ -97,13 +99,58 @@
  import { displayTitle } from "$lib/titles";
 
  function totalDocs(source: TreeSource): number {
-  return source.root_docs.length + source.docs.length + source.journal.length + (source.engineering_team?.length ?? 0);
+  let count = 0;
+  if (categoryFilters.isVisible('root_docs')) count += source.root_docs.length;
+  if (categoryFilters.isVisible('docs')) count += source.docs.length;
+  if (categoryFilters.isVisible('journal')) count += source.journal.length;
+  if (categoryFilters.isVisible('engineering_team')) count += (source.engineering_team?.length ?? 0);
+  return count;
  }
+
+ let activeFilterCount = $derived(CATEGORIES.filter(c => !categoryFilters.isVisible(c.key)).length);
 </script>
 
 <div class="sidebar-inner">
  <div class="search-box">
   <input type="text" placeholder="Search documentation..." bind:value={searchQuery} oninput={handleSearch} />
+ </div>
+
+ <div class="filter-section">
+  <button class="filter-toggle" onclick={() => showFilters = !showFilters}>
+   <span class="filter-toggle-label">Filter categories</span>
+   {#if activeFilterCount > 0}
+    <span class="filter-badge">{activeFilterCount} hidden</span>
+   {/if}
+   <svg
+    class="chevron"
+    class:expanded={showFilters}
+    width="12"
+    height="12"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    stroke-width="2"
+   >
+    <polyline points="9 18 15 12 9 6" />
+   </svg>
+  </button>
+
+  {#if showFilters}
+   <fieldset class="filter-checkboxes">
+    {#each CATEGORIES as cat}
+     <div class="filter-checkbox-item">
+      <input
+       class="filter-checkbox-input"
+       type="checkbox"
+       id="filter-{cat.key}"
+       checked={categoryFilters.isVisible(cat.key)}
+       onchange={() => categoryFilters.toggle(cat.key)}
+      />
+      <label class="filter-checkbox-label" for="filter-{cat.key}">{cat.label}</label>
+     </div>
+    {/each}
+   </fieldset>
+  {/if}
  </div>
 
  {#if searchQuery.trim()}
@@ -173,7 +220,7 @@
      </button>
 
      {#if expandedSources[source.source]}
-      {#if source.root_docs.length > 0}
+      {#if categoryFilters.isVisible('root_docs') && source.root_docs.length > 0}
        <div class="tree-items root-docs">
         {#each source.root_docs as doc}
          <a href={docUrl(doc.doc_id)} class="tree-item" class:active={isActive(doc.doc_id)} onclick={onNavigate}>
@@ -187,7 +234,7 @@
        </div>
       {/if}
 
-      {#if source.docs.length > 0}
+      {#if categoryFilters.isVisible('docs') && source.docs.length > 0}
        <div class="tree-category">
         <button class="tree-toggle category-toggle" onclick={() => toggleCategory(`${source.source}:docs`)}>
          <svg
@@ -222,7 +269,7 @@
        </div>
       {/if}
 
-      {#if source.journal.length > 0}
+      {#if categoryFilters.isVisible('journal') && source.journal.length > 0}
        <div class="tree-category">
         <button class="tree-toggle category-toggle" onclick={() => toggleCategory(`${source.source}:journal`)}>
          <svg
@@ -259,7 +306,7 @@
        </div>
       {/if}
 
-      {#if (source.engineering_team?.length ?? 0) > 0}
+      {#if categoryFilters.isVisible('engineering_team') && (source.engineering_team?.length ?? 0) > 0}
        <div class="tree-category">
         <button class="tree-toggle category-toggle" onclick={() => toggleCategory(`${source.source}:engineering_team`)}>
          <svg
@@ -335,6 +382,108 @@
 
  .search-box input::placeholder {
   color: var(--text-muted);
+ }
+
+ /* Category filter section */
+ .filter-section {
+  border-bottom: 1px solid var(--border);
+ }
+
+ .filter-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 10px 15px;
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  font-size: 14px;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.1s;
+ }
+
+ .filter-toggle:hover {
+  background: var(--bg-hover);
+ }
+
+ .filter-toggle-label {
+  flex: 1;
+ }
+
+ .filter-badge {
+  font-size: 12px;
+  padding: 1px 6px;
+  background: var(--accent-dim);
+  color: var(--accent);
+  font-weight: 700;
+ }
+
+ .filter-checkboxes {
+  border: none;
+  padding: 0 15px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+ }
+
+ /* GOV.UK small checkbox pattern */
+ .filter-checkbox-item {
+  display: flex;
+  align-items: center;
+  min-height: 28px;
+  position: relative;
+ }
+
+ .filter-checkbox-input {
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  opacity: 0;
+  cursor: pointer;
+ }
+
+ .filter-checkbox-label {
+  display: flex;
+  align-items: center;
+  padding: 3px 0 3px 30px;
+  cursor: pointer;
+  font-size: 14px;
+  color: var(--text);
+  line-height: 1.3;
+  user-select: none;
+ }
+
+ .filter-checkbox-label::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  width: 20px;
+  height: 20px;
+  border: 2px solid var(--border-strong);
+  background: var(--bg-body);
+ }
+
+ .filter-checkbox-input:checked + .filter-checkbox-label::before {
+  background: var(--border-strong);
+ }
+
+ .filter-checkbox-input:checked + .filter-checkbox-label::after {
+  content: "";
+  position: absolute;
+  left: 4px;
+  top: 7px;
+  width: 12px;
+  height: 6px;
+  border-left: 3px solid var(--bg-body);
+  border-bottom: 3px solid var(--bg-body);
+  transform: rotate(-45deg);
+ }
+
+ .filter-checkbox-input:focus-visible + .filter-checkbox-label::before {
+  outline: 3px solid var(--focus);
+  outline-offset: 1px;
  }
 
  .tree-actions {
@@ -544,6 +693,18 @@
  }
 
  @media (max-width: 768px) {
+  .filter-toggle {
+   min-height: 44px;
+   padding: 10px 15px;
+   font-size: 14px;
+  }
+  .filter-checkbox-item {
+   min-height: 36px;
+  }
+  .filter-checkbox-label {
+   font-size: 14px;
+   min-height: 36px;
+  }
   .tree-toggle {
    padding: 15px;
    min-height: 44px;
