@@ -119,3 +119,22 @@ Added 60 new tests (43→105 total) in documentation-ui:
 - `stores.test.ts` (11 tests): Tests `CATEGORIES` constant ordering, uniqueness, and labels.
 
 Added 32 new tests in documentation-mcp-server (`test_chat_prompt.py`).
+
+## Chat Input Improvements
+
+Replaced the single-line `<input>` with a `<textarea>` that auto-grows:
+- **Shift+Enter** inserts a newline
+- **Enter** sends the message
+- Auto-resizes up to 150px as content grows
+
+Added message editing: hover a sent user message to reveal a pencil icon. Clicking
+it loads the text into the input with an "Editing message" bar. Messages after the
+edit point dim to show what will be replaced. Submit re-sends from that point;
+Escape or Cancel reverts without changes.
+
+## MCP Server Startup Logging
+
+Added structured startup logs for: LLM provider (anthropic), chat model name,
+API key presence, embedding model (all-mpnet-base-v2 ONNX), and all non-secret
+`DOCSERVER_*` env vars. Chat model extracted as `CHAT_MODEL` constant, overridable
+via `DOCSERVER_CHAT_MODEL` env var.

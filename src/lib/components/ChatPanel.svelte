@@ -24,6 +24,7 @@
  let confirmingClear = $state(false);
  let hasPrevious = $state(false);
  let hydrated = false;
+ let editingIndex: number | null = $state(null);
 
  // Load from localStorage on mount (browser only)
  $effect(() => {
@@ -55,6 +56,12 @@
   const msg = input.trim();
   if (!msg || sending) return;
 
+  // If editing, truncate from the edited message onward on submit
+  if (editingIndex !== null) {
+   messages = messages.slice(0, editingIndex);
+   editingIndex = null;
+  }
+
   input = "";
   messages.push({ role: "user", content: msg });
   sending = true;
@@ -72,6 +79,17 @@
    sending = false;
    await scrollToBottom();
   }
+ }
+
+ function startEdit(index: number) {
+  if (sending) return;
+  editingIndex = index;
+  input = messages[index].content;
+ }
+
+ function cancelEdit() {
+  editingIndex = null;
+  input = "";
  }
 
  async function scrollToBottom() {
@@ -199,8 +217,14 @@
     {/if}
    </div>
   {:else}
-   {#each messages as msg}
-    <div class="message" class:user={msg.role === "user"} class:assistant={msg.role === "assistant"}>
+   {#each messages as msg, i}
+    <div
+     class="message"
+     class:user={msg.role === "user"}
+     class:assistant={msg.role === "assistant"}
+     class:editing={editingIndex === i}
+     class:will-remove={editingIndex !== null && i > editingIndex}
+    >
      <div class="message-bubble" class:markdown-content={msg.role === "assistant"}>
       {#if msg.role === "assistant"}
        {@html renderMarkdown(msg.content)}
@@ -208,6 +232,14 @@
        {msg.content}
       {/if}
      </div>
+     {#if msg.role === "user" && !sending}
+      <button class="edit-btn" onclick={() => startEdit(i)} title="Edit message">
+       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+       </svg>
+      </button>
+     {/if}
     </div>
    {/each}
    {#if sending}
@@ -220,8 +252,34 @@
   {/if}
  </div>
 
+ {#if editingIndex !== null}
+  <div class="edit-bar">
+   <span class="edit-label">Editing message</span>
+   <button class="edit-cancel-btn" onclick={cancelEdit}>Cancel</button>
+  </div>
+ {/if}
  <form class="chat-input" onsubmit={handleSubmit}>
-  <input type="text" placeholder="Ask about the docs..." bind:value={input} disabled={sending} />
+  <textarea
+   placeholder="Ask about the docs..."
+   bind:value={input}
+   disabled={sending}
+   rows="1"
+   onkeydown={(e) => {
+    if (e.key === "Escape" && editingIndex !== null) {
+     cancelEdit();
+     return;
+    }
+    if (e.key === "Enter" && !e.shiftKey) {
+     e.preventDefault();
+     if (input.trim() && !sending) handleSubmit(e);
+    }
+   }}
+   oninput={(e) => {
+    const el = e.currentTarget;
+    el.style.height = "auto";
+    el.style.height = Math.min(el.scrollHeight, 150) + "px";
+   }}
+  ></textarea>
   <button type="submit" disabled={sending || !input.trim()} class="send-btn" title="Send message">
    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
     <line x1="22" y1="2" x2="11" y2="13" />
@@ -463,7 +521,7 @@
   flex-shrink: 0;
  }
 
- .chat-input input {
+ .chat-input textarea {
   flex: 1;
   padding: 10px 15px;
   background: var(--bg-body);
@@ -471,16 +529,20 @@
   border-radius: 0;
   color: var(--text);
   font-size: 16px;
+  font-family: inherit;
   outline: none;
+  resize: none;
+  overflow-y: hidden;
+  line-height: 1.4;
  }
 
- .chat-input input:focus {
+ .chat-input textarea:focus {
   outline: 3px solid var(--focus);
   outline-offset: 0;
   box-shadow: inset 0 0 0 2px var(--border-strong);
  }
 
- .chat-input input::placeholder {
+ .chat-input textarea::placeholder {
   color: var(--text-muted);
  }
 
@@ -520,6 +582,68 @@
   box-shadow: 0 3px 0 var(--focus-text);
  }
 
+ .message.user {
+  position: relative;
+ }
+
+ .edit-btn {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  padding: 4px;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.1s;
+ }
+
+ .message.user:hover .edit-btn {
+  opacity: 1;
+ }
+
+ .edit-btn:hover {
+  color: var(--text);
+ }
+
+ .message.editing .message-bubble {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+ }
+
+ .message.will-remove {
+  opacity: 0.4;
+ }
+
+ .edit-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 15px;
+  background: var(--accent-dim);
+  border-top: 1px solid var(--border);
+  font-size: 14px;
+  color: var(--text-secondary);
+ }
+
+ .edit-label {
+  font-weight: 700;
+ }
+
+ .edit-cancel-btn {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  font-size: 14px;
+  cursor: pointer;
+  text-decoration: underline;
+ }
+
+ .edit-cancel-btn:hover {
+  color: var(--text);
+ }
+
  @media (max-width: 768px) {
   .chat-header h3 {
    font-size: 19px;
@@ -545,7 +669,7 @@
   .message-bubble {
    font-size: 16px;
   }
-  .chat-input input {
+  .chat-input textarea {
    min-height: 44px;
    font-size: 16px; /* Explicit 16px prevents iOS Safari auto-zoom on focus */
   }
