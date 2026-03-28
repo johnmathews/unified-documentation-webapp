@@ -118,10 +118,12 @@
      <div class="month-group">
       <h2 class="month-header">{group.month}</h2>
       <div class="entries">
-       {#each group.entries as entry}
+       {#each group.entries as entry, i}
+        {@const day = formatDay(entry.created_at || entry.modified_at)}
+        {@const prevDay = i > 0 ? formatDay(group.entries[i - 1].created_at || group.entries[i - 1].modified_at) : ""}
         <a href={docUrl(entry.doc_id)} class="entry-card">
          <div class="entry-header">
-          <span class="entry-date">{formatDay(entry.created_at || entry.modified_at)}</span>
+          <span class="entry-date" class:invisible={day === prevDay}>{day}</span>
           <span class="entry-source {sourceColorClass(entry.source)}">{displaySource(entry.source)}</span>
           <span class="entry-title">{displayTitle(entry)}</span>
          </div>
@@ -300,6 +302,11 @@
   color: var(--text-secondary);
   white-space: nowrap;
   flex-shrink: 0;
+  min-width: 1.5em;
+ }
+
+ .entry-date.invisible {
+  visibility: hidden;
  }
 
  .entry-source {
