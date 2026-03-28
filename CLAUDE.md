@@ -21,7 +21,7 @@
 ## Architecture Decisions
 
 - **SvelteKit** with adapter-node for Docker deployment
-- **Server-side proxy** — SvelteKit server routes proxy `/api/*` to the MCP server backend, configured via `API_URL` env var at runtime
+- **Server-side proxy** — SvelteKit server routes proxy `/api/*` to the MCP server backend, configured via `API_URL` env var at runtime. JSON endpoints use `proxyGet`/`proxyPost`; binary endpoints (e.g. `/api/files/`) use `proxyGetRaw` which preserves Content-Type and Content-Length
 - **No CORS needed** — Browser talks to same origin, server proxies to backend
 - **Dark theme** with CSS custom properties
 - **Responsive** — Desktop (3 panels), tablet (overlay drawers), phone (85%-width sidebar with backdrop, swipe gestures, 44px touch targets, safe-area-insets)

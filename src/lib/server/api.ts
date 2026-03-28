@@ -19,6 +19,28 @@ export async function proxyGet(path: string): Promise<Response> {
  }
 }
 
+export async function proxyGetRaw(path: string): Promise<Response> {
+ try {
+  const res = await fetch(`${getApiBase()}${path}`);
+  // Buffer the body so we can set Content-Length (required for inline PDF rendering).
+  const body = await res.arrayBuffer();
+  const headers: Record<string, string> = {
+   "Content-Type": res.headers.get("Content-Type") || "application/octet-stream",
+   "Content-Length": String(body.byteLength),
+  };
+  const disposition = res.headers.get("Content-Disposition");
+  if (disposition) {
+   headers["Content-Disposition"] = disposition;
+  }
+  return new Response(body, { status: res.status, headers });
+ } catch {
+  return new Response("Backend unavailable", {
+   status: 502,
+   headers: { "Content-Type": "text/plain" },
+  });
+ }
+}
+
 export async function proxyPost(path: string, body: unknown): Promise<Response> {
  try {
   const controller = new AbortController();

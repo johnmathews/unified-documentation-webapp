@@ -44,6 +44,14 @@
   return marked.parse(content, { async: false }) as string;
  }
 
+ function isPdf(doc: FullDocument): boolean {
+  return doc.file_path.toLowerCase().endsWith(".pdf");
+ }
+
+ function pdfUrl(docId: string): string {
+  return `/api/files/${encodeURIComponent(docId)}`;
+ }
+
  function formatDate(dateStr: string | null): string {
   if (!dateStr) return "";
   try {
@@ -102,7 +110,15 @@
    {/if}
   </header>
 
-  {#if doc.content}
+  {#if isPdf(doc)}
+   <div class="pdf-viewer">
+    <div class="pdf-toolbar">
+     <a href={pdfUrl(doc.doc_id)} target="_blank" rel="noopener" class="pdf-open-btn">Open in new tab</a>
+     <a href={pdfUrl(doc.doc_id)} download class="pdf-download-btn">Download</a>
+    </div>
+    <iframe src={pdfUrl(doc.doc_id)} class="pdf-embed" title={doc.title || doc.file_path}></iframe>
+   </div>
+  {:else if doc.content}
    <div class="markdown-content">
     {@html renderMarkdown(doc.content)}
    </div>
@@ -205,6 +221,43 @@
  .no-content {
   color: var(--text-secondary);
   font-style: italic;
+ }
+
+ .pdf-viewer {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+ }
+
+ .pdf-toolbar {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+ }
+
+ .pdf-open-btn,
+ .pdf-download-btn {
+  font-size: 14px;
+  color: var(--brand);
+  text-decoration: none;
+  padding: 4px 10px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  transition: background-color 0.15s;
+ }
+
+ .pdf-open-btn:hover,
+ .pdf-download-btn:hover {
+  background-color: var(--surface-hover, rgba(255, 255, 255, 0.05));
+ }
+
+ .pdf-embed {
+  width: 100%;
+  height: calc(100vh - 220px);
+  min-height: 500px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--surface, #1a1a1a);
  }
 
  @media (max-width: 640px) {
