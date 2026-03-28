@@ -60,11 +60,13 @@
     <div class="source-card {sourceColorClass(source.source)}">
      <h2><a href="/source/{encodeURIComponent(source.source)}">{displaySource(source.source)}</a></h2>
      <div class="stats">
-      <span>{source.root_docs.length + source.docs.length} docs</span>
-      <span>{source.journal.length} journal entries</span>
-      <span>{source.engineering_team?.length ?? 0} engineering analyses</span>
+      <span class="stat-tag">{source.root_docs.length + source.docs.length} docs</span>
+      <span class="stat-tag">{source.journal.length} journal</span>
+      {#if (source.engineering_team?.length ?? 0) > 0}
+       <span class="stat-tag">{source.engineering_team?.length ?? 0} analyses</span>
+      {/if}
       {#if (source.pdf?.length ?? 0) > 0}
-       <span>{source.pdf?.length ?? 0} PDFs</span>
+       <span class="stat-tag">{source.pdf?.length ?? 0} PDFs</span>
       {/if}
      </div>
 
@@ -245,10 +247,20 @@
 
  .stats {
   display: flex;
-  gap: 15px;
-  font-size: 16px;
-  color: var(--text-secondary);
+  flex-wrap: wrap;
+  gap: 8px;
   margin-bottom: 15px;
+ }
+
+ .stat-tag {
+  display: inline-block;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  padding: 2px 8px;
+  text-transform: uppercase;
+  background: var(--stat-tag-bg, rgba(128, 128, 128, 0.15));
+  color: var(--text-secondary);
  }
 
  .doc-section {
@@ -306,8 +318,8 @@
   .sources-grid {
    grid-template-columns: 1fr;
   }
-  .stats {
-   font-size: 16px;
+  .stat-tag {
+   font-size: 13px;
   }
   .doc-section h3 {
    font-size: 16px;
