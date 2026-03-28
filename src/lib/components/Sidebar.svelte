@@ -27,13 +27,6 @@
  async function loadTree() {
   try {
    tree = await fetchTree();
-   // Expand all sources by default
-   for (const s of tree) {
-    expandedSources[s.source] = true;
-    expandedCategories[`${s.source}:docs`] = true;
-    expandedCategories[`${s.source}:journal`] = true;
-    expandedCategories[`${s.source}:engineering_team`] = true;
-   }
   } catch (e) {
    error = e instanceof Error ? e.message : "Failed to load";
   } finally {
@@ -249,7 +242,7 @@
          >
           <polyline points="9 18 15 12 9 6" />
          </svg>
-         <span>Documentation</span>
+         <span>Documentation Directory</span>
          <span class="count">{source.docs.length}</span>
         </button>
 
@@ -599,8 +592,6 @@
   color: var(--text-secondary);
   padding-left: 30px;
   font-size: 16px;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
  }
 
  .chevron {

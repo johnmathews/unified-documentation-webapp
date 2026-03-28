@@ -3,6 +3,8 @@
  * Replaces hyphens and underscores with spaces, applies Title Case,
  * preserves short all-caps words (e.g., API, DNS).
  */
+const ACRONYMS = new Set(['mcp', 'api', 'dns', 'ui', 'url', 'ssh', 'ssl', 'tls', 'http', 'tcp', 'udp', 'ip', 'vm', 'ci', 'cd']);
+
 export function displaySource(name: string): string {
 	let display = name
 		.replace(/[_-]/g, ' ')
@@ -14,6 +16,7 @@ export function displaySource(name: string): string {
 		.map(word => {
 			if (word.length === 0) return word;
 			if (word === word.toUpperCase() && word.length <= 4) return word;
+			if (ACRONYMS.has(word.toLowerCase())) return word.toUpperCase();
 			return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
 		})
 		.join(' ');

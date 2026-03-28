@@ -3,7 +3,7 @@ export const currentDocId = $state<{ value: string | null }>({ value: null });
 /** Document category definitions — the single source of truth for category keys and labels. */
 export const CATEGORIES = [
 	{ key: 'root_docs', label: 'Root Docs' },
-	{ key: 'docs', label: 'Documentation' },
+	{ key: 'docs', label: 'Documentation Directory' },
 	{ key: 'journal', label: 'Journal' },
 	{ key: 'engineering_team', label: 'Engineering Team' },
 ] as const;
