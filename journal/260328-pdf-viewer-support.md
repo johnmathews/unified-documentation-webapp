@@ -20,6 +20,11 @@ Added inline PDF viewing in the document viewer. PDFs from indexed sources are d
 - Breadcrumbs and category detail page: PDF files route to "PDF" label instead of "Documentation".
 - Doc viewer breadcrumb detects `.pdf` extension for correct category assignment.
 
+### Source card stat tags
+- Replaced plain text metadata stats on the home page source cards with GOV.UK-style tags: bold uppercase text on tinted backgrounds.
+- Zero-count categories (engineering analyses, PDFs) are hidden instead of showing "0".
+- Shorter labels ("journal" not "journal entries") keep tags compact.
+
 ## Design decisions
 
 - Used `<iframe>` over `<object>` for PDF embedding. `<object>` is unreliable across browsers; `<iframe>` is universally supported for inline PDF display.
