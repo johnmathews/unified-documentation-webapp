@@ -138,3 +138,12 @@ Added structured startup logs for: LLM provider (anthropic), chat model name,
 API key presence, embedding model (all-mpnet-base-v2 ONNX), and all non-secret
 `DOCSERVER_*` env vars. Chat model extracted as `CHAT_MODEL` constant, overridable
 via `DOCSERVER_CHAT_MODEL` env var.
+
+## Chat Edit Button Improvements
+
+Improved the message edit button UX:
+- Moved from absolute-positioned top-right corner to **below** the chat bubble, stacking
+  vertically with the message (flex-direction: column, align-items: flex-end)
+- Replaced the small 12px two-path SVG with a cleaner 14px single-path pencil icon
+- Clicking the edit button now **focuses the textarea** immediately (await tick + focus)
+- Added `textareaEl` ref bound to the textarea for programmatic focus control

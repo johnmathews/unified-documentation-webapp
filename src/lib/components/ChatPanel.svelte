@@ -21,6 +21,7 @@
  let input = $state("");
  let sending = $state(false);
  let messagesEl: HTMLDivElement | undefined = $state();
+ let textareaEl: HTMLTextAreaElement | undefined = $state();
  let confirmingClear = $state(false);
  let hasPrevious = $state(false);
  let hydrated = false;
@@ -81,10 +82,12 @@
   }
  }
 
- function startEdit(index: number) {
+ async function startEdit(index: number) {
   if (sending) return;
   editingIndex = index;
   input = messages[index].content;
+  await tick();
+  textareaEl?.focus();
  }
 
  function cancelEdit() {
@@ -234,9 +237,8 @@
      </div>
      {#if msg.role === "user" && !sending}
       <button class="edit-btn" onclick={() => startEdit(i)} title="Edit message">
-       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z" />
        </svg>
       </button>
      {/if}
@@ -260,6 +262,7 @@
  {/if}
  <form class="chat-input" onsubmit={handleSubmit}>
   <textarea
+   bind:this={textareaEl}
    placeholder="Ask about the docs..."
    bind:value={input}
    disabled={sending}
@@ -418,7 +421,8 @@
  }
 
  .message.user {
-  justify-content: flex-end;
+  flex-direction: column;
+  align-items: flex-end;
  }
 
  .message-bubble {
@@ -582,29 +586,23 @@
   box-shadow: 0 3px 0 var(--focus-text);
  }
 
- .message.user {
-  position: relative;
- }
-
  .edit-btn {
-  position: absolute;
-  top: 4px;
-  right: 4px;
   background: none;
   border: none;
   color: var(--text-muted);
   padding: 4px;
   cursor: pointer;
   opacity: 0;
-  transition: opacity 0.1s;
- }
-
- .message.user:hover .edit-btn {
-  opacity: 1;
+  transition: opacity 0.15s;
+  margin-top: 2px;
  }
 
  .edit-btn:hover {
   color: var(--text);
+ }
+
+ .message.user:hover .edit-btn {
+  opacity: 1;
  }
 
  .message.editing .message-bubble {
