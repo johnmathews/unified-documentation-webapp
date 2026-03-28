@@ -64,9 +64,32 @@
  <div class="source-page">
   <Breadcrumbs source={source.source} />
   <h1>{displaySource(source.source)}</h1>
-  <p class="subtitle">
-   {source.docs.length} docs, {source.journal.length} journal entries, {source.engineering_team?.length ?? 0} engineering analyses
-  </p>
+  <div class="stats">
+   <span class="stat-tag">{source.root_docs.length + source.docs.length} docs</span>
+   <span class="stat-tag">{source.journal.length} journal</span>
+   {#if (source.engineering_team?.length ?? 0) > 0}
+    <span class="stat-tag">{source.engineering_team?.length ?? 0} analyses</span>
+   {/if}
+   {#if (source.pdf?.length ?? 0) > 0}
+    <span class="stat-tag">{source.pdf?.length ?? 0} PDFs</span>
+   {/if}
+  </div>
+
+  {#if source.root_docs.length > 0}
+   <section>
+    <h2>Root Docs</h2>
+    <ul class="doc-list">
+     {#each source.root_docs as doc}
+      <li>
+       <a href={docUrl(doc.doc_id)}>{displayTitle(doc)}</a>
+       {#if doc.modified_at}
+        <span class="date">{formatDate(doc.modified_at)}</span>
+       {/if}
+      </li>
+     {/each}
+    </ul>
+   </section>
+  {/if}
 
   {#if source.docs.length > 0}
    <section>
@@ -115,6 +138,22 @@
     </ul>
    </section>
   {/if}
+
+  {#if (source.pdf?.length ?? 0) > 0}
+   <section>
+    <h2><a href="/source/{encodeURIComponent(source.source)}/pdf">PDF</a></h2>
+    <ul class="doc-list">
+     {#each source.pdf ?? [] as doc}
+      <li>
+       <a href={docUrl(doc.doc_id)}>{displayTitle(doc)}</a>
+       {#if doc.modified_at}
+        <span class="date">{formatDate(doc.modified_at)}</span>
+       {/if}
+      </li>
+     {/each}
+    </ul>
+   </section>
+  {/if}
  </div>
 {/if}
 
@@ -136,10 +175,22 @@
   font-weight: 700;
   margin-bottom: 5px;
  }
- .subtitle {
-  color: var(--text-secondary);
+ .stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
   margin-bottom: 30px;
-  font-size: 16px;
+ }
+
+ .stat-tag {
+  display: inline-block;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  padding: 2px 8px;
+  text-transform: uppercase;
+  background: var(--stat-tag-bg, rgba(128, 128, 128, 0.15));
+  color: var(--text-secondary);
  }
  section {
   margin-bottom: 30px;
@@ -189,8 +240,8 @@
   h1 {
    font-size: 32px;
   }
-  .subtitle {
-   font-size: 16px;
+  .stat-tag {
+   font-size: 13px;
   }
   .doc-list li {
    flex-direction: column;
