@@ -337,7 +337,7 @@
          >
           <polyline points="9 18 15 12 9 6" />
          </svg>
-         <span>Engineering Analysis</span>
+         <span>Engineering Team</span>
          <span class="count">{source.engineering_team?.length ?? 0}</span>
         </button>
 

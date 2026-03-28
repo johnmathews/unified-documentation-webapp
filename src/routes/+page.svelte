@@ -106,7 +106,7 @@
 
      {#if (source.engineering_team?.length ?? 0) > 0}
       <div class="doc-section">
-       <h3><a href="/source/{encodeURIComponent(source.source)}/engineering_team">Engineering Analysis</a></h3>
+       <h3><a href="/source/{encodeURIComponent(source.source)}/engineering_team">Engineering Team</a></h3>
        <ul>
         {#each (source.engineering_team ?? []).slice(0, 3) as doc}
          <li><a href={docUrl(doc.doc_id)}>{displayTitle(doc)}</a></li>

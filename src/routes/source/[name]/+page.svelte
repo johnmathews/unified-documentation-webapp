@@ -103,7 +103,7 @@
 
   {#if (source.engineering_team?.length ?? 0) > 0}
    <section>
-    <h2><a href="/source/{encodeURIComponent(source.source)}/engineering_team">Engineering Analysis</a></h2>
+    <h2><a href="/source/{encodeURIComponent(source.source)}/engineering_team">Engineering Team</a></h2>
     <ul class="doc-list">
      {#each source.engineering_team ?? [] as doc}
       <li>

@@ -53,6 +53,16 @@ In print view, this becomes 3 rows (source name, file path, dates) via `flex-dir
 Added validation in `_parse_sources()` in the documentation-mcp-server that raises `ValueError`
 on startup if two sources share the same name. Includes the conflicting paths in the error message.
 
+## Service Nav Overhaul
+
+Reorganized the service navigation bar:
+- File Picker button moved to first position
+- Renamed "Journal Entries" to "Dev Journal"
+- Added "Root Docs" and "Engineering Team" nav items with dedicated cross-project
+  aggregate pages at `/root-docs` and `/engineering-team`
+- Renamed "Engineering Analysis" to "Engineering Team" across all views (sidebar,
+  home page, source page, category page)
+
 ## Test Suite Expansion
 
 Added 60 new tests (43→103 total):

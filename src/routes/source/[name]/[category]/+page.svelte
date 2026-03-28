@@ -49,7 +49,7 @@
 		} catch { return dateStr; }
 	}
 
-	let categoryLabel = $derived(category === 'journal' ? 'Development Journal' : category === 'engineering_team' ? 'Engineering Analysis' : 'Documentation');
+	let categoryLabel = $derived(category === 'journal' ? 'Development Journal' : category === 'engineering_team' ? 'Engineering Team' : 'Documentation');
 </script>
 
 <svelte:head>
