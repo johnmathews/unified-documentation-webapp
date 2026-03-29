@@ -62,7 +62,9 @@ The reverts seemed to occur during periods when:
 
 **Claude Code performs `git reset --hard origin/main` on the main working tree every 10 minutes.**
 
-This is part of Claude Code's internal checkpoint/file-history-snapshot system. It runs programmatically within the Node.js process (no external `git` binary is spawned), uses proper git lock files, and targets the main working tree specifically.
+The operation runs programmatically within the Claude Code process (no external `git` binary is spawned), uses proper git lock files, and targets the main working tree specifically. The exact internal mechanism has not been identified — the compiled binary is minified and process tracing requires sudo.
+
+**Reported:** [anthropics/claude-code#40710](https://github.com/anthropics/claude-code/issues/40710)
 
 ### Evidence: Git Reflog
 
@@ -106,10 +108,15 @@ All of the following were thoroughly investigated and ruled out:
 
 - **Git hooks** — All `.sample` (inactive). No husky, lint-staged, or pre-commit.
 - **Claude Code hooks** — All `peon-ping` (audio only). None reference git.
+- **Plugin marketplace updater** — Deleted `~/.claude/plugins/marketplaces/claude-plugins-official/` (which had no `.git`). Resets continued unchanged. Not the cause.
 - **macOS mechanisms** — No cloud sync, no cron, no LaunchAgents doing git ops, Time Machine snapshots are read-only.
 - **Vite/SvelteKit** — All file writes go to `.svelte-kit/` or `build/`. Zero git awareness. `pkill` triggers clean shutdown.
 - **IDE/editors** — nvim in different repo. No format-on-save anywhere.
 - **File watchers** — No fswatch, entr, watchman, or similar running.
+
+### Not investigated
+
+- **Claude desktop app** (`/Applications/Claude.app`, PID 8310) — was running during all sessions. Not checked for git integration or awareness of CLI session working directories. A potential gap in the investigation.
 
 ## Mitigations
 
@@ -120,6 +127,5 @@ All of the following were thoroughly investigated and ruled out:
 
 ### Recommended
 
-3. **File a focused bug report** at [github.com/anthropics/claude-code/issues](https://github.com/anthropics/claude-code/issues) with the reflog evidence and reproduction steps.
-4. **Monitor with reflog** — Run `git reflog --date=iso | head -5` to detect ongoing resets.
-5. **Investigate Claude Code settings** — Check if there's a way to disable the checkpoint/file-history system.
+3. **Monitor with reflog** — Run `git reflog --date=iso | head -5` to detect ongoing resets.
+4. **Track the bug report** — [anthropics/claude-code#40710](https://github.com/anthropics/claude-code/issues/40710).
