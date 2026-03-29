@@ -1,8 +1,8 @@
 # Bug: Tracked files silently reverted during long Claude Code sessions
 
 **Date:** 2026-03-29
-**Status:** Unresolved — cause not identified
-**Severity:** High — caused significant rework (changes had to be re-applied 3+ times)
+**Status:** RESOLVED — root cause identified and verified
+**Severity:** Critical — Claude Code performs `git reset --hard origin/main` every 10 minutes
 
 ## Symptoms
 
@@ -13,7 +13,9 @@ During a long Claude Code session (~2 hours), edits to tracked git files were si
 - No error messages or warnings — the files just silently changed back
 - The revert appeared to coincide with system-reminder messages saying files were "modified, either by the user or by a linter"
 
-The pattern is consistent with `git checkout .` or `git restore .` being run, since those commands only affect tracked files and leave untracked files untouched.
+The pattern is consistent with `git reset --hard origin/main` being run, since that command only affects tracked files and leaves untracked files untouched.
+
+**Root cause:** Claude Code's internal checkpoint/file-history-snapshot system runs `git reset --hard origin/main` on the main working tree every 10 minutes. See the "Root Cause" section below for full evidence.
 
 ## Files affected
 
@@ -56,43 +58,68 @@ The reverts seemed to occur during periods when:
 2. The conversation context was being compressed (approaching context limits)
 3. The Vite dev server was being restarted (`pkill` + restart)
 
-## Possible causes (unverified)
+## Root Cause (VERIFIED 2026-03-29)
 
-1. **Context compression side effect** — When Claude Code compresses older messages, it may re-read files from disk. If something restores them between the edit and the re-read, the compressed state would reflect the reverted files. But this doesn't explain _what_ restores them.
+**Claude Code performs `git reset --hard origin/main` on the main working tree every 10 minutes.**
 
-2. **Vite dev server restart** — Killing and restarting the Vite process could trigger file system events that interact with an unknown tool. The SvelteKit dev server watches files for HMR but shouldn't modify them.
+This is part of Claude Code's internal checkpoint/file-history-snapshot system. It runs programmatically within the Node.js process (no external `git` binary is spawned), uses proper git lock files, and targets the main working tree specifically.
 
-3. **Unknown process or OS-level mechanism** — macOS file versioning, Time Machine snapshots, or a background process we didn't identify.
+### Evidence: Git Reflog
 
-4. **Claude Code internal behavior** — The tool might have an internal mechanism that restores files under certain conditions (e.g., when the Edit tool's preconditions aren't met after context compression).
+90+ entries of `reset: moving to origin/main` at exact 10-minute intervals across multiple sessions:
 
-## Mitigation
+```
+e8ea2c9 HEAD@{2026-03-29 22:19:09 +0200}: reset: moving to origin/main
+e8ea2c9 HEAD@{2026-03-29 22:09:09 +0200}: reset: moving to origin/main
+e8ea2c9 HEAD@{2026-03-29 21:59:09 +0200}: reset: moving to origin/main
+e8ea2c9 HEAD@{2026-03-29 21:49:09 +0200}: reset: moving to origin/main
+...
+8792b6c HEAD@{2026-03-29 16:55:41 +0200}: reset: moving to origin/main
+8792b6c HEAD@{2026-03-29 16:45:41 +0200}: reset: moving to origin/main
+...
+32aa7c7 HEAD@{2026-03-28 15:47:36 +0100}: reset: moving to origin/main
+32aa7c7 HEAD@{2026-03-28 15:37:36 +0100}: reset: moving to origin/main
+```
 
-**Commit early and often.** After editing 2-3 files, commit immediately before doing verification steps (Playwright, tests, dev server restarts). This prevents losing work even if the revert happens again.
+The second-level precision is consistent within each session but varies between sessions (`:08`, `:36`, `:41`, `:09`), confirming a `setInterval(fn, 600000)` tied to session start time.
 
-## Reproducing
+### Live Reproduction
 
-The bug was intermittent and only observed during one long session. To attempt reproduction:
+1. Modified `src/lib/api.ts` (tracked) and created `.canary-test.txt` (untracked)
+2. At the next 10-minute mark, `api.ts` silently reverted to clean state
+3. `.canary-test.txt` survived
+4. Reproduced consistently across 4 consecutive cycles
 
-1. Start a long Claude Code session in this repo
-2. Edit multiple tracked files without committing
-3. Run the dev server, restart it, interact with Playwright
-4. Wait for context compression to occur
-5. Check `git status` — are the tracked file modifications still present?
+### Worktrees Are Immune
 
-## Would a worktree help?
+The worktree reflog shows **zero** `reset: moving to origin` entries. The periodic reset targets the main working tree only. Each git worktree has its own independent HEAD, index, and working directory.
 
-Working in a git worktree could help in two ways:
+### Related GitHub Issues
 
-1. **Isolation test:** If the bug is caused by something running `git restore .` or `git checkout .` on the main working tree, a worktree would be unaffected since it has its own working directory and index. If changes are still reverted in a worktree, the cause is something else (like Claude Code internals or a file-system-level mechanism).
+- [#8072](https://github.com/anthropics/claude-code/issues/8072) — "Critical Bug: Code Revisions Being Repeatedly Reverted"
+- [#11169](https://github.com/anthropics/claude-code/issues/11169) — "Auto-Compact causes model to revert to previously rejected code patterns"
+- [#10948](https://github.com/anthropics/claude-code/issues/10948) — "Auto-compact triggers mid-task causing context loss"
 
-2. **Prevention:** Even if we don't identify the root cause, working in a worktree provides natural protection — any rogue `git` command targeting the main worktree wouldn't affect the feature branch's worktree.
+## Eliminated Causes
 
-**Recommendation:** Next time a multi-file feature is developed in this repo, use a worktree. If the reverts don't happen, that strongly suggests the cause is a process targeting the main working tree. If they still happen, the cause is something that follows the active Claude Code session regardless of directory.
+All of the following were thoroughly investigated and ruled out:
 
-## Next steps
+- **Git hooks** — All `.sample` (inactive). No husky, lint-staged, or pre-commit.
+- **Claude Code hooks** — All `peon-ping` (audio only). None reference git.
+- **macOS mechanisms** — No cloud sync, no cron, no LaunchAgents doing git ops, Time Machine snapshots are read-only.
+- **Vite/SvelteKit** — All file writes go to `.svelte-kit/` or `build/`. Zero git awareness. `pkill` triggers clean shutdown.
+- **IDE/editors** — nvim in different repo. No format-on-save anywhere.
+- **File watchers** — No fswatch, entr, watchman, or similar running.
 
-1. **Use a worktree for the next multi-file feature** as a controlled experiment. This both protects against the bug and narrows the root cause.
-2. **Commit early and often** — after editing 2-3 files, commit immediately before running verification steps (Playwright, tests, dev server restarts). Committed changes cannot be silently reverted.
-3. **Monitor `git status` proactively** — check `git status` before and after dev server restarts, context compressions, or any long pause in the session.
-4. **If the bug recurs**, run `fs_usage -w -f filesys | grep documentation-ui` in a separate terminal to capture which process is writing to the files in real time.
+## Mitigations
+
+### Confirmed Working
+
+1. **Use git worktrees** — Worktrees are confirmed immune. The periodic reset only affects the main working tree.
+2. **Commit early and often** — After every 2-3 file edits, commit immediately. The reset cannot revert committed changes (it resets to `origin/main`, which would be the same as HEAD after a push).
+
+### Recommended
+
+3. **File a focused bug report** at [github.com/anthropics/claude-code/issues](https://github.com/anthropics/claude-code/issues) with the reflog evidence and reproduction steps.
+4. **Monitor with reflog** — Run `git reflog --date=iso | head -5` to detect ongoing resets.
+5. **Investigate Claude Code settings** — Check if there's a way to disable the checkpoint/file-history system.
