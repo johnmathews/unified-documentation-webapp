@@ -3,6 +3,7 @@
  import { tick } from "svelte";
  import { browser } from "$app/environment";
  import { marked } from "marked";
+ import { renderMarkdownWithLinks } from "$lib/links";
 
  let {
   docId = null,
@@ -131,6 +132,15 @@
  }
 
  function renderMarkdown(content: string): string {
+  // When a document is in context, resolve relative links against it
+  if (docId) {
+   const colonIndex = docId.indexOf(":");
+   if (colonIndex !== -1) {
+    const source = docId.slice(0, colonIndex);
+    const filePath = docId.slice(colonIndex + 1);
+    return renderMarkdownWithLinks(content, source, filePath);
+   }
+  }
   return marked.parse(content, { async: false }) as string;
  }
 </script>

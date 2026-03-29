@@ -5,7 +5,7 @@
  import { sourceColorClass } from "$lib/colors";
  import Breadcrumbs from "$lib/components/Breadcrumbs.svelte";
  import { displaySource } from "$lib/titles";
- import { marked } from "marked";
+ import { renderMarkdownWithLinks } from "$lib/links";
 
  let doc: FullDocument | null = $state(null);
  let loading = $state(true);
@@ -38,10 +38,6 @@
   } finally {
    loading = false;
   }
- }
-
- function renderMarkdown(content: string): string {
-  return marked.parse(content, { async: false }) as string;
  }
 
  function isPdf(doc: FullDocument): boolean {
@@ -122,7 +118,7 @@
    </div>
   {:else if doc.content}
    <div class="markdown-content">
-    {@html renderMarkdown(doc.content)}
+    {@html renderMarkdownWithLinks(doc.content, doc.source, doc.file_path)}
    </div>
   {:else}
    <p class="no-content">This document has no content.</p>

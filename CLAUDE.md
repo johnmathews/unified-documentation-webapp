@@ -4,6 +4,7 @@
 
 - `src/lib/` - Shared library code
   - `api.ts` - Client-side API functions (types + fetch wrappers)
+  - `links.ts` - Document link resolution (rewrites relative markdown links to app URLs)
   - `stores.svelte.ts` - Shared reactive state (current doc ID, category filters)
   - `server/api.ts` - Server-side proxy utilities
   - `components/` - Svelte components (Sidebar, SearchPanel, ChatPanel)
@@ -27,6 +28,7 @@
 - **Responsive** — Desktop (3 panels), tablet (overlay drawers), phone (85%-width sidebar with backdrop, swipe gestures, 44px touch targets, safe-area-insets)
 - **Document categories** — root\_docs, docs, journal, engineering\_team, pdf (defined in `CATEGORIES` constant in stores)
 - **Category filters** — GOV.UK-style small checkboxes in sidebar, global toggle per category, persisted to localStorage
+- **Document link resolution** — Relative markdown links (e.g. `[text](other.md)`) are rewritten at render time by `src/lib/links.ts`. Links to `.md` files resolve to `/doc/{docId}`, other files to `/api/files/{docId}`. The original markdown is unchanged, so links still work on GitHub and locally
 
 ## Backend Dependency
 
