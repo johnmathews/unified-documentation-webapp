@@ -39,3 +39,7 @@ Moved the search feature out of the file picker sidebar into a dedicated SearchP
 - 9 new tests for search filters and fetchSources
 - 2 pre-existing test fixes for PDF category count
 - All 114 tests passing
+
+## Bug investigation: tracked files silently reverted
+
+During this session, edits to tracked files were silently reverted to HEAD at least 3 times. Untracked files survived. Investigated all running processes, git hooks, formatters, and Claude Code hooks — none were the cause. The pattern is consistent with `git restore .` but nothing was found that would trigger it. Documented in `BUG-FILE-REVERTS.md` with reproduction steps and a plan to use worktrees as both a diagnostic test and mitigation.
