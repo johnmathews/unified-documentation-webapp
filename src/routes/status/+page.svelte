@@ -153,8 +153,8 @@
        >Chunks{sortIndicator("chunk_count")}</button
       ></th
      >
-     <th class="num"
-      ><button class="sort-btn sort-btn-right" onclick={() => toggleSort("last_indexed")}
+     <th
+      ><button class="sort-btn" onclick={() => toggleSort("last_indexed")}
        >Last Indexed{sortIndicator("last_indexed")}</button
       ></th
      >
@@ -168,7 +168,7 @@
       </td>
       <td class="num">{source.file_count}</td>
       <td class="num">{source.chunk_count}</td>
-      <td class="num">
+      <td>
        <span class="timestamp">{formatTimestamp(source.last_indexed)}</span>
        <span class="time-ago">{timeAgo(source.last_indexed)}</span>
       </td>
@@ -180,7 +180,7 @@
      <td><strong>Total</strong></td>
      <td class="num"><strong>{health.sources.reduce((n, s) => n + s.file_count, 0)}</strong></td>
      <td class="num"><strong>{health.total_chunks}</strong></td>
-     <td class="num"></td>
+     <td></td>
     </tr>
    </tfoot>
   </table>
@@ -381,6 +381,8 @@
  .num {
   text-align: right;
   font-variant-numeric: tabular-nums;
+  width: 1%;
+  white-space: nowrap;
  }
 
  .source-tag {
@@ -392,12 +394,14 @@
 
  .timestamp {
   font-size: 16px;
+  white-space: nowrap;
  }
 
  .time-ago {
   font-size: 14px;
   color: var(--text-muted);
   margin-left: 8px;
+  white-space: nowrap;
  }
 
  @media (max-width: 640px) {
