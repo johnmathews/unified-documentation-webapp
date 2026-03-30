@@ -2,31 +2,67 @@
 
 ## Overview
 
-The documentation UI is a SvelteKit web application that provides a browsable interface
-to documentation indexed by the documentation MCP server. It includes a real-time chat
-interface powered by Claude that has full context of the documentation.
+The documentation UI is a SvelteKit web application that provides a browsable interface to documentation indexed by the
+documentation MCP server. It includes a real-time chat interface powered by Claude that has full context of the
+documentation.
 
 ## Components
 
 ### Frontend (SvelteKit)
 
-- **Layout**: Three-panel layout with sidebar, content area, and collapsible chat panel. The header bar has the product name "Documentation Library" (shortened to "Library" on mobile) on the left and two icon groups on the right: utility actions (theme toggle, server status, print) and panel toggles (Files, Search, Chat), separated by a vertical border. The service navigation bar below the header contains only page-level navigation links: All Documents, Root Docs, Dev Journal, and Engineering Team. The sidebar (file picker) and search panel have mutual exclusion — opening one closes the other.
-- **Sidebar**: Tree navigation organized by Source > Category (Root Docs/Documentation Directory/Development Journal/Engineering Team) > Document, with expand/collapse controls inside the tree section. Each source has a deterministic color tag for visual distinction. All four categories are collapsible sections with document counts. A collapsible "Filter categories" section with GOV.UK-style small checkboxes allows globally toggling category visibility (persisted to localStorage). The `CATEGORIES` constant in `stores.svelte.ts` is the single source of truth for category definitions.
-- **Mobile Responsiveness**: Full-screen modal sidebar and chat panels on mobile (100% width in both portrait and landscape) with slide-in/out animations for both panels, swipe gestures (edge-swipe to open/close panels), 44px minimum touch targets, safe-area-inset handling for notched devices (top bar, content, sidebar, and chat input all respect `env(safe-area-inset-*)`), dynamic viewport height (`100dvh`), explicit 16px font size on mobile inputs to prevent iOS Safari auto-zoom, 16px base font size on mobile (up from 14px desktop default) for comfortable reading on phone screens, and a landscape-phone breakpoint (`max-height: 500px`) ensuring panels remain full-screen modals on rotated phones. The chat panel expand/collapse button is hidden on mobile since the panel is always full-width.
-- **Document Viewer**: Renders markdown documents with a two-row metadata header (row 1: source badge + file path; row 2: created/modified dates). Relative links between documents (e.g. `[text](other.md)`) are automatically rewritten at render time so they navigate to the correct document within the app — the original markdown files are unchanged and still work on GitHub and locally. Links to `.md` files resolve to `/doc/{docId}` routes; links to other files (images, etc.) resolve to `/api/files/{docId}`. The link resolution logic lives in `src/lib/links.ts`. PDF files are detected by file extension and displayed in an inline iframe via the `/api/files/` proxy route, with "Open in new tab" and "Download" action buttons above the viewer. A print button in the top bar triggers `window.print()` with `@media print` styles that hide all UI chrome, force light colours, use compact 12pt typography, and render the metadata as three rows (source name, file path, dates) for clean output. Print styles use `!important` to override Svelte-scoped styles.
-- **Chat Panel**: Real-time chat with Claude, aware of the currently viewed page. Supports multiline input (Shift+Enter for newlines, Enter to send) and message editing (pencil icon below sent user messages — clicking loads the text into the input, truncates from the edit point on submit). On desktop, the panel is resizable via a drag handle on its left edge (300–900px range, persisted to localStorage). Default width is 432px.
-- **Search**: Dedicated search panel (separate from sidebar) with debounced search combining semantic (ChromaDB) and keyword (title/file_path) matching. Always-visible source and document type filters above a collapsible section for date range filters (created/modified). Results show source tags, file paths, and date metadata. The panel has mutual exclusion with the file picker sidebar — opening one closes the other, but search state (query, filters, results) is preserved when the panel is toggled closed and reopened. On desktop, the panel is resizable via a drag handle on its right edge (250–800px range, persisted to localStorage as `search-width`). Default width is 320px (384px on large screens).
+- **Layout**: Three-panel layout with sidebar, content area, and collapsible chat panel. The header bar has the product
+  name "Documentation Library" (shortened to "Library" on mobile) on the left and two icon groups on the right: utility
+  actions (theme toggle, server status, print) and panel toggles (Files, Search, Chat), separated by a vertical border.
+  The service navigation bar below the header contains only page-level navigation links: All Documents, Root Docs, Dev
+  Journal, and Engineering Team. The sidebar (file picker) and search panel have mutual exclusion — opening one closes
+  the other.
+- **Sidebar**: Tree navigation organized by Source > Category (Root Docs/Documentation Directory/Development
+  Journal/Engineering Team) > Document, with expand/collapse controls inside the tree section. Each source has a
+  deterministic color tag for visual distinction. All four categories are collapsible sections with document counts. A
+  collapsible "Filter categories" section with GOV.UK-style small checkboxes allows globally toggling category visibility
+  (persisted to localStorage). The `CATEGORIES` constant in `stores.svelte.ts` is the single source of truth for category
+  definitions.
+- **Mobile Responsiveness**: Full-screen modal sidebar and chat panels on mobile (100% width in both portrait and
+  landscape) with slide-in/out animations for both panels, swipe gestures (edge-swipe to open/close panels), 44px minimum
+  touch targets, safe-area-inset handling for notched devices (top bar, content, sidebar, and chat input all respect
+  `env(safe-area-inset-*)`), dynamic viewport height (`100dvh`), explicit 16px font size on mobile inputs to prevent iOS
+  Safari auto-zoom, 16px base font size on mobile (up from 14px desktop default) for comfortable reading on phone
+  screens, and a landscape-phone breakpoint (`max-height: 500px`) ensuring panels remain full-screen modals on rotated
+  phones. The chat panel expand/collapse button is hidden on mobile since the panel is always full-width.
+- **Document Viewer**: Renders markdown documents with a two-row metadata header (row 1: source badge + file path; row 2:
+  created/modified dates). Relative links between documents (e.g. `[text](other.md)`) are automatically rewritten at
+  render time so they navigate to the correct document within the app — the original markdown files are unchanged and
+  still work on GitHub and locally. Links to `.md` files resolve to `/doc/{docId}` routes; links to other files (images,
+  etc.) resolve to `/api/files/{docId}`. The link resolution logic lives in `src/lib/links.ts`. PDF files are detected by
+  file extension and displayed in an inline iframe via the `/api/files/` proxy route, with "Open in new tab" and
+  "Download" action buttons above the viewer. A print button in the top bar triggers `window.print()` with `@media print`
+  styles that hide all UI chrome, force light colours, use compact 12pt typography, and render the metadata as three rows
+  (source name, file path, dates) for clean output. Print styles use `!important` to override Svelte-scoped styles.
+- **Chat Panel**: Real-time chat with Claude, aware of the currently viewed page. Supports multiline input (Shift+Enter
+  for newlines, Enter to send) and message editing (pencil icon below sent user messages — clicking loads the text into
+  the input, truncates from the edit point on submit). On desktop, the panel is resizable via a drag handle on its left
+  edge (300–900px range, persisted to localStorage). Default width is 432px.
+- **Search**: Dedicated search panel (separate from sidebar) with debounced search combining semantic (ChromaDB) and
+  keyword (title/file_path) matching. Always-visible source and document type filters above a collapsible section for
+  date range filters (created/modified). Results show source tags, file paths, and date metadata. The panel has mutual
+  exclusion with the file picker sidebar — opening one closes the other, but search state (query, filters, results) is
+  preserved when the panel is toggled closed and reopened. On desktop, the panel is resizable via a drag handle on its
+  right edge (250–800px range, persisted to localStorage as `search-width`). Default width is 320px (384px on large
+  screens).
 - **Journal Timeline**: Cross-project chronological view of all journal entries at `/journal`
 - **Root Docs**: Cross-project view of root-level files (README, CLAUDE.md) at `/root-docs`, grouped by source
-- **Engineering Team**: Cross-project view of evaluation reports and improvement plans at `/engineering-team`, grouped by source
-- **Server Status**: Admin page at `/status` showing backend health, per-source indexing stats (file count, chunk count, last indexed time), and a refresh button. Proxied via `/api/health`.
+- **Engineering Team**: Cross-project view of evaluation reports and improvement plans at `/engineering-team`, grouped by
+  source
+- **Server Status**: Admin page at `/status` showing backend health, per-source indexing stats (file count, chunk count,
+  last indexed time), and a refresh button. Proxied via `/api/health`.
 
 ### Server Routes (SvelteKit)
 
-SvelteKit server routes act as a proxy between the browser and the MCP server backend.
-This eliminates CORS concerns and allows runtime configuration of the backend URL.
+SvelteKit server routes act as a proxy between the browser and the MCP server backend. This eliminates CORS concerns and
+allows runtime configuration of the backend URL.
 
 Routes:
+
 - `GET /api/tree` → proxies to backend `/api/tree`
 - `GET /api/documents/:id` → proxies to backend `/api/documents/:id`
 - `GET /api/files/:id` → proxies raw binary to backend `/api/files/:id` (preserves Content-Type, Content-Length)
@@ -40,7 +76,8 @@ The MCP server provides REST API endpoints alongside its existing MCP tools:
 
 - `GET /api/tree` — Document tree organized by source and category
 - `GET /api/documents/:doc_id` — Full document content
-- `GET /api/search?q=&source=&limit=` — Combined semantic search (ChromaDB) and keyword search on title/file_path (SQLite LIKE)
+- `GET /api/search?q=&source=&limit=` — Combined semantic search (ChromaDB) and keyword search on title/file_path (SQLite
+  LIKE)
 - `POST /api/chat` — RAG-powered chat (searches docs, sends context to Claude)
 
 ## Deployment
@@ -55,7 +92,7 @@ The UI connects to the backend via the internal Docker network using `http://doc
 ## Environment Variables
 
 | Variable            | Where        | Description                                    |
-|---------------------|--------------|------------------------------------------------|
-| `API_URL`           | UI container | Backend URL (default: `http://localhost:8085`)  |
+| ------------------- | ------------ | ---------------------------------------------- |
+| `API_URL`           | UI container | Backend URL (default: `http://localhost:8085`) |
 | `ANTHROPIC_API_KEY` | MCP server   | Required for the chat endpoint                 |
 | `PORT`              | UI container | Server port (default: `3000`)                  |

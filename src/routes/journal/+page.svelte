@@ -96,10 +96,7 @@
  <div class="masthead">
   <div class="masthead__inner">
    <h1 class="masthead__title">Journal Timeline</h1>
-   <p class="masthead__description">
-    All development journal entries across {new Set(entries.map((e) => e.source)).size} projects &middot; {entries.length}
-    entries
-   </p>
+   <p class="masthead__description">All development journal entries.</p>
   </div>
  </div>
 

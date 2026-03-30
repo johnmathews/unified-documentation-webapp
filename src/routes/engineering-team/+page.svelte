@@ -72,10 +72,7 @@
  <div class="masthead">
   <div class="masthead__inner">
    <h1 class="masthead__title">Engineering Team</h1>
-   <p class="masthead__description">
-    Evaluation reports and improvement plans across {new Set(docs.map((d) => d.source)).size} projects &middot; {docs.length}
-    documents
-   </p>
+   <p class="masthead__description">Evaluation reports and improvement plans built using the /engineering-team skill.</p>
   </div>
  </div>
 
