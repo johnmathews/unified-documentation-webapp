@@ -333,7 +333,6 @@
  }
 
  .source-table {
-  width: 100%;
   border-collapse: collapse;
   font-size: 16px;
  }
