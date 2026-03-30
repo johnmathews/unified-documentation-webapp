@@ -143,6 +143,11 @@
    <thead>
     <tr>
      <th><button class="sort-btn" onclick={() => toggleSort("source")}>Source{sortIndicator("source")}</button></th>
+     <th
+      ><button class="sort-btn" onclick={() => toggleSort("last_indexed")}
+       >Last Indexed{sortIndicator("last_indexed")}</button
+      ></th
+     >
      <th class="num"
       ><button class="sort-btn sort-btn-right" onclick={() => toggleSort("file_count")}
        >Files{sortIndicator("file_count")}</button
@@ -153,11 +158,6 @@
        >Chunks{sortIndicator("chunk_count")}</button
       ></th
      >
-     <th
-      ><button class="sort-btn" onclick={() => toggleSort("last_indexed")}
-       >Last Indexed{sortIndicator("last_indexed")}</button
-      ></th
-     >
     </tr>
    </thead>
    <tbody>
@@ -166,21 +166,21 @@
       <td>
        <span class="source-tag {sourceColorClass(source.source)}">{displaySource(source.source)}</span>
       </td>
-      <td class="num">{source.file_count}</td>
-      <td class="num">{source.chunk_count}</td>
       <td>
        <span class="timestamp">{formatTimestamp(source.last_indexed)}</span>
        <span class="time-ago">{timeAgo(source.last_indexed)}</span>
       </td>
+      <td class="num">{source.file_count}</td>
+      <td class="num">{source.chunk_count}</td>
      </tr>
     {/each}
    </tbody>
    <tfoot>
     <tr>
      <td><strong>Total</strong></td>
+     <td></td>
      <td class="num"><strong>{health.sources.reduce((n, s) => n + s.file_count, 0)}</strong></td>
      <td class="num"><strong>{health.total_chunks}</strong></td>
-     <td></td>
     </tr>
    </tfoot>
   </table>
@@ -343,6 +343,11 @@
   font-weight: 700;
   padding: 12px 25px 12px 0;
   border-bottom: 2px solid var(--border-strong);
+ }
+
+ .source-table th:first-child,
+ .source-table td:first-child {
+  padding-left: 8px;
  }
 
  .sort-btn {
