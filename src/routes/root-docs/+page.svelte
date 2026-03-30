@@ -73,7 +73,8 @@
   <div class="masthead__inner">
    <h1 class="masthead__title">Root Docs</h1>
    <p class="masthead__description">
-    Project root files (README, CLAUDE.md) across {new Set(docs.map((d) => d.source)).size} projects &middot; {docs.length}
+    Project root files (README.md, CLAUDE.md, project-brief.md, etc.) across {new Set(docs.map((d) => d.source)).size} projects
+    &middot; {docs.length}
     documents
    </p>
   </div>
