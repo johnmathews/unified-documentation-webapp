@@ -26,6 +26,11 @@
  let sidebarWidth = $state(DEFAULT_WIDTH);
  let isResizing = $state(false);
 
+ const SEARCH_DEFAULT_WIDTH = 320;
+ const SEARCH_LARGE_DEFAULT_WIDTH = 384;
+ let searchWidth = $state(SEARCH_DEFAULT_WIDTH);
+ let isSearchResizing = $state(false);
+
  const CHAT_DEFAULT_WIDTH = 432;
  let chatWidth = $state(CHAT_DEFAULT_WIDTH);
  let isChatResizing = $state(false);
@@ -45,6 +50,27 @@
    document.removeEventListener("mousemove", onMove);
    document.removeEventListener("mouseup", onUp);
    localStorage.setItem("sidebar-width", String(sidebarWidth));
+  }
+
+  document.addEventListener("mousemove", onMove);
+  document.addEventListener("mouseup", onUp);
+ }
+
+ function handleSearchResizeStart(e: MouseEvent) {
+  e.preventDefault();
+  isSearchResizing = true;
+  const startX = e.clientX;
+  const startWidth = searchWidth;
+
+  function onMove(ev: MouseEvent) {
+   searchWidth = Math.max(250, Math.min(800, startWidth + (ev.clientX - startX)));
+  }
+
+  function onUp() {
+   isSearchResizing = false;
+   document.removeEventListener("mousemove", onMove);
+   document.removeEventListener("mouseup", onUp);
+   localStorage.setItem("search-width", String(searchWidth));
   }
 
   document.addEventListener("mousemove", onMove);
@@ -120,6 +146,12 @@
    sidebarWidth = Math.max(250, Math.min(800, parseInt(saved, 10) || DEFAULT_WIDTH));
   } else if (isLargeScreen.current) {
    sidebarWidth = LARGE_DEFAULT_WIDTH;
+  }
+  const savedSearch = localStorage.getItem("search-width");
+  if (savedSearch) {
+   searchWidth = Math.max(250, Math.min(800, parseInt(savedSearch, 10) || SEARCH_DEFAULT_WIDTH));
+  } else if (isLargeScreen.current) {
+   searchWidth = SEARCH_LARGE_DEFAULT_WIDTH;
   }
   const savedChat = localStorage.getItem("chat-width");
   if (savedChat) {
@@ -198,7 +230,7 @@
      </svg>
     </button>
     <button
-     class="govuk-header__action-btn"
+     class="govuk-header__action-btn govuk-header__action-btn--search"
      class:active={searchOpen}
      onclick={() => {
       searchOpen = !searchOpen;
@@ -235,7 +267,13 @@
   <div class="govuk-service-nav__container">
    <ul class="govuk-service-nav__list">
     <li class="govuk-service-nav__item">
-     <button class="govuk-service-nav__link govuk-service-nav__link--btn" onclick={() => (sidebarOpen = !sidebarOpen)}>
+     <button
+      class="govuk-service-nav__link govuk-service-nav__link--btn"
+      onclick={() => {
+       sidebarOpen = !sidebarOpen;
+       if (sidebarOpen) searchOpen = false;
+      }}
+     >
       File Picker
      </button>
     </li>
@@ -306,7 +344,8 @@
 <aside
  class="search-panel"
  class:open={searchOpen}
- style="width: {isMobile.current ? '100%' : sidebarWidth + 'px'}"
+ class:resizing={isSearchResizing}
+ style="width: {isMobile.current ? '100%' : searchWidth + 'px'}"
  aria-hidden={!searchOpen}
 >
  <SearchPanel
@@ -314,6 +353,10 @@
    if (window.innerWidth <= 768) searchOpen = false;
   }}
  />
+ {#if !isMobile.current}
+  <!-- svelte-ignore a11y_no_static_element_interactions -->
+  <div class="search-resize-handle" onmousedown={handleSearchResizeStart}></div>
+ {/if}
 </aside>
 
 <aside
@@ -441,6 +484,12 @@
   color: var(--focus-text);
   background: var(--focus);
   outline: none;
+ }
+
+ .govuk-header__action-btn--search {
+  margin-left: 10px;
+  border-left: 1px solid rgba(255, 255, 255, 0.3);
+  padding-left: 15px;
  }
 
  .govuk-header__btn-label {
@@ -599,6 +648,26 @@
 
  .search-panel.open {
   display: flex;
+ }
+
+ .search-panel.resizing {
+  user-select: none;
+ }
+
+ .search-resize-handle {
+  position: absolute;
+  top: 0;
+  right: -3px;
+  width: 6px;
+  height: 100%;
+  cursor: col-resize;
+  z-index: 201;
+ }
+
+ .search-resize-handle:hover,
+ .search-panel.resizing .search-resize-handle {
+  background: var(--brand);
+  opacity: 0.4;
  }
 
  .sidebar-resize-handle {

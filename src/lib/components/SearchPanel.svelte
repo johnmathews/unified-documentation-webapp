@@ -563,6 +563,9 @@
  .primary-filters {
   padding: 10px 15px;
   border-bottom: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
  }
 
  /* Filter section */

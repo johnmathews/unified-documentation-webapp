@@ -9,29 +9,26 @@ const DESKTOP = { width: 1280, height: 800 };
 // --- Helpers --------------------------------------------------------------------
 
 const sidebar = (page: Page) => page.locator('aside.sidebar');
-const toggleBtn = (page: Page) => page.getByTitle('Toggle sidebar');
+const filePickerBtn = (page: Page) => page.getByRole('button', { name: 'File Picker' });
 const backdrop = (page: Page) => page.locator('button.backdrop');
 const content = (page: Page) => page.locator('main.content');
 
 /**
- * Whether the sidebar is visually on-screen.
- * Checks boundingBox — if off-screen via translateX(-100%), its right edge is at x=0 or less.
+ * Whether the sidebar panel is visible (display is not 'none').
  */
 async function isSidebarVisible(page: Page): Promise<boolean> {
-	const box = await sidebar(page).boundingBox();
-	if (!box) return false;
-	return box.x + box.width > 0;
+	const display = await sidebar(page).evaluate(
+		(el) => getComputedStyle(el).display
+	);
+	return display !== 'none';
 }
 
-// NOTE: sidebarOpen defaults to true — the sidebar starts open on ALL viewports.
-// On mobile/tablet it overlays as a fixed panel; on desktop it's in the layout flow.
+// NOTE: sidebarOpen defaults to false — the sidebar starts CLOSED on all viewports.
+// Users open it via the "File Picker" button in the service nav.
 
 // =================================================================================
-// REGRESSION: Sidebar must open AND close on mobile portrait
+// Mobile portrait sidebar
 // =================================================================================
-// Bug: CSS at max-width:600px set `transform: translateX(0)` on `.sidebar`,
-// overriding the `translateX(-100%)` hide state from the 1024px query.
-// Result: sidebar was always visible; toggle only affected the backdrop dimming.
 
 test.describe('Mobile portrait sidebar', () => {
 	test.beforeEach(async ({ page }) => {
@@ -40,72 +37,47 @@ test.describe('Mobile portrait sidebar', () => {
 		await page.waitForLoadState('networkidle');
 	});
 
-	test('sidebar is visible by default (sidebarOpen=true)', async ({ page }) => {
-		expect(await isSidebarVisible(page)).toBe(true);
-	});
-
-	test('toggle button closes the sidebar', async ({ page }) => {
-		// Sidebar starts open; first click should close it
-		await toggleBtn(page).click();
-		await sidebar(page).evaluate(
-			(el) => new Promise((r) => el.addEventListener('transitionend', r, { once: true }))
-		);
+	test('sidebar is hidden by default', async ({ page }) => {
 		expect(await isSidebarVisible(page)).toBe(false);
 	});
 
-	test('toggle button reopens the sidebar after closing', async ({ page }) => {
+	test('File Picker button opens the sidebar', async ({ page }) => {
+		await filePickerBtn(page).click();
+		expect(await isSidebarVisible(page)).toBe(true);
+	});
+
+	test('File Picker button toggles sidebar closed', async ({ page }) => {
+		// Open
+		await filePickerBtn(page).click();
+		expect(await isSidebarVisible(page)).toBe(true);
+
 		// Close
-		await toggleBtn(page).click();
-		await sidebar(page).evaluate(
-			(el) => new Promise((r) => el.addEventListener('transitionend', r, { once: true }))
-		);
+		await filePickerBtn(page).click();
 		expect(await isSidebarVisible(page)).toBe(false);
-
-		// Reopen
-		await toggleBtn(page).click();
-		await sidebar(page).evaluate(
-			(el) => new Promise((r) => el.addEventListener('transitionend', r, { once: true }))
-		);
-		expect(await isSidebarVisible(page)).toBe(true);
 	});
 
-	test('backdrop present when sidebar open, gone when closed', async ({ page }) => {
-		// Starts open — backdrop should be present on mobile
+	test('backdrop appears when sidebar opens, disappears when closed', async ({ page }) => {
+		// Closed — no backdrop
+		expect(await backdrop(page).count()).toBe(0);
+
+		// Open sidebar — backdrop appears
+		await filePickerBtn(page).click();
 		expect(await backdrop(page).count()).toBe(1);
 
-		// Close sidebar — backdrop should disappear
-		await toggleBtn(page).click();
-		await expect(backdrop(page)).toHaveCount(0);
-	});
-
-	test('backdrop is behind full-width sidebar on mobile (not clickable)', async ({ page }) => {
-		// With 100% width sidebar, the backdrop is completely covered.
-		// Users close via the toggle button or by selecting a document.
-		expect(await isSidebarVisible(page)).toBe(true);
-		expect(await backdrop(page).count()).toBe(1);
-
-		// The backdrop is not actionable when sidebar is full-width — verify
-		// the toggle button is the way to close instead.
-		await toggleBtn(page).click();
-		await sidebar(page).evaluate(
-			(el) => new Promise((r) => el.addEventListener('transitionend', r, { once: true }))
-		);
-		expect(await isSidebarVisible(page)).toBe(false);
+		// Close via button — backdrop disappears
+		await filePickerBtn(page).click();
 		expect(await backdrop(page).count()).toBe(0);
 	});
 
 	test('sidebar takes full viewport width on mobile', async ({ page }) => {
+		await filePickerBtn(page).click();
+
 		const box = await sidebar(page).boundingBox();
 		expect(box).toBeTruthy();
 		expect(box!.width).toBeGreaterThanOrEqual(IPHONE_PORTRAIT.width - 2);
 	});
 
-	test('content is accessible after sidebar closes', async ({ page }) => {
-		await toggleBtn(page).click();
-		await sidebar(page).evaluate(
-			(el) => new Promise((r) => el.addEventListener('transitionend', r, { once: true }))
-		);
-
+	test('content is accessible when sidebar is closed', async ({ page }) => {
 		const box = await content(page).boundingBox();
 		expect(box).toBeTruthy();
 		expect(box!.width).toBeGreaterThan(0);
@@ -124,27 +96,30 @@ test.describe('Mobile landscape sidebar', () => {
 	});
 
 	test('sidebar opens and closes correctly in landscape', async ({ page }) => {
-		// Starts open
+		// Starts closed
+		expect(await isSidebarVisible(page)).toBe(false);
+
+		// Open
+		await filePickerBtn(page).click();
 		expect(await isSidebarVisible(page)).toBe(true);
 
 		// Close
-		await toggleBtn(page).click();
-		await sidebar(page).evaluate(
-			(el) => new Promise((r) => el.addEventListener('transitionend', r, { once: true }))
-		);
+		await filePickerBtn(page).click();
 		expect(await isSidebarVisible(page)).toBe(false);
+	});
 
-		// Reopen
-		await toggleBtn(page).click();
-		await sidebar(page).evaluate(
-			(el) => new Promise((r) => el.addEventListener('transitionend', r, { once: true }))
-		);
-		expect(await isSidebarVisible(page)).toBe(true);
+	test('sidebar has a fixed pixel width in landscape (not full-width)', async ({ page }) => {
+		// At 844px wide, max-width:768px does not apply, so sidebar uses its pixel width
+		await filePickerBtn(page).click();
+		const box = await sidebar(page).boundingBox();
+		expect(box).toBeTruthy();
+		expect(box!.width).toBeLessThan(IPHONE_LANDSCAPE.width);
+		expect(box!.width).toBeGreaterThan(200);
 	});
 });
 
 // =================================================================================
-// Tablet — sidebar uses slide animation (1024px breakpoint)
+// Tablet — sidebar is a fixed overlay
 // =================================================================================
 
 test.describe('Tablet sidebar', () => {
@@ -154,27 +129,31 @@ test.describe('Tablet sidebar', () => {
 		await page.waitForLoadState('networkidle');
 	});
 
-	test('sidebar opens and closes with slide animation', async ({ page }) => {
+	test('sidebar opens and closes', async ({ page }) => {
+		expect(await isSidebarVisible(page)).toBe(false);
+
+		// Open
+		await filePickerBtn(page).click();
 		expect(await isSidebarVisible(page)).toBe(true);
 
 		// Close
-		await toggleBtn(page).click();
-		await sidebar(page).evaluate(
-			(el) => new Promise((r) => el.addEventListener('transitionend', r, { once: true }))
-		);
+		await filePickerBtn(page).click();
 		expect(await isSidebarVisible(page)).toBe(false);
+	});
 
-		// Reopen
-		await toggleBtn(page).click();
-		await sidebar(page).evaluate(
-			(el) => new Promise((r) => el.addEventListener('transitionend', r, { once: true }))
+	test('sidebar is full width at 768px breakpoint', async ({ page }) => {
+		// At exactly 768px, max-width:768px media query matches → sidebar is 100% width
+		await filePickerBtn(page).click();
+
+		const width = await sidebar(page).evaluate(
+			(el) => parseFloat(getComputedStyle(el).width)
 		);
-		expect(await isSidebarVisible(page)).toBe(true);
+		expect(width).toBeGreaterThanOrEqual(TABLET_PORTRAIT.width - 2);
 	});
 });
 
 // =================================================================================
-// Desktop — sidebar is part of the flow, not an overlay
+// Desktop — sidebar is a fixed overlay
 // =================================================================================
 
 test.describe('Desktop sidebar', () => {
@@ -184,110 +163,77 @@ test.describe('Desktop sidebar', () => {
 		await page.waitForLoadState('networkidle');
 	});
 
-	test('sidebar is visible by default', async ({ page }) => {
-		expect(await isSidebarVisible(page)).toBe(true);
+	test('sidebar is hidden by default on desktop', async ({ page }) => {
+		expect(await isSidebarVisible(page)).toBe(false);
 	});
 
-	test('no backdrop on desktop', async ({ page }) => {
+	test('no backdrop when sidebar is closed', async ({ page }) => {
 		expect(await backdrop(page).count()).toBe(0);
 	});
 
-	test('toggle hides sidebar on desktop', async ({ page }) => {
-		await toggleBtn(page).click();
-		// Desktop uses display:none, not transform
-		await page.waitForTimeout(100);
+	test('File Picker toggles sidebar on desktop', async ({ page }) => {
+		await filePickerBtn(page).click();
+		expect(await isSidebarVisible(page)).toBe(true);
+
+		await filePickerBtn(page).click();
 		expect(await isSidebarVisible(page)).toBe(false);
 	});
 });
 
 // =================================================================================
-// CSS property regression guards
+// CSS property checks
 // =================================================================================
-// These tests directly check computed CSS values to catch the exact class of bug
-// we hit: one media query overriding another's transform/display/visibility rules.
 
-test.describe('CSS property regression', () => {
-	test('mobile: closed sidebar has negative translateX', async ({ page }) => {
+test.describe('CSS property checks', () => {
+	test('mobile: closed sidebar has display none', async ({ page }) => {
 		await page.setViewportSize(IPHONE_PORTRAIT);
 		await page.goto('/');
 		await page.waitForLoadState('networkidle');
 
-		// Close the sidebar (it starts open)
-		await toggleBtn(page).click();
-		await sidebar(page).evaluate(
-			(el) => new Promise((r) => el.addEventListener('transitionend', r, { once: true }))
+		const display = await sidebar(page).evaluate(
+			(el) => getComputedStyle(el).display
 		);
-
-		const transform = await sidebar(page).evaluate(
-			(el) => getComputedStyle(el).transform
-		);
-		// translateX(-100%) computes to matrix(1, 0, 0, 1, -<width>, 0)
-		expect(transform).not.toBe('none');
-		const match = transform.match(/matrix\(([^)]+)\)/);
-		expect(match).toBeTruthy();
-		const tx = parseFloat(match![1].split(',')[4].trim());
-		expect(tx).toBeLessThan(0);
+		expect(display).toBe('none');
 	});
 
-	test('mobile: open sidebar has translateX(0)', async ({ page }) => {
+	test('mobile: open sidebar has display flex', async ({ page }) => {
 		await page.setViewportSize(IPHONE_PORTRAIT);
 		await page.goto('/');
 		await page.waitForLoadState('networkidle');
 
-		// Sidebar starts open — check its transform
-		const transform = await sidebar(page).evaluate(
-			(el) => getComputedStyle(el).transform
-		);
-		// translateX(0) computes to matrix(1,0,0,1,0,0) or 'none'
-		if (transform && transform !== 'none') {
-			const match = transform.match(/matrix\(([^)]+)\)/);
-			if (match) {
-				const tx = parseFloat(match[1].split(',')[4].trim());
-				expect(tx).toBe(0);
-			}
-		}
-	});
+		await filePickerBtn(page).click();
 
-	test('mobile: sidebar width is 100% of viewport', async ({ page }) => {
-		await page.setViewportSize(IPHONE_PORTRAIT);
-		await page.goto('/');
-		await page.waitForLoadState('networkidle');
-
-		const width = await sidebar(page).evaluate(
-			(el) => getComputedStyle(el).width
-		);
-		const widthPx = parseFloat(width);
-		expect(widthPx).toBeGreaterThanOrEqual(IPHONE_PORTRAIT.width - 2);
-	});
-
-	test('tablet: sidebar is narrower than viewport', async ({ page }) => {
-		await page.setViewportSize(TABLET_PORTRAIT);
-		await page.goto('/');
-		await page.waitForLoadState('networkidle');
-
-		const width = await sidebar(page).evaluate(
-			(el) => getComputedStyle(el).width
-		);
-		const widthPx = parseFloat(width);
-		expect(widthPx).toBeLessThan(TABLET_PORTRAIT.width);
-	});
-
-	test('mobile: sidebar stays in DOM when closed (display is not none)', async ({ page }) => {
-		await page.setViewportSize(IPHONE_PORTRAIT);
-		await page.goto('/');
-		await page.waitForLoadState('networkidle');
-
-		// Close
-		await toggleBtn(page).click();
-		await sidebar(page).evaluate(
-			(el) => new Promise((r) => el.addEventListener('transitionend', r, { once: true }))
-		);
-
-		// Must remain display:flex for the CSS transition to animate
 		const display = await sidebar(page).evaluate(
 			(el) => getComputedStyle(el).display
 		);
 		expect(display).toBe('flex');
+	});
+
+	test('mobile: open sidebar width is 100% of viewport', async ({ page }) => {
+		await page.setViewportSize(IPHONE_PORTRAIT);
+		await page.goto('/');
+		await page.waitForLoadState('networkidle');
+
+		await filePickerBtn(page).click();
+
+		const width = await sidebar(page).evaluate(
+			(el) => parseFloat(getComputedStyle(el).width)
+		);
+		expect(width).toBeGreaterThanOrEqual(IPHONE_PORTRAIT.width - 2);
+	});
+
+	test('tablet: open sidebar is full width at 768px breakpoint', async ({ page }) => {
+		await page.setViewportSize(TABLET_PORTRAIT);
+		await page.goto('/');
+		await page.waitForLoadState('networkidle');
+
+		await filePickerBtn(page).click();
+
+		const width = await sidebar(page).evaluate(
+			(el) => parseFloat(getComputedStyle(el).width)
+		);
+		// At 768px, max-width:768px matches → full width
+		expect(width).toBeGreaterThanOrEqual(TABLET_PORTRAIT.width - 2);
 	});
 });
 
@@ -300,7 +246,9 @@ test.describe('Viewport resize transitions', () => {
 		await page.setViewportSize(IPHONE_PORTRAIT);
 		await page.goto('/');
 		await page.waitForLoadState('networkidle');
-		// Sidebar starts open
+
+		// Open sidebar
+		await filePickerBtn(page).click();
 		expect(await isSidebarVisible(page)).toBe(true);
 
 		// Rotate to landscape — should still be visible
@@ -314,11 +262,7 @@ test.describe('Viewport resize transitions', () => {
 		await page.goto('/');
 		await page.waitForLoadState('networkidle');
 
-		// Close sidebar
-		await toggleBtn(page).click();
-		await sidebar(page).evaluate(
-			(el) => new Promise((r) => el.addEventListener('transitionend', r, { once: true }))
-		);
+		// Sidebar starts closed
 		expect(await isSidebarVisible(page)).toBe(false);
 
 		// Rotate to landscape — should stay closed
