@@ -341,7 +341,7 @@
  .source-table th {
   text-align: left;
   font-weight: 700;
-  padding: 10px 15px 10px 0;
+  padding: 12px 25px 12px 0;
   border-bottom: 2px solid var(--border-strong);
  }
 
@@ -367,7 +367,7 @@
  }
 
  .source-table td {
-  padding: 10px 15px 10px 0;
+  padding: 12px 25px 12px 0;
   border-bottom: 1px solid var(--border);
   vertical-align: middle;
  }
