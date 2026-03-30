@@ -149,7 +149,7 @@
  <div class="chat-header">
   <h3>Chat</h3>
   {#if docId}
-   <span class="context-badge" title={docId}>
+   <span class="context-badge" title="The chat assistant can see the document you're currently viewing and will use it as context when answering questions.">
     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
      <circle cx="12" cy="12" r="10" />
      <line x1="12" y1="16" x2="12" y2="12" />
