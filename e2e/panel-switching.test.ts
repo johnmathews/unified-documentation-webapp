@@ -6,7 +6,6 @@ const DESKTOP = { width: 1280, height: 800 };
 const searchBtn = (page: Page) => page.getByTitle('Search documentation');
 const filePickerBtn = (page: Page) => page.getByTitle('File picker');
 const searchPanel = (page: Page) => page.locator('aside.search-panel');
-const sidebarPanel = (page: Page) => page.locator('aside.sidebar');
 const searchInput = (page: Page) => page.getByRole('searchbox', { name: 'Search documentation' });
 const backdrop = (page: Page) => page.locator('button.backdrop');
 
