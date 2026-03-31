@@ -9,6 +9,8 @@
  }
 
  let docs: RootDoc[] = $state([]);
+ let sources: string[] = $state([]);
+ let activeSource: string | null = $state(null);
  let loading = $state(true);
  let error = $state("");
 
@@ -21,7 +23,9 @@
   try {
    const tree = await fetchTree();
    const all: RootDoc[] = [];
+   const srcSet = new Set<string>();
    for (const source of tree) {
+    if (source.root_docs.length > 0) srcSet.add(source.source);
     for (const doc of source.root_docs) {
      all.push({ ...doc, source: source.source });
     }
@@ -32,6 +36,7 @@
     return (a.title || a.file_path).localeCompare(b.title || b.file_path);
    });
    docs = all;
+   sources = [...srcSet].sort((a, b) => displaySource(a).localeCompare(displaySource(b)));
   } catch (e) {
    error = e instanceof Error ? e.message : "Failed to load";
   } finally {
@@ -43,10 +48,14 @@
   return `/doc/${encodeURIComponent(docId)}`;
  }
 
+ let filteredDocs = $derived(
+  activeSource ? docs.filter((d) => d.source === activeSource) : docs,
+ );
+
  let groupedDocs = $derived.by(() => {
   const groups: { source: string; docs: RootDoc[] }[] = [];
   let currentSource = "";
-  for (const doc of docs) {
+  for (const doc of filteredDocs) {
    if (doc.source !== currentSource) {
     currentSource = doc.source;
     groups.push({ source: doc.source, docs: [] });
@@ -72,7 +81,7 @@
  <div class="masthead">
   <div class="masthead__inner">
    <h1 class="masthead__title">Root Docs</h1>
-   <p class="masthead__description">Project root files - README.md, CLAUDE.md, project-brief.md, etc.</p>
+   <p class="masthead__description">{filteredDocs.length} root files{activeSource ? ` from ${displaySource(activeSource)}` : " across all projects"}.</p>
   </div>
  </div>
 
@@ -83,8 +92,17 @@
    <span class="current">Root Docs</span>
   </nav>
 
-  {#if docs.length === 0}
-   <p class="empty">No root documents found.</p>
+  {#if sources.length > 1}
+   <div class="source-filters">
+    <button class="filter-btn" class:active={activeSource === null} onclick={() => activeSource = null}>All</button>
+    {#each sources as src}
+     <button class="filter-btn {sourceColorClass(src)}" class:active={activeSource === src} onclick={() => activeSource = activeSource === src ? null : src}>{displaySource(src)}</button>
+    {/each}
+   </div>
+  {/if}
+
+  {#if filteredDocs.length === 0}
+   <p class="empty">No root documents found{activeSource ? ` for ${displaySource(activeSource)}` : ""}.</p>
   {:else}
    <div class="doc-groups">
     {#each groupedDocs as group}
@@ -208,6 +226,34 @@
  .current {
   color: var(--text);
  }
+ .source-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 25px;
+ }
+
+ .filter-btn {
+  padding: 4px 12px;
+  font-size: 14px;
+  font-weight: 600;
+  background: var(--stat-tag-bg, rgba(128, 128, 128, 0.15));
+  color: var(--text-secondary);
+  border: 1px solid transparent;
+  border-radius: 3px;
+  cursor: pointer;
+ }
+
+ .filter-btn:hover {
+  border-color: var(--border);
+ }
+
+ .filter-btn.active {
+  background: var(--brand);
+  color: #fff;
+  border-color: var(--brand);
+ }
+
  .empty {
   color: var(--text-muted);
   font-style: italic;
