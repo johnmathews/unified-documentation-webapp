@@ -356,9 +356,6 @@
   color: var(--text);
   font-size: 19px;
   font-weight: 500;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
   min-width: 0;
  }
 

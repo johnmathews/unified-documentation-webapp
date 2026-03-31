@@ -781,6 +781,7 @@
   }
 
   .govuk-header__separator {
+   height: 28px;
    margin: 0 2px;
   }
 
