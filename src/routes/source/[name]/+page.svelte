@@ -1,12 +1,16 @@
 <script lang="ts">
  import { page } from "$app/state";
- import { fetchTree, type TreeSource } from "$lib/api";
+ import { fetchTree, type TreeSource, type TreeDocument } from "$lib/api";
  import Breadcrumbs from "$lib/components/Breadcrumbs.svelte";
  import { currentDocId } from "$lib/stores.svelte";
+ import { displayTitle, displaySource } from "$lib/titles";
 
  let source: TreeSource | null = $state(null);
  let loading = $state(true);
  let error = $state("");
+
+ type SortMode = "date" | "alpha";
+ let sortMode: SortMode = $state("date");
 
  let sourceName = $derived(decodeURIComponent(page.params.name ?? ""));
 
@@ -29,11 +33,23 @@
   }
  }
 
+ function sortDocs(docs: TreeDocument[]): TreeDocument[] {
+  const copy = [...docs];
+  if (sortMode === "alpha") {
+   copy.sort((a, b) => (displayTitle(a)).localeCompare(displayTitle(b)));
+  } else {
+   copy.sort((a, b) => {
+    const da = a.modified_at ?? a.created_at ?? "";
+    const db = b.modified_at ?? b.created_at ?? "";
+    return db.localeCompare(da);
+   });
+  }
+  return copy;
+ }
+
  function docUrl(docId: string): string {
   return `/doc/${encodeURIComponent(docId)}`;
  }
-
- import { displayTitle, displaySource } from "$lib/titles";
 
  function formatDate(dateStr: string | null): string {
   if (!dateStr) return "";
@@ -64,27 +80,34 @@
  <div class="source-page">
   <Breadcrumbs source={source.source} />
   <h1>{displaySource(source.source)}</h1>
-  <div class="stats">
-   <span class="stat-tag">{source.root_docs.length + source.docs.length} docs</span>
-   <span class="stat-tag">{source.journal.length} journal</span>
-   {#if (source.engineering_team?.length ?? 0) > 0}
-    <span class="stat-tag">{source.engineering_team?.length ?? 0} analyses</span>
-   {/if}
-   {#if (source.pdf?.length ?? 0) > 0}
-    <span class="stat-tag">{source.pdf?.length ?? 0} PDFs</span>
-   {/if}
+  <div class="controls-row">
+   <div class="stats">
+    <span class="stat-tag">{source.root_docs.length + source.docs.length} docs</span>
+    <span class="stat-tag">{source.journal.length} journal</span>
+    {#if (source.engineering_team?.length ?? 0) > 0}
+     <span class="stat-tag">{source.engineering_team?.length ?? 0} analyses</span>
+    {/if}
+    {#if (source.pdf?.length ?? 0) > 0}
+     <span class="stat-tag">{source.pdf?.length ?? 0} PDFs</span>
+    {/if}
+   </div>
+   <div class="sort-toggle">
+    <button class:active={sortMode === "date"} onclick={() => sortMode = "date"}>Recent</button>
+    <button class:active={sortMode === "alpha"} onclick={() => sortMode = "alpha"}>A–Z</button>
+   </div>
   </div>
 
   {#if source.root_docs.length > 0}
    <section>
     <h2>Root Docs</h2>
     <ul class="doc-list">
-     {#each source.root_docs as doc}
+     {#each sortDocs(source.root_docs) as doc}
       <li>
        <a href={docUrl(doc.doc_id)}>{displayTitle(doc)}</a>
-       {#if doc.modified_at}
-        <span class="date">{formatDate(doc.modified_at)}</span>
-       {/if}
+       <span class="dates">
+        {#if doc.modified_at}<span class="date">edited {formatDate(doc.modified_at)}</span>{/if}
+        {#if doc.created_at}<span class="date created">created {formatDate(doc.created_at)}</span>{/if}
+       </span>
       </li>
      {/each}
     </ul>
@@ -95,12 +118,13 @@
    <section>
     <h2><a href="/source/{encodeURIComponent(source.source)}/docs">Documentation</a></h2>
     <ul class="doc-list">
-     {#each source.docs as doc}
+     {#each sortDocs(source.docs) as doc}
       <li>
        <a href={docUrl(doc.doc_id)}>{displayTitle(doc)}</a>
-       {#if doc.modified_at}
-        <span class="date">{formatDate(doc.modified_at)}</span>
-       {/if}
+       <span class="dates">
+        {#if doc.modified_at}<span class="date">edited {formatDate(doc.modified_at)}</span>{/if}
+        {#if doc.created_at}<span class="date created">created {formatDate(doc.created_at)}</span>{/if}
+       </span>
       </li>
      {/each}
     </ul>
@@ -111,12 +135,13 @@
    <section>
     <h2><a href="/source/{encodeURIComponent(source.source)}/journal">Development Journal</a></h2>
     <ul class="doc-list">
-     {#each source.journal as doc}
+     {#each sortDocs(source.journal) as doc}
       <li>
        <a href={docUrl(doc.doc_id)}>{displayTitle(doc)}</a>
-       {#if doc.created_at}
-        <span class="date">{formatDate(doc.created_at)}</span>
-       {/if}
+       <span class="dates">
+        {#if doc.modified_at}<span class="date">edited {formatDate(doc.modified_at)}</span>{/if}
+        {#if doc.created_at}<span class="date created">created {formatDate(doc.created_at)}</span>{/if}
+       </span>
       </li>
      {/each}
     </ul>
@@ -127,12 +152,13 @@
    <section>
     <h2><a href="/source/{encodeURIComponent(source.source)}/engineering_team">Engineering Team</a></h2>
     <ul class="doc-list">
-     {#each source.engineering_team ?? [] as doc}
+     {#each sortDocs(source.engineering_team ?? []) as doc}
       <li>
        <a href={docUrl(doc.doc_id)}>{displayTitle(doc)}</a>
-       {#if doc.modified_at}
-        <span class="date">{formatDate(doc.modified_at)}</span>
-       {/if}
+       <span class="dates">
+        {#if doc.modified_at}<span class="date">edited {formatDate(doc.modified_at)}</span>{/if}
+        {#if doc.created_at}<span class="date created">created {formatDate(doc.created_at)}</span>{/if}
+       </span>
       </li>
      {/each}
     </ul>
@@ -143,12 +169,13 @@
    <section>
     <h2><a href="/source/{encodeURIComponent(source.source)}/pdf">PDF</a></h2>
     <ul class="doc-list">
-     {#each source.pdf ?? [] as doc}
+     {#each sortDocs(source.pdf ?? []) as doc}
       <li>
        <a href={docUrl(doc.doc_id)}>{displayTitle(doc)}</a>
-       {#if doc.modified_at}
-        <span class="date">{formatDate(doc.modified_at)}</span>
-       {/if}
+       <span class="dates">
+        {#if doc.modified_at}<span class="date">edited {formatDate(doc.modified_at)}</span>{/if}
+        {#if doc.created_at}<span class="date created">created {formatDate(doc.created_at)}</span>{/if}
+       </span>
       </li>
      {/each}
     </ul>
@@ -175,11 +202,18 @@
   font-weight: 700;
   margin-bottom: 5px;
  }
+ .controls-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
+  gap: 12px;
+ }
+
  .stats {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
-  margin-bottom: 30px;
  }
 
  .stat-tag {
@@ -191,6 +225,36 @@
   text-transform: uppercase;
   background: var(--stat-tag-bg, rgba(128, 128, 128, 0.15));
   color: var(--text-secondary);
+ }
+
+ .sort-toggle {
+  display: flex;
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  overflow: hidden;
+  flex-shrink: 0;
+ }
+
+ .sort-toggle button {
+  padding: 4px 12px;
+  font-size: 14px;
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+ }
+
+ .sort-toggle button:first-child {
+  border-right: 1px solid var(--border);
+ }
+
+ .sort-toggle button.active {
+  background: var(--brand);
+  color: #fff;
+ }
+
+ .sort-toggle button:hover:not(.active) {
+  background: var(--stat-tag-bg, rgba(128, 128, 128, 0.15));
  }
  section {
   margin-bottom: 30px;
@@ -229,11 +293,24 @@
  .doc-list a:hover {
   color: var(--link-hover);
  }
- .date {
-  font-size: 16px;
-  color: var(--text-secondary);
+ .dates {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
   flex-shrink: 0;
   margin-left: 15px;
+  gap: 1px;
+ }
+
+ .date {
+  font-size: 14px;
+  color: var(--text-secondary);
+  white-space: nowrap;
+ }
+
+ .date.created {
+  color: var(--text-muted);
+  font-size: 13px;
  }
 
  @media (max-width: 640px) {
@@ -242,6 +319,10 @@
   }
   .stat-tag {
    font-size: 13px;
+  }
+  .controls-row {
+   flex-direction: column;
+   align-items: flex-start;
   }
   .doc-list li {
    flex-direction: column;
@@ -255,9 +336,15 @@
    align-items: center;
    font-size: 16px;
   }
-  .date {
+  .dates {
+   align-items: flex-start;
    margin-left: 0;
+  }
+  .date {
    font-size: 14px;
+  }
+  .date.created {
+   font-size: 13px;
   }
  }
 </style>
