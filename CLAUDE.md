@@ -26,7 +26,7 @@
 - **No CORS needed** — Browser talks to same origin, server proxies to backend
 - **Dark theme** with CSS custom properties
 - **Responsive** — Desktop (3 panels), tablet (overlay drawers), phone (85%-width sidebar with backdrop, swipe gestures, 44px touch targets, safe-area-insets)
-- **Document categories** — root\_docs, docs, journal, engineering\_team, pdf (defined in `CATEGORIES` constant in stores)
+- **Document categories** — root\_docs, docs, journal, learning\_journal, engineering\_team, pdf (defined in `CATEGORIES` constant in stores)
 - **Category filters** — GOV.UK-style small checkboxes in sidebar, global toggle per category, persisted to localStorage
 - **Document link resolution** — Relative markdown links (e.g. `[text](other.md)`) are rewritten at render time by `src/lib/links.ts`. Links to `.md` files resolve to `/doc/{docId}`, other files to `/api/files/{docId}`. The original markdown is unchanged, so links still work on GitHub and locally
 

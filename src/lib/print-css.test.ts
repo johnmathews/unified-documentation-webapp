@@ -99,32 +99,32 @@ describe("print CSS: forces light colours", () => {
 });
 
 describe("print CSS: compact typography", () => {
- it("body font-size is 12pt", () => {
-  expect(printBlock).toMatch(/body\s*\{[^}]*font-size:\s*12pt\s*!important/);
+ it("body font-size is 10pt", () => {
+  expect(printBlock).toMatch(/body\s*\{[^}]*font-size:\s*10pt\s*!important/);
  });
 
- it(".markdown-content font-size is 12pt", () => {
-  expect(printBlock).toMatch(/\.markdown-content\s*\{[^}]*font-size:\s*12pt\s*!important/);
+ it(".markdown-content font-size is 10pt", () => {
+  expect(printBlock).toMatch(/\.markdown-content\s*\{[^}]*font-size:\s*10pt\s*!important/);
  });
 
- it("h1 is 18pt", () => {
-  expect(printBlock).toMatch(/\.markdown-content\s+h1\s*\{[^}]*font-size:\s*18pt\s*!important/);
+ it("h1 is 15pt", () => {
+  expect(printBlock).toMatch(/\.markdown-content\s+h1\s*\{[^}]*font-size:\s*15pt\s*!important/);
  });
 
- it("h2 is 15pt", () => {
-  expect(printBlock).toMatch(/\.markdown-content\s+h2\s*\{[^}]*font-size:\s*15pt\s*!important/);
+ it("h2 is 13pt", () => {
+  expect(printBlock).toMatch(/\.markdown-content\s+h2\s*\{[^}]*font-size:\s*13pt\s*!important/);
  });
 
- it("h3 is 13pt", () => {
-  expect(printBlock).toMatch(/\.markdown-content\s+h3\s*\{[^}]*font-size:\s*13pt\s*!important/);
+ it("h3 is 11pt", () => {
+  expect(printBlock).toMatch(/\.markdown-content\s+h3\s*\{[^}]*font-size:\s*11pt\s*!important/);
  });
 
- it("code is 10pt", () => {
-  expect(printBlock).toMatch(/\.markdown-content\s+code\s*\{[^}]*font-size:\s*10pt\s*!important/);
+ it("code is 8pt", () => {
+  expect(printBlock).toMatch(/\.markdown-content\s+code\s*\{[^}]*font-size:\s*8pt\s*!important/);
  });
 
- it("table is 11pt", () => {
-  expect(printBlock).toMatch(/\.markdown-content\s+table\s*\{[^}]*font-size:\s*11pt\s*!important/);
+ it("table is 9pt", () => {
+  expect(printBlock).toMatch(/\.markdown-content\s+table\s*\{[^}]*font-size:\s*9pt\s*!important/);
  });
 });
 
@@ -150,7 +150,7 @@ describe("print CSS: all !important flags present", () => {
   { selector: ".app-layout", property: "overflow", value: "visible" },
   { selector: ".main-area", property: "overflow", value: "visible" },
   { selector: ".content", property: "overflow", value: "visible" },
-  { selector: "body", property: "font-size", value: "12pt" },
+  { selector: "body", property: "font-size", value: "10pt" },
  ];
 
  for (const rule of criticalRules) {

@@ -13,15 +13,15 @@ documentation.
 - **Layout**: Three-panel layout with sidebar, content area, and collapsible chat panel. The header bar has the product
   name "Documentation Library" (shortened to "Library" on mobile) on the left and two icon groups on the right: utility
   actions (theme toggle, server status, print) and panel toggles (Files, Search, Chat), separated by a vertical border.
-  The service navigation bar below the header contains only page-level navigation links: Projects, Root Docs, Dev
-  Journal, and Engineering Team. The sidebar (file picker) and search panel have mutual exclusion — opening one closes
+  The service navigation bar below the header contains page-level navigation links: Projects, Root Docs, Dev
+  Journal, Learning Journal, and Engineering Team. The sidebar (file picker) and search panel have mutual exclusion — opening one closes
   the other.
 - **Sidebar**: Tree navigation organized by Source > Category (Root Docs/Documentation Directory/Development
-  Journal/Engineering Team) > Document, with expand/collapse controls inside the tree section. Each source has a
-  deterministic color tag for visual distinction. All four categories are collapsible sections with document counts. A
-  collapsible "Filter categories" section with GOV.UK-style small checkboxes allows globally toggling category visibility
-  (persisted to localStorage). The `CATEGORIES` constant in `stores.svelte.ts` is the single source of truth for category
-  definitions.
+  Journal/Learning Journal/Engineering Team) > Document, with expand/collapse controls inside the tree section. Each
+  source has a deterministic color tag for visual distinction. All six categories are collapsible sections with document
+  counts. A collapsible "Filter categories" section with GOV.UK-style small checkboxes allows globally toggling category
+  visibility (persisted to localStorage). The `CATEGORIES` constant in `stores.svelte.ts` is the single source of truth
+  for category definitions.
 - **Mobile Responsiveness**: Full-screen modal sidebar and chat panels on mobile (100% width in both portrait and
   landscape) with slide-in/out animations for both panels, swipe gestures (edge-swipe to open/close panels), 44px minimum
   touch targets, safe-area-inset handling for notched devices (top bar, content, sidebar, and chat input all respect
@@ -36,8 +36,9 @@ documentation.
   etc.) resolve to `/api/files/{docId}`. The link resolution logic lives in `src/lib/links.ts`. PDF files are detected by
   file extension and displayed in an inline iframe via the `/api/files/` proxy route, with "Open in new tab" and
   "Download" action buttons above the viewer. A print button in the top bar triggers `window.print()` with `@media print`
-  styles that hide all UI chrome, force light colours, use compact 12pt typography, and render the metadata as three rows
-  (source name, file path, dates) for clean output. Print styles use `!important` to override Svelte-scoped styles.
+  styles that hide all UI chrome, force light colours, use compact 10pt typography with pre-wrap for code blocks, and
+  render the metadata as three rows (source name, file path, dates) for clean output. Print styles use `!important` to
+  override Svelte-scoped styles.
 - **Chat Panel**: Real-time chat with Claude, aware of the currently viewed page. Supports multiline input (Shift+Enter
   for newlines, Enter to send) and message editing (pencil icon below sent user messages — clicking loads the text into
   the input, truncates from the edit point on submit). On desktop, the panel is resizable via a drag handle on its left
@@ -49,10 +50,18 @@ documentation.
   preserved when the panel is toggled closed and reopened. On desktop, the panel is resizable via a drag handle on its
   right edge (250–800px range, persisted to localStorage as `search-width`). Default width is 320px (384px on large
   screens).
-- **Journal Timeline**: Cross-project chronological view of all journal entries at `/journal`
-- **Root Docs**: Cross-project view of root-level files (README, CLAUDE.md) at `/root-docs`, grouped by source
-- **Engineering Team**: Cross-project view of evaluation reports and improvement plans at `/engineering-team`, grouped by
-  source
+- **Homepage**: Project list table at `/` with sortable columns (Project, Last updated, Documents). Default sort is by
+  last updated descending. Click column headers to sort; click again to toggle direction.
+- **Source Pages**: Per-source view at `/source/<name>` showing documents grouped by category with a Recent/A-Z sort
+  toggle. Each document shows both edited and created dates (inline, no labels). Categories shown: Root Docs,
+  Documentation, Development Journal, Learning Journal, Engineering Team, PDF.
+- **Journal Timeline**: Cross-project chronological view of all journal entries at `/journal`, with source filter buttons
+- **Learning Journal**: Cross-project chronological view of learning entries at `/learning-journal`, with source filters.
+  Backend identifies these as markdown files in `learning/` directories.
+- **Root Docs**: Cross-project view of root-level files at `/root-docs`, grouped by source, with source filters and
+  Edited/Created/A-Z sort toggle. Each row shows edit and creation dates.
+- **Engineering Team**: Cross-project view of evaluation reports at `/engineering-team`, grouped by source, with source
+  filters and Edited/Created/A-Z sort toggle. Each row shows edit and creation dates.
 - **Server Status**: Admin page at `/status` showing backend health, per-source indexing stats (file count, chunk count,
   last indexed time), and a refresh button. Proxied via `/api/health`.
 
