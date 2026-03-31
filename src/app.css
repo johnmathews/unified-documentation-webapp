@@ -364,9 +364,9 @@ button {
   --link-visited: #000000;
  }
 
- /* Compact base font — 12pt is standard for print */
+ /* Compact base font */
  body {
-  font-size: 12pt !important;
+  font-size: 10pt !important;
   line-height: 1.4 !important;
  }
 
@@ -423,22 +423,22 @@ button {
 
  /* Compact markdown typography for print */
  .markdown-content {
-  font-size: 12pt !important;
+  font-size: 10pt !important;
   line-height: 1.4 !important;
  }
 
  .markdown-content h1 {
-  font-size: 18pt !important;
+  font-size: 15pt !important;
   margin: 20px 0 10px !important;
  }
 
  .markdown-content h2 {
-  font-size: 15pt !important;
+  font-size: 13pt !important;
   margin: 16px 0 8px !important;
  }
 
  .markdown-content h3 {
-  font-size: 13pt !important;
+  font-size: 11pt !important;
   margin: 12px 0 6px !important;
  }
 
@@ -455,13 +455,21 @@ button {
   margin-bottom: 2px !important;
  }
 
+ .markdown-content pre {
+  white-space: pre-wrap !important;
+  word-wrap: break-word !important;
+ }
+
  .markdown-content pre code {
-  font-size: 10pt !important;
+  font-size: 8pt !important;
   padding: 10px !important;
+  white-space: pre-wrap !important;
+  word-wrap: break-word !important;
+  overflow-x: visible !important;
  }
 
  .markdown-content code {
-  font-size: 10pt !important;
+  font-size: 8pt !important;
  }
 
  .markdown-content blockquote {
@@ -470,7 +478,7 @@ button {
  }
 
  .markdown-content table {
-  font-size: 11pt !important;
+  font-size: 9pt !important;
  }
 
  .markdown-content th,
