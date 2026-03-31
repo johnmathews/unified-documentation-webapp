@@ -187,7 +187,9 @@
   <div class="govuk-header__container">
    <div class="govuk-header__logo">
     <a href="/" class="govuk-header__link govuk-header__link--homepage">
-     <span class="govuk-header__product-name"><span class="govuk-header__product-name-prefix">Documentation</span> Library</span>
+     <span class="govuk-header__product-name"
+      ><span class="govuk-header__product-name-prefix">Documentation</span> Library</span
+     >
     </a>
    </div>
    <div class="govuk-header__actions">
@@ -231,51 +233,50 @@
       </svg>
      </button>
     </div>
-    <span class="govuk-header__separator" aria-hidden="true"></span>
     <div class="govuk-header__actions-panels">
-    <button
-     class="govuk-header__action-btn"
-     class:active={sidebarOpen}
-     onclick={() => {
-      sidebarOpen = !sidebarOpen;
-      if (sidebarOpen) searchOpen = false;
-     }}
-     title="File picker"
-    >
-     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-      <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
-     </svg>
-     <span class="govuk-header__btn-label">Files</span>
-    </button>
-    <button
-     class="govuk-header__action-btn"
-     class:active={searchOpen}
-     onclick={() => {
-      searchOpen = !searchOpen;
-      if (searchOpen) sidebarOpen = false;
-     }}
-     title="Search documentation"
-    >
-     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-      <circle cx="11" cy="11" r="8" />
-      <line x1="21" y1="21" x2="16.65" y2="16.65" />
-     </svg>
-     <span class="govuk-header__btn-label">Search</span>
-    </button>
-    <button
-     class="govuk-header__action-btn"
-     class:active={chatOpen}
-     onclick={() => {
-      chatOpen = !chatOpen;
-      if (!chatOpen) chatExpanded = false;
-     }}
-     title="Toggle chat"
-    >
-     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-     </svg>
-     <span class="govuk-header__btn-label">Chat</span>
-    </button>
+     <button
+      class="govuk-header__action-btn"
+      class:active={sidebarOpen}
+      onclick={() => {
+       sidebarOpen = !sidebarOpen;
+       if (sidebarOpen) searchOpen = false;
+      }}
+      title="File picker"
+     >
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+       <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
+      </svg>
+      <span class="govuk-header__btn-label">Files</span>
+     </button>
+     <button
+      class="govuk-header__action-btn"
+      class:active={searchOpen}
+      onclick={() => {
+       searchOpen = !searchOpen;
+       if (searchOpen) sidebarOpen = false;
+      }}
+      title="Search documentation"
+     >
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+       <circle cx="11" cy="11" r="8" />
+       <line x1="21" y1="21" x2="16.65" y2="16.65" />
+      </svg>
+      <span class="govuk-header__btn-label">Search</span>
+     </button>
+     <button
+      class="govuk-header__action-btn"
+      class:active={chatOpen}
+      onclick={() => {
+       chatOpen = !chatOpen;
+       if (!chatOpen) chatExpanded = false;
+      }}
+      title="Toggle chat"
+     >
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+       <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+      </svg>
+      <span class="govuk-header__btn-label">Chat</span>
+     </button>
     </div>
    </div>
   </div>
