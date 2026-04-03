@@ -9,7 +9,7 @@
  let error = $state("");
  let refreshing = $state(false);
 
- type SortKey = "source" | "file_count" | "chunk_count" | "last_indexed";
+ type SortKey = "source" | "file_count" | "chunk_count" | "last_indexed" | "last_checked";
  let sortKey: SortKey = $state("last_indexed");
  let sortAsc = $state(false);
 
@@ -28,9 +28,9 @@
    let cmp: number;
    if (sortKey === "source") {
     cmp = a.source.localeCompare(b.source);
-   } else if (sortKey === "last_indexed") {
-    const ta = a.last_indexed || "";
-    const tb = b.last_indexed || "";
+   } else if (sortKey === "last_indexed" || sortKey === "last_checked") {
+    const ta = a[sortKey] || "";
+    const tb = b[sortKey] || "";
     cmp = ta.localeCompare(tb);
    } else {
     cmp = (a[sortKey] ?? 0) - (b[sortKey] ?? 0);
@@ -145,7 +145,12 @@
      <th><button class="sort-btn" onclick={() => toggleSort("source")}>Source{sortIndicator("source")}</button></th>
      <th
       ><button class="sort-btn" onclick={() => toggleSort("last_indexed")}
-       >Last Indexed{sortIndicator("last_indexed")}</button
+       >Last Updated{sortIndicator("last_indexed")}</button
+      ></th
+     >
+     <th
+      ><button class="sort-btn" onclick={() => toggleSort("last_checked")}
+       >Last Scanned{sortIndicator("last_checked")}</button
       ></th
      >
      <th class="num"
@@ -170,6 +175,10 @@
        <span class="timestamp">{formatTimestamp(source.last_indexed)}</span>
        <span class="time-ago">{timeAgo(source.last_indexed)}</span>
       </td>
+      <td>
+       <span class="timestamp">{formatTimestamp(source.last_checked)}</span>
+       <span class="time-ago">{timeAgo(source.last_checked)}</span>
+      </td>
       <td class="num">{source.file_count}</td>
       <td class="num">{source.chunk_count}</td>
      </tr>
@@ -178,6 +187,7 @@
    <tfoot>
     <tr>
      <td><strong>Total</strong></td>
+     <td></td>
      <td></td>
      <td class="num"><strong>{health.sources.reduce((n, s) => n + s.file_count, 0)}</strong></td>
      <td class="num"><strong>{health.total_chunks}</strong></td>

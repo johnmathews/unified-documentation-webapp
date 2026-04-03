@@ -53,6 +53,7 @@ export interface HealthSource {
  file_count: number;
  chunk_count: number;
  last_indexed: string | null;
+ last_checked: string | null;
 }
 
 export interface HealthStatus {

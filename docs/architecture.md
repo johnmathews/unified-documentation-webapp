@@ -63,7 +63,7 @@ documentation.
 - **Engineering Team**: Cross-project view of evaluation reports at `/engineering-team`, grouped by source, with source
   filters and Edited/Created/A-Z sort toggle. Each row shows edit and creation dates.
 - **Server Status**: Admin page at `/status` showing backend health, per-source indexing stats (file count, chunk count,
-  last indexed time), and a refresh button. Proxied via `/api/health`.
+  last updated time, last scanned time), and a refresh button. Proxied via `/api/health`.
 
 ### Server Routes (SvelteKit)
 
