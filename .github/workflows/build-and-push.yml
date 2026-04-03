@@ -6,7 +6,7 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: johnmathews/documentation-ui
+  IMAGE_NAME: johnmathews/unified-documentation-webapp
 
 jobs:
   build-and-push:

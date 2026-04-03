@@ -97,10 +97,10 @@ src/
 
 ```bash
 # Build
-docker build -t documentation-ui .
+docker build -t unified-documentation-webapp .
 
 # Run (standalone, connecting to a backend on the host)
-docker run -p 3001:3000 -e API_URL=http://host.docker.internal:8080 documentation-ui
+docker run -p 3001:3000 -e API_URL=http://host.docker.internal:8080 unified-documentation-webapp
 ```
 
 In production, both services run via `docker-compose.yml` where the UI connects to the backend at `http://docserver:8080` (container-to-container networking).

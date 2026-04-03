@@ -43,13 +43,13 @@ Both services run in the same docker-compose stack:
 docker compose up -d
 ```
 
-| Service                       | Internal Port | Mapped Port |
-| ----------------------------- | ------------- | ----------- |
-| `docserver` (MCP server)      | 8080          | 8085        |
-| `documentation-ui` (this app) | 3000          | 3002        |
+| Service                            | Internal Port | Mapped Port |
+| ---------------------------------- | ------------- | ----------- |
+| `docserver` (MCP server)           | 8080          | 8085        |
+| `documentation-webapp` (this app)  | 3000          | 3002        |
 
 The UI connects to the backend via the Docker network at `http://docserver:8080`. The Docker image is built and pushed to
-`ghcr.io/johnmathews/documentation-ui` on every push to `main`.
+`ghcr.io/johnmathews/unified-documentation-webapp` on every push to `main`.
 
 ## Commands
 

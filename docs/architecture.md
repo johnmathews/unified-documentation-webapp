@@ -94,7 +94,7 @@ The MCP server provides REST API endpoints alongside its existing MCP tools:
 Both services run in the same docker-compose stack:
 
 - `docserver` — MCP server on port 8080 (mapped to 8085)
-- `documentation-ui` — SvelteKit app on port 3000 (mapped to 3002)
+- `documentation-webapp` — SvelteKit app on port 3000 (mapped to 3002)
 
 The UI connects to the backend via the internal Docker network using `http://docserver:8080`.
 
