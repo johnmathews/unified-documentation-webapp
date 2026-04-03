@@ -138,7 +138,12 @@
    <div class="status-badge"
     class:ok={health.status === "healthy"}
     class:warn={health.status === "degraded"}
-    class:err={health.status === "error"}>
+    class:err={health.status === "error"}
+    title={health.status === "healthy"
+     ? "Healthy: All sources are scanning successfully."
+     : health.status === "degraded"
+      ? "Degraded: One or more sources have scan failures or are stale."
+      : "Error: All sources are failing or unreachable."}>
     {health.status === "healthy" ? "Healthy" : health.status === "degraded" ? "Degraded" : "Error"}
    </div>
    <button class="refresh-btn" onclick={refresh} disabled={refreshing}>
@@ -181,14 +186,22 @@
     {#each sortedSources as source}
      <tr>
       <td>
-       <span class="source-tag {sourceColorClass(source.source)}">{displaySource(source.source)}</span>
+       <a href="/source/{source.source}" class="source-link">
+        <span class="source-tag {sourceColorClass(source.source)}">{displaySource(source.source)}</span>
+       </a>
       </td>
       <td>
        <span class="src-status" class:src-healthy={source.source_status === "healthy"}
         class:src-warning={source.source_status === "warning"}
         class:src-error={source.source_status === "error"}
         class:src-unknown={source.source_status === "unknown"}
-        title={source.last_error ? `Error: ${source.last_error}` : ""}>
+        title={source.source_status === "healthy"
+         ? "Healthy: Last scan succeeded with no errors."
+         : source.source_status === "warning"
+          ? `Warning: 1 consecutive scan failure or scan is overdue.${source.last_error ? `\n\nLast error: ${source.last_error}` : ""}`
+          : source.source_status === "error"
+           ? `Error: 2+ consecutive scan failures or scan is severely overdue.${source.last_error ? `\n\nLast error: ${source.last_error}` : ""}`
+           : "Unknown: This source has not been scanned yet."}>
         {source.source_status === "healthy" ? "Healthy" : source.source_status === "warning" ? "Warning" : source.source_status === "error" ? "Error" : "Unknown"}
         {#if source.consecutive_failures > 0}
          <span class="failure-count">({source.consecutive_failures})</span>
@@ -428,6 +441,15 @@
   font-variant-numeric: tabular-nums;
   width: 1%;
   white-space: nowrap;
+ }
+
+ .source-link {
+  text-decoration: none;
+  color: inherit;
+ }
+
+ .source-link:hover .source-tag {
+  text-decoration: underline;
  }
 
  .source-tag {

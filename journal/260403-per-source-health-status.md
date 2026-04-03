@@ -30,6 +30,9 @@ even when every source was failing to sync.
 - Overall badge supports 3 states: Healthy (green), Degraded (orange), Error (red).
 - Added `--warning` CSS variable to both light and dark themes.
 - Status column sort defaults to ascending (errors first) on first click.
+- Source names in the table are now clickable links to `/source/{name}`.
+- Descriptive tooltips on both overall badge and per-source status labels explain what
+  each status means and what triggers it.
 
 ## Edge cases now caught
 
