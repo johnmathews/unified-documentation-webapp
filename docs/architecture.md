@@ -62,8 +62,12 @@ documentation.
   Edited/Created/A-Z sort toggle. Each row shows edit and creation dates.
 - **Engineering Team**: Cross-project view of evaluation reports at `/engineering-team`, grouped by source, with source
   filters and Edited/Created/A-Z sort toggle. Each row shows edit and creation dates.
-- **Server Status**: Admin page at `/status` showing backend health, per-source indexing stats (file count, chunk count,
-  last updated time, last scanned time), and a refresh button. Proxied via `/api/health`.
+- **Server Status**: Admin page at `/status` showing backend health with per-source monitoring. Each source row shows:
+  status (Healthy/Warning/Error/Unknown), file count, chunk count, last updated time, and last scanned time. Per-source
+  status is computed from consecutive scan failures (1 = warning, 2+ = error) and staleness of last-checked relative to
+  the poll interval (>2x = warning, >5x = error). The overall system badge aggregates these: Healthy (all sources OK),
+  Degraded (any source warning/error), Error (all sources failing). Error messages are shown on hover. Failure counts
+  display in parentheses next to the status label. All columns are sortable. Proxied via `/api/health`.
 
 ### Server Routes (SvelteKit)
 

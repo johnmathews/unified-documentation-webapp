@@ -9,16 +9,18 @@
  let error = $state("");
  let refreshing = $state(false);
 
- type SortKey = "source" | "file_count" | "chunk_count" | "last_indexed" | "last_checked";
+ type SortKey = "source" | "source_status" | "file_count" | "chunk_count" | "last_indexed" | "last_checked";
  let sortKey: SortKey = $state("last_indexed");
  let sortAsc = $state(false);
+
+ const statusOrder: Record<string, number> = { error: 0, warning: 1, unknown: 2, healthy: 3 };
 
  function toggleSort(key: SortKey) {
   if (sortKey === key) {
    sortAsc = !sortAsc;
   } else {
    sortKey = key;
-   sortAsc = key === "source";
+   sortAsc = key === "source" || key === "source_status";
   }
  }
 
@@ -28,6 +30,8 @@
    let cmp: number;
    if (sortKey === "source") {
     cmp = a.source.localeCompare(b.source);
+   } else if (sortKey === "source_status") {
+    cmp = (statusOrder[a.source_status] ?? 2) - (statusOrder[b.source_status] ?? 2);
    } else if (sortKey === "last_indexed" || sortKey === "last_checked") {
     const ta = a[sortKey] || "";
     const tb = b[sortKey] || "";
@@ -131,8 +135,11 @@
   </nav>
 
   <div class="status-header">
-   <div class="status-badge" class:ok={health.status === "ok"} class:err={health.status !== "ok"}>
-    {health.status === "ok" ? "Healthy" : health.status}
+   <div class="status-badge"
+    class:ok={health.status === "healthy"}
+    class:warn={health.status === "degraded"}
+    class:err={health.status === "error"}>
+    {health.status === "healthy" ? "Healthy" : health.status === "degraded" ? "Degraded" : "Error"}
    </div>
    <button class="refresh-btn" onclick={refresh} disabled={refreshing}>
     {refreshing ? "Refreshing..." : "Refresh"}
@@ -143,6 +150,11 @@
    <thead>
     <tr>
      <th><button class="sort-btn" onclick={() => toggleSort("source")}>Source{sortIndicator("source")}</button></th>
+     <th
+      ><button class="sort-btn" onclick={() => toggleSort("source_status")}
+       >Status{sortIndicator("source_status")}</button
+      ></th
+     >
      <th
       ><button class="sort-btn" onclick={() => toggleSort("last_indexed")}
        >Last Updated{sortIndicator("last_indexed")}</button
@@ -172,6 +184,18 @@
        <span class="source-tag {sourceColorClass(source.source)}">{displaySource(source.source)}</span>
       </td>
       <td>
+       <span class="src-status" class:src-healthy={source.source_status === "healthy"}
+        class:src-warning={source.source_status === "warning"}
+        class:src-error={source.source_status === "error"}
+        class:src-unknown={source.source_status === "unknown"}
+        title={source.last_error ? `Error: ${source.last_error}` : ""}>
+        {source.source_status === "healthy" ? "Healthy" : source.source_status === "warning" ? "Warning" : source.source_status === "error" ? "Error" : "Unknown"}
+        {#if source.consecutive_failures > 0}
+         <span class="failure-count">({source.consecutive_failures})</span>
+        {/if}
+       </span>
+      </td>
+      <td>
        <span class="timestamp">{formatTimestamp(source.last_indexed)}</span>
        <span class="time-ago">{timeAgo(source.last_indexed)}</span>
       </td>
@@ -187,6 +211,7 @@
    <tfoot>
     <tr>
      <td><strong>Total</strong></td>
+     <td></td>
      <td></td>
      <td></td>
      <td class="num"><strong>{health.sources.reduce((n, s) => n + s.file_count, 0)}</strong></td>
@@ -317,6 +342,11 @@
   color: #ffffff;
  }
 
+ .status-badge.warn {
+  background: var(--warning);
+  color: #ffffff;
+ }
+
  .status-badge.err {
   background: var(--error);
   color: #ffffff;
@@ -417,6 +447,34 @@
   color: var(--text-muted);
   margin-left: 8px;
   white-space: nowrap;
+ }
+
+ .src-status {
+  font-size: 14px;
+  font-weight: 700;
+  padding: 2px 8px;
+  white-space: nowrap;
+ }
+
+ .src-healthy {
+  color: var(--success);
+ }
+
+ .src-warning {
+  color: var(--warning);
+ }
+
+ .src-error {
+  color: var(--error);
+ }
+
+ .src-unknown {
+  color: var(--text-muted);
+ }
+
+ .failure-count {
+  font-weight: 400;
+  font-size: 12px;
  }
 
  @media (max-width: 640px) {

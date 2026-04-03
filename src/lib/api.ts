@@ -50,16 +50,21 @@ export interface ChatMessage {
 
 export interface HealthSource {
  source: string;
+ source_status: "healthy" | "warning" | "error" | "unknown";
  file_count: number;
  chunk_count: number;
  last_indexed: string | null;
  last_checked: string | null;
+ last_error: string | null;
+ last_error_at: string | null;
+ consecutive_failures: number;
 }
 
 export interface HealthStatus {
- status: string;
+ status: "healthy" | "degraded" | "error";
  total_sources: number;
  total_chunks: number;
+ poll_interval_seconds: number;
  sources: HealthSource[];
 }
 

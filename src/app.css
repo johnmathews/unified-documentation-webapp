@@ -47,6 +47,7 @@
 
  /* Functional */
  --error: #ca3535;
+ --warning: #f47738;
  --success: #0f7a52;
  --focus: #ffdd00;
  --focus-text: #0b0c0c;
@@ -92,6 +93,7 @@
  --accent-dim: rgba(86, 148, 202, 0.15);
 
  --error: #f38ba8;
+ --warning: #fab387;
  --success: #6ccda5;
  --focus: #ffdd00;
  --focus-text: #0b0c0c;
