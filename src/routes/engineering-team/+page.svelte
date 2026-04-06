@@ -1,7 +1,6 @@
 <script lang="ts">
  import { fetchTree, type TreeDocument } from "$lib/api";
  import { currentDocId } from "$lib/stores.svelte";
- import { sourceColorClass } from "$lib/colors";
  import { displayTitle, displaySource } from "$lib/titles";
 
  interface EngDoc extends TreeDocument {
@@ -80,9 +79,7 @@
   return copy;
  }
 
- let filteredDocs = $derived(
-  activeSource ? docs.filter((d) => d.source === activeSource) : docs,
- );
+ let filteredDocs = $derived(activeSource ? docs.filter((d) => d.source === activeSource) : docs);
 
  let groupedDocs = $derived.by(() => {
   const groups: { source: string; docs: EngDoc[] }[] = [];
@@ -113,7 +110,9 @@
  <div class="masthead">
   <div class="masthead__inner">
    <h1 class="masthead__title">Engineering Team</h1>
-   <p class="masthead__description">{filteredDocs.length} reports{activeSource ? ` from ${displaySource(activeSource)}` : " across all projects"}.</p>
+   <p class="masthead__description">
+    {filteredDocs.length} reports{activeSource ? ` from ${displaySource(activeSource)}` : " across all projects"}.
+   </p>
   </div>
  </div>
 
@@ -127,16 +126,20 @@
   <div class="controls-row">
    {#if sources.length > 1}
     <div class="source-filters">
-     <button class="filter-btn" class:active={activeSource === null} onclick={() => activeSource = null}>All</button>
+     <button class="filter-btn" class:active={activeSource === null} onclick={() => (activeSource = null)}>All</button>
      {#each sources as src}
-      <button class="filter-btn {sourceColorClass(src)}" class:active={activeSource === src} onclick={() => activeSource = activeSource === src ? null : src}>{displaySource(src)}</button>
+      <button
+       class="filter-btn"
+       class:active={activeSource === src}
+       onclick={() => (activeSource = activeSource === src ? null : src)}>{displaySource(src)}</button
+      >
      {/each}
     </div>
    {/if}
    <div class="sort-toggle">
-    <button class:active={sortMode === "edited"} onclick={() => sortMode = "edited"}>Edited</button>
-    <button class:active={sortMode === "created"} onclick={() => sortMode = "created"}>Created</button>
-    <button class:active={sortMode === "alpha"} onclick={() => sortMode = "alpha"}>A–Z</button>
+    <button class:active={sortMode === "edited"} onclick={() => (sortMode = "edited")}>Edited</button>
+    <button class:active={sortMode === "created"} onclick={() => (sortMode = "created")}>Created</button>
+    <button class:active={sortMode === "alpha"} onclick={() => (sortMode = "alpha")}>A–Z</button>
    </div>
   </div>
 
@@ -147,7 +150,7 @@
     {#each groupedDocs as group}
      <div class="source-group">
       <h2 class="source-header">
-       <span class="source-tag {sourceColorClass(group.source)}">{displaySource(group.source)}</span>
+       <span class="source-tag">{displaySource(group.source)}</span>
       </h2>
       <ul class="doc-list">
        {#each sortDocs(group.docs) as doc}
@@ -155,7 +158,9 @@
          <a href={docUrl(doc.doc_id)}>{displayTitle(doc)}</a>
          <span class="dates">
           {#if doc.modified_at}<span class="date">{formatDate(doc.modified_at)}</span>{/if}
-          {#if doc.created_at && doc.created_at !== doc.modified_at}<span class="date created">{formatDate(doc.created_at)}</span>{/if}
+          {#if doc.created_at && doc.created_at !== doc.modified_at}<span class="date created"
+            >{formatDate(doc.created_at)}</span
+           >{/if}
          </span>
         </li>
        {/each}
@@ -316,9 +321,7 @@
  }
 
  .source-tag {
-  font-size: 16px;
   font-weight: bold;
-  padding: 2px 8px;
  }
 
  .controls-row {
@@ -375,6 +378,7 @@
  .doc-list a {
   color: var(--link);
   font-size: 16px;
+  font-weight: 600;
  }
 
  .doc-list a:hover {

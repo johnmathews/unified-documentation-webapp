@@ -1,7 +1,6 @@
 <script lang="ts">
  import { fetchTree, type TreeSource } from "$lib/api";
  import { currentDocId, categoryFilters, CATEGORIES } from "$lib/stores.svelte";
- import { sourceColorClass } from "$lib/colors";
  import { displaySource } from "$lib/titles";
 
  let showFilters = $state(false);
@@ -161,7 +160,7 @@
       >
        <polyline points="9 18 15 12 9 6" />
       </svg>
-      <span class="source-tag {sourceColorClass(source.source)}">{displaySource(source.source)}</span>
+      <span class="source-tag">{displaySource(source.source)}</span>
       <span class="count">{totalDocs(source)}</span>
      </button>
 
@@ -624,8 +623,6 @@
  .source-tag {
   font-size: 16px;
   font-weight: bold;
-  padding: 2px 8px;
-  border-radius: 0;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -725,7 +722,6 @@
   }
   .source-tag {
    font-size: 16px;
-   padding: 2px 8px;
   }
   .count {
    font-size: 14px;

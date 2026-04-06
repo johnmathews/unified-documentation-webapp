@@ -1,7 +1,6 @@
 <script lang="ts">
  import { fetchTree, type TreeDocument } from "$lib/api";
  import { currentDocId } from "$lib/stores.svelte";
- import { sourceColorClass } from "$lib/colors";
  import { displayTitle, displaySource } from "$lib/titles";
 
  interface LearningEntry extends TreeDocument {
@@ -118,7 +117,7 @@
    <div class="source-filters">
     <button class="filter-btn" class:active={activeSource === null} onclick={() => activeSource = null}>All</button>
     {#each sources as src}
-     <button class="filter-btn {sourceColorClass(src)}" class:active={activeSource === src} onclick={() => activeSource = activeSource === src ? null : src}>{displaySource(src)}</button>
+     <button class="filter-btn" class:active={activeSource === src} onclick={() => activeSource = activeSource === src ? null : src}>{displaySource(src)}</button>
     {/each}
    </div>
   {/if}
@@ -137,7 +136,7 @@
         <a href={docUrl(entry.doc_id)} class="entry-card">
          <div class="entry-header">
           <span class="entry-date" class:invisible={day === prevDay}>{day}</span>
-          {#if !activeSource}<span class="entry-source {sourceColorClass(entry.source)}">{displaySource(entry.source)}</span>{/if}
+          {#if !activeSource}<span class="entry-source">{displaySource(entry.source)}</span>{/if}
           <span class="entry-title">{displayTitle(entry)}</span>
          </div>
         </a>
@@ -345,9 +344,8 @@
  }
 
  .entry-source {
-  font-size: 16px;
+  font-size: 20px;
   font-weight: bold;
-  padding: 2px 8px;
   white-space: nowrap;
   flex-shrink: 0;
  }
@@ -355,7 +353,7 @@
  .entry-title {
   color: var(--text);
   font-size: 19px;
-  font-weight: 500;
+  font-weight: 600;
   min-width: 0;
  }
 
@@ -389,7 +387,6 @@
   }
   .entry-source {
    font-size: 16px;
-   padding: 2px 8px;
   }
   .entry-card {
    min-height: 44px;

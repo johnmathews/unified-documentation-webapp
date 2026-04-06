@@ -1,7 +1,6 @@
 <script lang="ts">
  import { fetchHealth, type HealthStatus } from "$lib/api";
  import { currentDocId } from "$lib/stores.svelte";
- import { sourceColorClass } from "$lib/colors";
  import { displaySource } from "$lib/titles";
 
  let health: HealthStatus | null = $state(null);
@@ -187,7 +186,7 @@
      <tr>
       <td>
        <a href="/source/{source.source}" class="source-link">
-        <span class="source-tag {sourceColorClass(source.source)}">{displaySource(source.source)}</span>
+        <span class="source-tag">{displaySource(source.source)}</span>
        </a>
       </td>
       <td>
@@ -461,7 +460,6 @@
  .source-tag {
   font-size: 16px;
   font-weight: bold;
-  padding: 2px 8px;
   white-space: nowrap;
  }
 

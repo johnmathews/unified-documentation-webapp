@@ -2,7 +2,6 @@
  import { page } from "$app/state";
  import { fetchDocument, type FullDocument } from "$lib/api";
  import { currentDocId } from "$lib/stores.svelte";
- import { sourceColorClass } from "$lib/colors";
  import Breadcrumbs from "$lib/components/Breadcrumbs.svelte";
  import { displaySource, displayTitle, stripSourcePrefix } from "$lib/titles";
  import { renderMarkdownWithLinks } from "$lib/links";
@@ -91,7 +90,7 @@
   />
   <header class="doc-header">
    <div class="doc-meta-row">
-    <a href="/source/{encodeURIComponent(doc.source)}" class="source-badge {sourceColorClass(doc.source)}"
+    <a href="/source/{encodeURIComponent(doc.source)}" class="source-badge"
      >{displaySource(doc.source)}</a
     >
     <span class="file-path">{doc.file_path}</span>
@@ -179,8 +178,6 @@
  .source-badge {
   font-size: 16px;
   font-weight: bold;
-  padding: 2px 8px;
-  border-radius: 0;
   white-space: nowrap;
   text-decoration: none;
   transition: opacity 0.15s;
@@ -261,7 +258,6 @@
  @media (max-width: 640px) {
   .source-badge {
    font-size: 16px;
-   padding: 2px 8px;
    min-height: 44px;
    display: inline-flex;
    align-items: center;

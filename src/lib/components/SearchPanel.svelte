@@ -1,6 +1,5 @@
 <script lang="ts">
  import { searchDocuments, fetchSources, type SearchResult, type SearchFilters } from "$lib/api";
- import { sourceColorClass } from "$lib/colors";
  import { displaySource, displayTitle } from "$lib/titles";
  import { currentDocId } from "$lib/stores.svelte";
 
@@ -466,7 +465,7 @@
     >
      <span class="result-title">{displayTitle(result)}</span>
      <div class="result-meta">
-      <span class="source-tag {sourceColorClass(result.source)}">{displaySource(result.source)}</span>
+      <span class="source-tag">{displaySource(result.source)}</span>
       {#if result.created_at}
        <span class="result-date">Created {formatDate(result.created_at)}</span>
       {/if}
@@ -829,7 +828,6 @@
  .source-tag {
   font-size: 14px;
   font-weight: bold;
-  padding: 1px 6px;
   white-space: nowrap;
  }
 

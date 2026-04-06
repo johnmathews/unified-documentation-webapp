@@ -1,7 +1,6 @@
 <script lang="ts">
  import { fetchTree, type TreeDocument } from "$lib/api";
  import { currentDocId } from "$lib/stores.svelte";
- import { sourceColorClass } from "$lib/colors";
  import { displayTitle, displaySource } from "$lib/titles";
 
  interface RootDoc extends TreeDocument {
@@ -129,7 +128,7 @@
     <div class="source-filters">
      <button class="filter-btn" class:active={activeSource === null} onclick={() => activeSource = null}>All</button>
      {#each sources as src}
-      <button class="filter-btn {sourceColorClass(src)}" class:active={activeSource === src} onclick={() => activeSource = activeSource === src ? null : src}>{displaySource(src)}</button>
+      <button class="filter-btn" class:active={activeSource === src} onclick={() => activeSource = activeSource === src ? null : src}>{displaySource(src)}</button>
      {/each}
     </div>
    {/if}
@@ -147,7 +146,7 @@
     {#each groupedDocs as group}
      <div class="source-group">
       <h2 class="source-header">
-       <span class="source-tag {sourceColorClass(group.source)}">{displaySource(group.source)}</span>
+       <span class="source-tag">{displaySource(group.source)}</span>
       </h2>
       <ul class="doc-list">
        {#each sortDocs(group.docs) as doc}
@@ -316,9 +315,7 @@
  }
 
  .source-tag {
-  font-size: 16px;
   font-weight: bold;
-  padding: 2px 8px;
  }
 
  .controls-row {
@@ -375,6 +372,7 @@
  .doc-list a {
   color: var(--link);
   font-size: 16px;
+  font-weight: 600;
  }
 
  .doc-list a:hover {

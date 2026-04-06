@@ -282,8 +282,6 @@
  h2 {
   font-size: 24px;
   font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
   margin-bottom: 10px;
   padding-bottom: 10px;
   border-bottom: 1px solid var(--border);
@@ -309,6 +307,7 @@
  .doc-list a {
   color: var(--link);
   font-size: 16px;
+  font-weight: 600;
  }
  .doc-list a:hover {
   color: var(--link-hover);

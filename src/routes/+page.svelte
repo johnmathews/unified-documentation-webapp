@@ -1,7 +1,6 @@
 <script lang="ts">
  import { fetchTree, fetchHealth, type TreeSource, type TreeDocument, type HealthStatus, type HealthSource } from "$lib/api";
  import { currentDocId } from "$lib/stores.svelte";
- import { sourceColorClass } from "$lib/colors";
  import { displaySource } from "$lib/titles";
 
  let tree: TreeSource[] = $state([]);
@@ -198,7 +197,7 @@
      {@const updated = lastUpdated(source)}
      <tr>
       <td>
-       <a class="source-link {sourceColorClass(source.source)}" href="/source/{encodeURIComponent(source.source)}"
+       <a class="source-link" href="/source/{encodeURIComponent(source.source)}"
         >{displaySource(source.source)}</a
        >
       </td>

@@ -1,28 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { categorizeFilePath } from "$lib/api";
 import type { TreeSource, TreeDocument } from "$lib/api";
-import { sourceColorClass } from "$lib/colors";
 import { displayTitle } from "$lib/titles";
 
 // Test the pure utility logic that the API module and components share
-
-describe("sourceColorClass", () => {
- it("returns a tag-* CSS class name", () => {
-  const cls = sourceColorClass("test-source");
-  expect(cls).toMatch(/^tag-/);
- });
-
- it("returns the same class for the same source name", () => {
-  expect(sourceColorClass("my-repo")).toBe(sourceColorClass("my-repo"));
- });
-
- it("returns different classes for different source names", () => {
-  const a = sourceColorClass("alpha");
-  const b = sourceColorClass("beta");
-  // Not guaranteed to differ, but these specific strings do hash differently
-  expect(a !== b).toBe(true);
- });
-});
 
 describe("docUrl", () => {
  function docUrl(docId: string): string {
