@@ -245,7 +245,7 @@ describe("TreeSource optional field regression tests", () => {
  // --- Sidebar.svelte: totalDocs() ---
  describe("totalDocs calculation (Sidebar.svelte)", () => {
   function totalDocs(source: TreeSource): number {
-   return source.root_docs.length + source.docs.length + source.journal.length + (source.engineering_team?.length ?? 0);
+   return source.root_docs.length + source.docs.length + source.journal.length + (source.engineering_team?.length ?? 0) + (source.research?.length ?? 0);
   }
 
   it("works when engineering_team is missing", () => {
@@ -342,6 +342,7 @@ describe("TreeSource optional field regression tests", () => {
   function detectCategory(filePath: string): string {
    if (filePath.includes("journal/")) return "journal";
    if (filePath.includes(".engineering-team/")) return "engineering_team";
+   if (filePath.includes("research/")) return "research";
    return "docs";
   }
 
@@ -351,6 +352,10 @@ describe("TreeSource optional field regression tests", () => {
 
   it("detects engineering_team category", () => {
    expect(detectCategory(".engineering-team/evaluation-report.md")).toBe("engineering_team");
+  });
+
+  it("detects research category", () => {
+   expect(detectCategory("research/analysis.md")).toBe("research");
   });
 
   it("defaults to docs for other paths", () => {
@@ -530,6 +535,11 @@ describe("categorizeFilePath", () => {
   expect(categorizeFilePath("source/.engineering-team/plan.md")).toBe("engineering_team");
  });
 
+ it("detects research files", () => {
+  expect(categorizeFilePath("research/topic.md")).toBe("research");
+  expect(categorizeFilePath("source/research/analysis.md")).toBe("research");
+ });
+
  it("detects docs (files in subdirectories)", () => {
   expect(categorizeFilePath("docs/setup.md")).toBe("docs");
   expect(categorizeFilePath("nested/deep/file.md")).toBe("docs");
@@ -593,6 +603,16 @@ describe("searchDocuments with docType filter", () => {
    snippet: "Engineering eval",
   },
   {
+   doc_id: "repo:research/analysis.md",
+   source: "repo",
+   file_path: "research/analysis.md",
+   title: "Analysis",
+   created_at: "2025-04-01T00:00:00Z",
+   modified_at: "2025-04-01T00:00:00Z",
+   score: 0.55,
+   snippet: "Research analysis",
+  },
+  {
    doc_id: "repo:docs/report.pdf",
    source: "repo",
    file_path: "docs/report.pdf",
@@ -618,7 +638,7 @@ describe("searchDocuments with docType filter", () => {
  it("returns all results when docType is not set", async () => {
   const { searchDocuments } = await import("$lib/api");
   const results = await searchDocuments("test");
-  expect(results).toHaveLength(5);
+  expect(results).toHaveLength(6);
  });
 
  it("filters by root_docs type", async () => {
@@ -647,6 +667,13 @@ describe("searchDocuments with docType filter", () => {
   const results = await searchDocuments("test", { docType: "engineering_team" });
   expect(results).toHaveLength(1);
   expect(results[0].doc_id).toBe("repo:.engineering-team/eval.md");
+ });
+
+ it("filters by research type", async () => {
+  const { searchDocuments } = await import("$lib/api");
+  const results = await searchDocuments("test", { docType: "research" });
+  expect(results).toHaveLength(1);
+  expect(results[0].doc_id).toBe("repo:research/analysis.md");
  });
 
  it("filters by pdf type", async () => {

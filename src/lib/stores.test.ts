@@ -2,8 +2,8 @@ import { describe, it, expect } from "vitest";
 import { CATEGORIES, type CategoryKey } from "$lib/stores.svelte";
 
 describe("CATEGORIES constant", () => {
- it("contains exactly 6 categories", () => {
-  expect(CATEGORIES).toHaveLength(6);
+ it("contains exactly 7 categories", () => {
+  expect(CATEGORIES).toHaveLength(7);
  });
 
  it("has root_docs as the first category", () => {
@@ -22,6 +22,10 @@ describe("CATEGORIES constant", () => {
   expect(CATEGORIES.find((c) => c.key === "engineering_team")).toBeDefined();
  });
 
+ it("has research category", () => {
+  expect(CATEGORIES.find((c) => c.key === "research")).toBeDefined();
+ });
+
  it("all categories have unique keys", () => {
   const keys = CATEGORIES.map((c) => c.key);
   expect(new Set(keys).size).toBe(keys.length);
@@ -35,7 +39,7 @@ describe("CATEGORIES constant", () => {
 
  it("CategoryKey type matches the defined keys", () => {
   // This is a compile-time check, but we can verify at runtime too
-  const validKeys: CategoryKey[] = ["root_docs", "docs", "journal", "learning_journal", "engineering_team", "pdf"];
+  const validKeys: CategoryKey[] = ["root_docs", "docs", "journal", "learning_journal", "engineering_team", "research", "pdf"];
   const actualKeys = CATEGORIES.map((c) => c.key);
   expect(actualKeys).toEqual(validKeys);
  });
@@ -58,5 +62,17 @@ describe("CATEGORIES ordering", () => {
   const journalIdx = CATEGORIES.findIndex((c) => c.key === "journal");
   const engIdx = CATEGORIES.findIndex((c) => c.key === "engineering_team");
   expect(journalIdx).toBeLessThan(engIdx);
+ });
+
+ it("engineering_team comes before research", () => {
+  const engIdx = CATEGORIES.findIndex((c) => c.key === "engineering_team");
+  const researchIdx = CATEGORIES.findIndex((c) => c.key === "research");
+  expect(engIdx).toBeLessThan(researchIdx);
+ });
+
+ it("research comes before pdf", () => {
+  const researchIdx = CATEGORIES.findIndex((c) => c.key === "research");
+  const pdfIdx = CATEGORIES.findIndex((c) => c.key === "pdf");
+  expect(researchIdx).toBeLessThan(pdfIdx);
  });
 });

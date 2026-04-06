@@ -8,6 +8,7 @@ export interface TreeSource {
  journal: TreeDocument[];
  learning_journal?: TreeDocument[];
  engineering_team?: TreeDocument[];
+ research?: TreeDocument[];
  pdf?: TreeDocument[];
 }
 
@@ -110,6 +111,7 @@ export function categorizeFilePath(filePath: string): string {
  if (filePath.includes("learning/") || filePath.includes("learning\\")) return "learning_journal";
  if (filePath.includes("journal/") || filePath.includes("journal\\")) return "journal";
  if (filePath.includes(".engineering-team/") || filePath.includes(".engineering-team\\")) return "engineering_team";
+ if (filePath.includes("research/") || filePath.includes("research\\")) return "research";
  if (filePath.includes("/") || filePath.includes("\\")) return "docs";
  return "root_docs";
 }

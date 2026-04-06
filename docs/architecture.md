@@ -17,9 +17,9 @@ documentation.
   Journal, Learning Journal, and Engineering Team. The sidebar (file picker) and search panel have mutual exclusion — opening one closes
   the other.
 - **Sidebar**: Tree navigation organized by Source > Category (Root Docs/Documentation Directory/Development
-  Journal/Learning Journal/Engineering Team) > Document, with expand/collapse controls inside the tree section. Each
-  source has a deterministic color tag for visual distinction. All six categories are collapsible sections with document
-  counts. A collapsible "Filter categories" section with GOV.UK-style small checkboxes allows globally toggling category
+  Journal/Learning Journal/Engineering Team/Research/PDF) > Document, with expand/collapse controls inside the tree
+  section. Each source has a deterministic color tag for visual distinction. All seven categories are collapsible sections
+  with document counts. A collapsible "Filter categories" section with GOV.UK-style small checkboxes allows globally toggling category
   visibility (persisted to localStorage). The `CATEGORIES` constant in `stores.svelte.ts` is the single source of truth
   for category definitions.
 - **Mobile Responsiveness**: Full-screen modal sidebar and chat panels on mobile (100% width in both portrait and
@@ -57,7 +57,7 @@ documentation.
   is fetched in parallel with the tree and degrades gracefully if `/api/health` fails.
 - **Source Pages**: Per-source view at `/source/<name>` showing documents grouped by category with a Recent/A-Z sort
   toggle. Each document shows both edited and created dates (inline, no labels). Categories shown: Root Docs,
-  Documentation, Development Journal, Learning Journal, Engineering Team, PDF.
+  Documentation, Development Journal, Learning Journal, Engineering Team, Research, PDF.
 - **Journal Timeline**: Cross-project chronological view of all journal entries at `/journal`, with source filter buttons
 - **Learning Journal**: Cross-project chronological view of learning entries at `/learning-journal`, with source filters.
   Backend identifies these as markdown files in `learning/` directories.

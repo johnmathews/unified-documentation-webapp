@@ -77,6 +77,7 @@
    ...source.journal,
    ...(source.learning_journal ?? []),
    ...(source.engineering_team ?? []),
+   ...(source.research ?? []),
    ...(source.pdf ?? []),
   ];
  }

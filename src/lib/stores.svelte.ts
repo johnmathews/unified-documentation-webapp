@@ -7,6 +7,7 @@ export const CATEGORIES = [
  { key: "journal", label: "Journal" },
  { key: "learning_journal", label: "Learning Journal" },
  { key: "engineering_team", label: "Engineering Team" },
+ { key: "research", label: "Research" },
  { key: "pdf", label: "PDF" },
 ] as const;
 
