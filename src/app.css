@@ -100,56 +100,20 @@
  --backdrop: rgba(0, 0, 0, 0.6);
 }
 
-/* Source tag classes — GOV.UK tag styles (tint-80 bg, shade-50 text) */
-.tag-blue {
- background: #d2e2f1;
- color: #0f385c;
-}
-.tag-green {
- background: #cfe4dc;
- color: #083d29;
-}
-.tag-purple {
- background: #ddd6ec;
- color: #2a1950;
-}
-.tag-orange {
- background: #fde4d7;
- color: #7a3c1c;
-}
-.tag-teal {
- background: #d0e6e7;
- color: #0b4144;
-}
-.tag-red {
- background: #f4d7d7;
- color: #651b1b;
-}
+/* Source tag classes — colored background, standard text for max contrast */
+.tag-blue { background: #d2e2f1; color: var(--text); }
+.tag-green { background: #cfe4dc; color: var(--text); }
+.tag-purple { background: #ddd6ec; color: var(--text); }
+.tag-orange { background: #fde4d7; color: var(--text); }
+.tag-teal { background: #d0e6e7; color: var(--text); }
+.tag-red { background: #f4d7d7; color: var(--text); }
 
-[data-theme="dark"] .tag-blue {
- background: #163d6b;
- color: #7db8e8;
-}
-[data-theme="dark"] .tag-green {
- background: #0d4f35;
- color: #6ccda5;
-}
-[data-theme="dark"] .tag-purple {
- background: #3a2570;
- color: #a694d4;
-}
-[data-theme="dark"] .tag-orange {
- background: #8f4a24;
- color: #f4b07a;
-}
-[data-theme="dark"] .tag-teal {
- background: #105558;
- color: #6dd4d8;
-}
-[data-theme="dark"] .tag-red {
- background: #7a2424;
- color: #f09090;
-}
+[data-theme="dark"] .tag-blue { background: #1a3a5c; }
+[data-theme="dark"] .tag-green { background: #0d4f35; }
+[data-theme="dark"] .tag-purple { background: #2d1c58; }
+[data-theme="dark"] .tag-orange { background: #5c3518; }
+[data-theme="dark"] .tag-teal { background: #105558; }
+[data-theme="dark"] .tag-red { background: #5c1c1c; }
 
 /* Reset */
 * {

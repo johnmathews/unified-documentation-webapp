@@ -365,6 +365,12 @@
   color: #ffffff;
  }
 
+ :global([data-theme="dark"]) .status-badge.ok,
+ :global([data-theme="dark"]) .status-badge.warn,
+ :global([data-theme="dark"]) .status-badge.err {
+  color: #1a1a1a;
+ }
+
  .refresh-btn {
   font-size: 16px;
   padding: 8px 16px;

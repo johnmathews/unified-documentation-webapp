@@ -348,14 +348,13 @@
  .source-link {
   font-size: 1.1875rem;
   font-weight: 700;
-  color: var(--link);
   text-decoration: underline;
   text-decoration-thickness: max(1px, 0.0625rem);
   text-underline-offset: 0.1578em;
  }
 
  .source-link:hover {
-  color: var(--link-hover);
+  filter: brightness(1.3);
   text-decoration-thickness: max(3px, 0.1875rem, 0.12em);
  }
 
@@ -402,6 +401,12 @@
  .status-badge.err {
   background: var(--error);
   color: #ffffff;
+ }
+
+ :global([data-theme="dark"]) .status-badge.ok,
+ :global([data-theme="dark"]) .status-badge.warn,
+ :global([data-theme="dark"]) .status-badge.err {
+  color: #1a1a1a;
  }
 
  .status-badge:hover {
