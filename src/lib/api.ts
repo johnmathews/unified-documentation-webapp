@@ -170,6 +170,102 @@ export async function sendChat(
  });
 }
 
+// ---- Streaming chat (SSE) ----
+
+export interface StreamCallbacks {
+	onStatus?: (data: { status: string; iteration?: number }) => void;
+	onToolCall?: (data: { index: number; tool: string; input: Record<string, unknown> }) => void;
+	onToolResult?: (data: { index: number; tool: string; summary: string }) => void;
+	onReply?: (data: ChatResponse) => void;
+	onError?: (error: string) => void;
+}
+
+export async function streamChat(
+	message: string,
+	callbacks: StreamCallbacks,
+	docId?: string,
+	history?: ChatMessage[],
+	pageContext?: PageContext,
+	conversationId?: string,
+): Promise<void> {
+	const body: Record<string, unknown> = { message };
+	if (docId) body.doc_id = docId;
+	if (pageContext) body.page_context = pageContext;
+	if (history?.length) body.history = history;
+	if (conversationId) body.conversation_id = conversationId;
+
+	const response = await fetch("/api/chat/stream", {
+		method: "POST",
+		headers: { "Content-Type": "application/json" },
+		body: JSON.stringify(body),
+	});
+
+	if (!response.ok) {
+		const err = await response.json().catch(() => ({ error: response.statusText }));
+		throw new Error((err as { error?: string }).error || `API error ${response.status}`);
+	}
+
+	const reader = response.body!.getReader();
+	const decoder = new TextDecoder();
+	let buffer = "";
+	let gotReplyOrError = false;
+
+	while (true) {
+		const { done, value } = await reader.read();
+		if (done) break;
+		buffer += decoder.decode(value, { stream: true });
+
+		const parts = buffer.split("\n\n");
+		buffer = parts.pop()!;
+
+		for (const part of parts) {
+			if (!part.trim()) continue;
+			const parsed = parseSSE(part);
+			if (!parsed) continue;
+
+			switch (parsed.event) {
+				case "status":
+					callbacks.onStatus?.(JSON.parse(parsed.data));
+					break;
+				case "tool_call":
+					callbacks.onToolCall?.(JSON.parse(parsed.data));
+					break;
+				case "tool_result":
+					callbacks.onToolResult?.(JSON.parse(parsed.data));
+					break;
+				case "reply":
+					callbacks.onReply?.(JSON.parse(parsed.data));
+					gotReplyOrError = true;
+					break;
+				case "error":
+					callbacks.onError?.(JSON.parse(parsed.data).error);
+					gotReplyOrError = true;
+					break;
+			}
+		}
+	}
+
+	if (!gotReplyOrError) {
+		throw new Error("Connection lost — no response received");
+	}
+}
+
+function parseSSE(raw: string): { event: string; data: string } | null {
+	let event = "message";
+	const dataLines: string[] = [];
+
+	for (const line of raw.split("\n")) {
+		if (line.startsWith("event:")) {
+			event = line.slice(6).trim();
+		} else if (line.startsWith("data:")) {
+			dataLines.push(line.slice(5).trim());
+		}
+	}
+
+	if (dataLines.length === 0) return null;
+	return { event, data: dataLines.join("\n") };
+}
+
 export interface ConversationSummary {
  id: string;
  title: string;

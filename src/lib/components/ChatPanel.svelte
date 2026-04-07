@@ -1,6 +1,6 @@
 <script lang="ts">
  import {
-  sendChat,
+  streamChat,
   listConversations,
   getConversation,
   deleteConversation,
@@ -44,6 +44,17 @@
  let textareaEl: HTMLTextAreaElement | undefined = $state();
  let confirmingClear = $state(false);
  let editingIndex: number | null = $state(null);
+ let toolProgress: { index: number; tool: string; status: "calling" | "done"; summary?: string }[] = $state([]);
+
+ const toolLabels: Record<string, string> = {
+  search_docs: "Searching documentation",
+  query_docs: "Querying documents",
+  get_document: "Reading document",
+  list_sources: "Listing sources",
+ };
+ function formatToolName(name: string): string {
+  return toolLabels[name] || name;
+ }
 
  // Conversation history
  let showHistory = $state(false);
@@ -104,20 +115,41 @@
   await scrollToBottom();
 
   try {
-   const result = await sendChat(
+   toolProgress = [];
+   await streamChat(
     msg,
+    {
+     onToolCall: (data) => {
+      toolProgress = [...toolProgress, { index: data.index, tool: data.tool, status: "calling" }];
+      scrollToBottom();
+     },
+     onToolResult: (data) => {
+      toolProgress = toolProgress.map((t) =>
+       t.index === data.index ? { ...t, status: "done" as const, summary: data.summary } : t,
+      );
+      scrollToBottom();
+     },
+     onReply: (data) => {
+      messages.push({ role: "assistant", content: data.reply });
+      conversationId = data.conversation_id;
+      toolProgress = [];
+     },
+     onError: (error) => {
+      messages.push({ role: "assistant", content: `Error: ${error}` });
+      toolProgress = [];
+     },
+    },
     docId ?? undefined,
     messages.slice(0, -1),
     pageContext ?? undefined,
     conversationId ?? undefined,
    );
-   messages.push({ role: "assistant", content: result.reply });
-   conversationId = result.conversation_id;
   } catch (err) {
    messages.push({
     role: "assistant",
     content: `Error: ${err instanceof Error ? err.message : "Something went wrong"}`,
    });
+   toolProgress = [];
   } finally {
    sending = false;
    await scrollToBottom();
@@ -317,8 +349,23 @@
    {/each}
    {#if sending}
     <div class="message assistant">
-     <div class="message-bubble typing">
-      <span class="dot"></span><span class="dot"></span><span class="dot"></span>
+     <div class="message-bubble typing-progress">
+      {#if toolProgress.length > 0}
+       <div class="tool-progress">
+        {#each toolProgress as tp (tp.index)}
+         <div class="tool-step" class:done={tp.status === "done"}>
+          <span class="tool-icon">{tp.status === "done" ? "\u2713" : "\u21BB"}</span>
+          <span class="tool-name">{formatToolName(tp.tool)}</span>
+          {#if tp.summary}
+           <span class="tool-summary">&mdash; {tp.summary}</span>
+          {/if}
+         </div>
+        {/each}
+       </div>
+      {/if}
+      <div class="thinking-dots">
+       <span class="dot"></span><span class="dot"></span><span class="dot"></span>
+      </div>
      </div>
     </div>
    {/if}
@@ -622,10 +669,55 @@
   border-left: 5px solid var(--border);
  }
 
- .typing {
+ .typing-progress {
+  padding: 12px 16px;
+ }
+
+ .tool-progress {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 8px;
+  font-size: 13px;
+ }
+
+ .tool-step {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-secondary, #888);
+ }
+
+ .tool-step.done {
+  color: var(--text-muted);
+ }
+
+ .tool-icon {
+  font-size: 12px;
+  width: 16px;
+  text-align: center;
+ }
+
+ .tool-step:not(.done) .tool-icon {
+  animation: spin 1s linear infinite;
+ }
+
+ @keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+ }
+
+ .tool-name {
+  font-weight: 600;
+ }
+
+ .tool-summary {
+  color: var(--text-muted);
+ }
+
+ .thinking-dots {
   display: flex;
   gap: 5px;
-  padding: 15px 20px;
  }
 
  .dot {
