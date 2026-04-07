@@ -93,6 +93,12 @@
     {#if (source.research?.length ?? 0) > 0}
      <span class="stat-tag">{source.research?.length ?? 0} research</span>
     {/if}
+    {#if (source.skills?.length ?? 0) > 0}
+     <span class="stat-tag">{source.skills?.length ?? 0} skills</span>
+    {/if}
+    {#if (source.runbooks?.length ?? 0) > 0}
+     <span class="stat-tag">{source.runbooks?.length ?? 0} runbooks</span>
+    {/if}
     {#if (source.pdf?.length ?? 0) > 0}
      <span class="stat-tag">{source.pdf?.length ?? 0} PDFs</span>
     {/if}
@@ -193,6 +199,40 @@
     <h2><a href="/source/{encodeURIComponent(source.source)}/research">Research</a></h2>
     <ul class="doc-list">
      {#each sortDocs(source.research ?? []) as doc}
+      <li>
+       <a href={docUrl(doc.doc_id)}>{displayTitle(doc)}</a>
+       <span class="dates">
+        {#if doc.modified_at}<span class="date">{formatDate(doc.modified_at)}</span>{/if}
+        {#if doc.created_at && doc.created_at !== doc.modified_at}<span class="date created">{formatDate(doc.created_at)}</span>{/if}
+       </span>
+      </li>
+     {/each}
+    </ul>
+   </section>
+  {/if}
+
+  {#if (source.skills?.length ?? 0) > 0}
+   <section>
+    <h2><a href="/source/{encodeURIComponent(source.source)}/skills">Skills</a></h2>
+    <ul class="doc-list">
+     {#each sortDocs(source.skills ?? []) as doc}
+      <li>
+       <a href={docUrl(doc.doc_id)}>{displayTitle(doc)}</a>
+       <span class="dates">
+        {#if doc.modified_at}<span class="date">{formatDate(doc.modified_at)}</span>{/if}
+        {#if doc.created_at && doc.created_at !== doc.modified_at}<span class="date created">{formatDate(doc.created_at)}</span>{/if}
+       </span>
+      </li>
+     {/each}
+    </ul>
+   </section>
+  {/if}
+
+  {#if (source.runbooks?.length ?? 0) > 0}
+   <section>
+    <h2><a href="/source/{encodeURIComponent(source.source)}/runbooks">Runbooks</a></h2>
+    <ul class="doc-list">
+     {#each sortDocs(source.runbooks ?? []) as doc}
       <li>
        <a href={docUrl(doc.doc_id)}>{displayTitle(doc)}</a>
        <span class="dates">

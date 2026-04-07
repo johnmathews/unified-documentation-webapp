@@ -44,6 +44,8 @@
    expandedCategories[`${s.source}:learning_journal`] = true;
    expandedCategories[`${s.source}:engineering_team`] = true;
    expandedCategories[`${s.source}:research`] = true;
+   expandedCategories[`${s.source}:skills`] = true;
+   expandedCategories[`${s.source}:runbooks`] = true;
    expandedCategories[`${s.source}:pdf`] = true;
   }
  }
@@ -57,6 +59,8 @@
    expandedCategories[`${s.source}:learning_journal`] = false;
    expandedCategories[`${s.source}:engineering_team`] = false;
    expandedCategories[`${s.source}:research`] = false;
+   expandedCategories[`${s.source}:skills`] = false;
+   expandedCategories[`${s.source}:runbooks`] = false;
    expandedCategories[`${s.source}:pdf`] = false;
   }
  }
@@ -82,6 +86,8 @@
   if (categoryFilters.isVisible("learning_journal")) count += source.learning_journal?.length ?? 0;
   if (categoryFilters.isVisible("engineering_team")) count += source.engineering_team?.length ?? 0;
   if (categoryFilters.isVisible("research")) count += source.research?.length ?? 0;
+  if (categoryFilters.isVisible("skills")) count += source.skills?.length ?? 0;
+  if (categoryFilters.isVisible("runbooks")) count += source.runbooks?.length ?? 0;
   if (categoryFilters.isVisible("pdf")) count += source.pdf?.length ?? 0;
   return count;
  }
@@ -373,6 +379,75 @@
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
              <circle cx="11" cy="11" r="8" />
              <line x1="21" y1="21" x2="16.65" y2="16.65" />
+            </svg>
+            <span class="item-title">{displayTitle(doc)}</span>
+           </a>
+          {/each}
+         </div>
+        {/if}
+       </div>
+      {/if}
+
+      {#if categoryFilters.isVisible("skills") && (source.skills?.length ?? 0) > 0}
+       <div class="tree-category">
+        <button class="tree-toggle category-toggle" onclick={() => toggleCategory(`${source.source}:skills`)}>
+         <svg
+          class="chevron"
+          class:expanded={expandedCategories[`${source.source}:skills`]}
+          width="12"
+          height="12"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+         >
+          <polyline points="9 18 15 12 9 6" />
+         </svg>
+         <span>Skills</span>
+         <span class="count">{source.skills?.length ?? 0}</span>
+        </button>
+
+        {#if expandedCategories[`${source.source}:skills`]}
+         <div class="tree-items">
+          {#each source.skills ?? [] as doc}
+           <a href={docUrl(doc.doc_id)} class="tree-item" class:active={isActive(doc.doc_id)} onclick={onNavigate}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+             <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+            </svg>
+            <span class="item-title">{displayTitle(doc)}</span>
+           </a>
+          {/each}
+         </div>
+        {/if}
+       </div>
+      {/if}
+
+      {#if categoryFilters.isVisible("runbooks") && (source.runbooks?.length ?? 0) > 0}
+       <div class="tree-category">
+        <button class="tree-toggle category-toggle" onclick={() => toggleCategory(`${source.source}:runbooks`)}>
+         <svg
+          class="chevron"
+          class:expanded={expandedCategories[`${source.source}:runbooks`]}
+          width="12"
+          height="12"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+         >
+          <polyline points="9 18 15 12 9 6" />
+         </svg>
+         <span>Runbooks</span>
+         <span class="count">{source.runbooks?.length ?? 0}</span>
+        </button>
+
+        {#if expandedCategories[`${source.source}:runbooks`]}
+         <div class="tree-items">
+          {#each source.runbooks ?? [] as doc}
+           <a href={docUrl(doc.doc_id)} class="tree-item" class:active={isActive(doc.doc_id)} onclick={onNavigate}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+             <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+             <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
             </svg>
             <span class="item-title">{displayTitle(doc)}</span>
            </a>

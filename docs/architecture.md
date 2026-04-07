@@ -17,8 +17,8 @@ documentation.
   Journal, Learning Journal, and Engineering Team. The sidebar (file picker) and search panel have mutual exclusion — opening one closes
   the other.
 - **Sidebar**: Tree navigation organized by Source > Category (Root Docs/Documentation Directory/Development
-  Journal/Learning Journal/Engineering Team/Research/PDF) > Document, with expand/collapse controls inside the tree
-  section. Each source has a deterministic color tag for visual distinction. All seven categories are collapsible sections
+  Journal/Learning Journal/Engineering Team/Research/Skills/Runbooks/PDF) > Document, with expand/collapse controls inside the tree
+  section. Each source has a deterministic color tag for visual distinction. All nine categories are collapsible sections
   with document counts. A collapsible "Filter categories" section with GOV.UK-style small checkboxes allows globally toggling category
   visibility (persisted to localStorage). The `CATEGORIES` constant in `stores.svelte.ts` is the single source of truth
   for category definitions.
