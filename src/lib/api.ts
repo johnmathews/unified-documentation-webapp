@@ -213,7 +213,7 @@ export async function streamChat(
 	while (true) {
 		const { done, value } = await reader.read();
 		if (done) break;
-		buffer += decoder.decode(value, { stream: true });
+		buffer += decoder.decode(value, { stream: true }).replace(/\r/g, "");
 
 		const parts = buffer.split("\n\n");
 		buffer = parts.pop()!;
@@ -250,7 +250,7 @@ export async function streamChat(
 	}
 }
 
-function parseSSE(raw: string): { event: string; data: string } | null {
+export function parseSSE(raw: string): { event: string; data: string } | null {
 	let event = "message";
 	const dataLines: string[] = [];
 

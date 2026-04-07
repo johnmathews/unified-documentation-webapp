@@ -68,7 +68,8 @@ npm run test:e2e  # Run end-to-end tests
 ```
 src/
   lib/
-    api.ts                # Client-side API types + fetch wrappers
+    api.ts                # Client-side API types, fetch wrappers, SSE streaming
+    sse.test.ts           # Tests for SSE parser and streaming chat
     stores.svelte.ts      # Shared reactive state (doc ID, category filters)
     colors.ts             # Deterministic source tag colors
     titles.ts             # Display formatting for sources and titles
@@ -104,3 +105,9 @@ docker run -p 3001:3000 -e API_URL=http://host.docker.internal:8080 unified-docu
 ```
 
 In production, both services run via `docker-compose.yml` where the UI connects to the backend at `http://docserver:8080` (container-to-container networking).
+
+## SSE streaming
+
+The chat feature uses Server-Sent Events for real-time progress during the agentic tool-use loop. The backend (`sse-starlette`) sends events with `\r\n` line endings (CRLF), which the frontend normalizes to `\n` (LF) before parsing. The `parseSSE()` function in `api.ts` extracts event type and data from each SSE frame. Event types: `status`, `tool_call`, `tool_result`, `reply`, `error`.
+
+The SvelteKit server route at `src/routes/api/chat/stream/+server.ts` proxies the SSE stream from the backend, preserving the streaming `ReadableStream` body without buffering.
