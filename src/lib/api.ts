@@ -140,15 +140,64 @@ export async function fetchSources(): Promise<string[]> {
  return health.sources.map((s) => s.source);
 }
 
-export async function sendChat(message: string, docId?: string, history?: ChatMessage[]): Promise<string> {
+export interface PageContext {
+ source?: string;
+ category?: string;
+}
+
+export interface ChatResponse {
+ reply: string;
+ conversation_id: string;
+}
+
+export async function sendChat(
+ message: string,
+ docId?: string,
+ history?: ChatMessage[],
+ pageContext?: PageContext,
+ conversationId?: string,
+): Promise<ChatResponse> {
  const body: Record<string, unknown> = { message };
  if (docId) body.doc_id = docId;
+ if (pageContext) body.page_context = pageContext;
  if (history?.length) body.history = history;
+ if (conversationId) body.conversation_id = conversationId;
 
- const result = await apiFetch<{ reply: string }>("/api/chat", {
+ return apiFetch<ChatResponse>("/api/chat", {
   method: "POST",
   headers: { "Content-Type": "application/json" },
   body: JSON.stringify(body),
  });
- return result.reply;
+}
+
+export interface ConversationSummary {
+ id: string;
+ title: string;
+ created_at: string;
+ updated_at: string;
+ message_count: number;
+ preview: string;
+}
+
+export interface ConversationFull {
+ id: string;
+ title: string;
+ created_at: string;
+ updated_at: string;
+ page_context: PageContext | null;
+ messages: ChatMessage[];
+}
+
+export async function listConversations(): Promise<ConversationSummary[]> {
+ return apiFetch<ConversationSummary[]>("/api/conversations");
+}
+
+export async function getConversation(id: string): Promise<ConversationFull> {
+ return apiFetch<ConversationFull>(`/api/conversations/${encodeURIComponent(id)}`);
+}
+
+export async function deleteConversation(id: string): Promise<void> {
+ await apiFetch<{ deleted: boolean }>(`/api/conversations/${encodeURIComponent(id)}`, {
+  method: "DELETE",
+ });
 }

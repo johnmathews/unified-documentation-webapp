@@ -1,5 +1,13 @@
 <script lang="ts">
- import { sendChat, type ChatMessage } from "$lib/api";
+ import {
+  sendChat,
+  listConversations,
+  getConversation,
+  deleteConversation,
+  type ChatMessage,
+  type PageContext,
+  type ConversationSummary,
+ } from "$lib/api";
  import { tick } from "svelte";
  import { browser } from "$app/environment";
  import { marked } from "marked";
@@ -7,51 +15,75 @@
 
  let {
   docId = null,
+  pageContext = null,
   expanded = false,
   onToggleExpand = () => {},
  }: {
   docId: string | null;
+  pageContext: PageContext | null;
   expanded?: boolean;
   onToggleExpand?: () => void;
  } = $props();
 
- const STORAGE_KEY = "doc-chat-messages";
- const PREV_STORAGE_KEY = "doc-chat-messages-prev";
+ let hasContext = $derived(!!docId || !!pageContext);
+ let contextLabel = $derived(
+  docId
+   ? "Page context"
+   : pageContext?.category
+     ? `${pageContext.source} / ${pageContext.category}`
+     : pageContext?.source
+       ? `${pageContext.source}`
+       : "",
+ );
 
  let messages: ChatMessage[] = $state([]);
+ let conversationId: string | null = $state(null);
  let input = $state("");
  let sending = $state(false);
  let messagesEl: HTMLDivElement | undefined = $state();
  let textareaEl: HTMLTextAreaElement | undefined = $state();
  let confirmingClear = $state(false);
- let hasPrevious = $state(false);
- let hydrated = false;
  let editingIndex: number | null = $state(null);
 
- // Load from localStorage on mount (browser only)
- $effect(() => {
-  if (!browser) return;
+ // Conversation history
+ let showHistory = $state(false);
+ let conversations: ConversationSummary[] = $state([]);
+ let loadingHistory = $state(false);
+
+ async function loadHistory() {
+  showHistory = !showHistory;
+  if (!showHistory) return;
+  loadingHistory = true;
   try {
-   const stored = localStorage.getItem(STORAGE_KEY);
-   if (stored) messages = JSON.parse(stored);
+   conversations = await listConversations();
+  } catch {
+   conversations = [];
+  } finally {
+   loadingHistory = false;
+  }
+ }
+
+ async function resumeConversation(id: string) {
+  try {
+   const conv = await getConversation(id);
+   messages = conv.messages;
+   conversationId = conv.id;
+   showHistory = false;
+   await scrollToBottom();
   } catch {
    /* ignore */
   }
-  hasPrevious = !!localStorage.getItem(PREV_STORAGE_KEY);
-  hydrated = true;
- });
+ }
 
- // Persist messages to localStorage on change (browser only)
- $effect(() => {
-  if (!browser) return;
-  void messages.length;
-  if (!hydrated) return;
+ async function removeConversation(e: Event, id: string) {
+  e.stopPropagation();
   try {
-   localStorage.setItem(STORAGE_KEY, JSON.stringify(messages));
+   await deleteConversation(id);
+   conversations = conversations.filter((c) => c.id !== id);
   } catch {
-   /* quota exceeded — ignore */
+   /* ignore */
   }
- });
+ }
 
  async function handleSubmit(e: Event) {
   e.preventDefault();
@@ -61,17 +93,26 @@
   // If editing, truncate from the edited message onward on submit
   if (editingIndex !== null) {
    messages = messages.slice(0, editingIndex);
+   conversationId = null; // New conversation branch
    editingIndex = null;
   }
 
   input = "";
   messages.push({ role: "user", content: msg });
   sending = true;
+  showHistory = false;
   await scrollToBottom();
 
   try {
-   const reply = await sendChat(msg, docId ?? undefined, messages.slice(0, -1));
-   messages.push({ role: "assistant", content: reply });
+   const result = await sendChat(
+    msg,
+    docId ?? undefined,
+    messages.slice(0, -1),
+    pageContext ?? undefined,
+    conversationId ?? undefined,
+   );
+   messages.push({ role: "assistant", content: result.reply });
+   conversationId = result.conversation_id;
   } catch (err) {
    messages.push({
     role: "assistant",
@@ -104,31 +145,31 @@
  }
 
  function clearChat() {
-  try {
-   localStorage.setItem(PREV_STORAGE_KEY, JSON.stringify(messages));
-  } catch {
-   /* ignore */
-  }
   messages = [];
+  conversationId = null;
   confirmingClear = false;
-  hasPrevious = true;
- }
-
- function restorePrevious() {
-  try {
-   const stored = localStorage.getItem(PREV_STORAGE_KEY);
-   if (stored) {
-    messages = JSON.parse(stored);
-    localStorage.removeItem(PREV_STORAGE_KEY);
-    hasPrevious = false;
-   }
-  } catch {
-   /* ignore */
-  }
  }
 
  function cancelClear() {
   confirmingClear = false;
+ }
+
+ function formatDate(dateStr: string): string {
+  try {
+   const d = new Date(dateStr);
+   const now = new Date();
+   const diffMs = now.getTime() - d.getTime();
+   const diffMins = Math.floor(diffMs / 60000);
+   if (diffMins < 1) return "just now";
+   if (diffMins < 60) return `${diffMins}m ago`;
+   const diffHrs = Math.floor(diffMins / 60);
+   if (diffHrs < 24) return `${diffHrs}h ago`;
+   const diffDays = Math.floor(diffHrs / 24);
+   if (diffDays < 7) return `${diffDays}d ago`;
+   return d.toLocaleDateString("en-GB", { day: "numeric", month: "short" });
+  } catch {
+   return "";
+  }
  }
 
  function renderMarkdown(content: string): string {
@@ -148,14 +189,14 @@
 <div class="chat-container">
  <div class="chat-header">
   <h3>Chat</h3>
-  {#if docId}
-   <span class="context-badge" title="The chat assistant can see the document you're currently viewing and will use it as context when answering questions.">
+  {#if hasContext}
+   <span class="context-badge" title={docId ? "The chat assistant can see the document you're currently viewing." : "The chat assistant knows which source you're browsing and can research documents within it."}>
     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
      <circle cx="12" cy="12" r="10" />
      <line x1="12" y1="16" x2="12" y2="12" />
      <line x1="12" y1="8" x2="12.01" y2="8" />
     </svg>
-    Page context
+    {contextLabel}
    </span>
   {/if}
   <div class="header-actions">
@@ -174,19 +215,17 @@
      </button>
     </span>
    {:else if messages.length > 0}
-    <button class="header-btn" onclick={() => (confirmingClear = true)} title="Clear chat">
+    <button class="header-btn" onclick={() => (confirmingClear = true)} title="New chat">
      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-      <polyline points="3 6 5 6 21 6" />
-      <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-     </svg>
-    </button>
-   {:else if hasPrevious}
-    <button class="header-btn" onclick={restorePrevious} title="Restore previous chat">
-     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-      <polyline points="1 4 1 10 7 10" /><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10" />
+      <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
      </svg>
     </button>
    {/if}
+   <button class="header-btn" class:active={showHistory} onclick={loadHistory} title="Conversation history">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+     <circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" />
+    </svg>
+   </button>
    <button class="header-btn expand-btn" onclick={onToggleExpand} title={expanded ? "Collapse" : "Expand"}>
     {#if expanded}
      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -212,21 +251,43 @@
  </div>
 
  <div class="messages" bind:this={messagesEl}>
-  {#if messages.length === 0}
+  {#if showHistory}
+   <div class="history-list">
+    {#if loadingHistory}
+     <p class="history-loading">Loading...</p>
+    {:else if conversations.length === 0}
+     <p class="history-empty">No previous conversations.</p>
+    {:else}
+     {#each conversations as conv}
+      <!-- svelte-ignore a11y_no_static_element_interactions -->
+      <div class="history-item" onclick={() => resumeConversation(conv.id)} onkeydown={(e) => { if (e.key === 'Enter') resumeConversation(conv.id); }} role="button" tabindex="0">
+       <div class="history-item-header">
+        <span class="history-title">{conv.title}</span>
+        <button class="history-delete" onclick={(e) => removeConversation(e, conv.id)} title="Delete">
+         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+         </svg>
+        </button>
+       </div>
+       <div class="history-meta">
+        <span>{conv.message_count} messages</span>
+        <span>{formatDate(conv.updated_at)}</span>
+       </div>
+       {#if conv.preview}
+        <p class="history-preview">{conv.preview}</p>
+       {/if}
+      </div>
+     {/each}
+    {/if}
+   </div>
+  {:else if messages.length === 0}
    <div class="empty-state">
     <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
     </svg>
     <p>Ask questions about the documentation.</p>
-    {#if hasPrevious}
-     <button class="restore-hint" onclick={restorePrevious}>
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-       <polyline points="1 4 1 10 7 10" /><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10" />
-      </svg>
-      Restore previous chat
-     </button>
-    {:else if docId}
-     <p class="context-hint">The assistant can see the page you're viewing.</p>
+    {#if hasContext}
+     <p class="context-hint">{docId ? "The assistant can see the page you're viewing." : "The assistant knows which source you're browsing."}</p>
     {/if}
    </div>
   {:else}
@@ -358,6 +419,10 @@
   color: var(--text);
  }
 
+ .header-btn.active {
+  color: var(--brand);
+ }
+
  .confirm-clear {
   display: flex;
   align-items: center;
@@ -408,22 +473,84 @@
   color: var(--text-muted);
  }
 
- .restore-hint {
+ .history-list {
   display: flex;
-  align-items: center;
-  gap: 5px;
-  font-size: 14px;
-  color: var(--link);
-  background: none;
-  border: 2px solid var(--border-strong);
-  border-radius: 0;
-  padding: 10px 15px;
-  cursor: pointer;
-  transition: all 0.15s;
+  flex-direction: column;
+  gap: 0;
  }
 
- .restore-hint:hover {
+ .history-loading,
+ .history-empty {
+  text-align: center;
+  color: var(--text-muted);
+  padding: 40px 20px;
+  font-size: 16px;
+ }
+
+ .history-item {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 12px 15px;
+  background: none;
+  border: none;
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+  color: var(--text);
+ }
+
+ .history-item:hover {
   background: var(--bg-hover);
+ }
+
+ .history-item-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 8px;
+ }
+
+ .history-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--link);
+  line-height: 1.3;
+ }
+
+ .history-delete {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  padding: 2px;
+  cursor: pointer;
+  flex-shrink: 0;
+  opacity: 0;
+ }
+
+ .history-item:hover .history-delete {
+  opacity: 1;
+ }
+
+ .history-delete:hover {
+  color: var(--error);
+ }
+
+ .history-meta {
+  display: flex;
+  gap: 10px;
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-top: 3px;
+ }
+
+ .history-preview {
+  font-size: 14px;
+  color: var(--text-secondary);
+  margin: 4px 0 0;
+  line-height: 1.3;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
  }
 
  .message {

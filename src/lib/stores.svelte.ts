@@ -1,5 +1,12 @@
 export const currentDocId = $state<{ value: string | null }>({ value: null });
 
+export interface PageContext {
+ source?: string;
+ category?: string;
+}
+
+export const currentPageContext = $state<{ value: PageContext | null }>({ value: null });
+
 /** Document category definitions — the single source of truth for category keys and labels. */
 export const CATEGORIES = [
  { key: "root_docs", label: "Root Docs" },

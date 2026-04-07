@@ -2,7 +2,7 @@
  import { page } from "$app/state";
  import { fetchTree, type TreeSource, type TreeDocument } from "$lib/api";
  import Breadcrumbs from "$lib/components/Breadcrumbs.svelte";
- import { currentDocId } from "$lib/stores.svelte";
+ import { currentDocId, currentPageContext } from "$lib/stores.svelte";
  import { displayTitle, displaySource } from "$lib/titles";
 
  let source: TreeSource | null = $state(null);
@@ -16,7 +16,14 @@
 
  $effect(() => {
   currentDocId.value = null;
+  currentPageContext.value = { source: sourceName };
   loadSource(sourceName);
+
+  return () => {
+   if (currentPageContext.value?.source === sourceName) {
+    currentPageContext.value = null;
+   }
+  };
  });
 
  async function loadSource(name: string) {

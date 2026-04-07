@@ -2,7 +2,7 @@
  import { page } from "$app/state";
  import { fetchTree, type TreeDocument } from "$lib/api";
  import Breadcrumbs from "$lib/components/Breadcrumbs.svelte";
- import { currentDocId } from "$lib/stores.svelte";
+ import { currentDocId, currentPageContext } from "$lib/stores.svelte";
  import { displayTitle, displaySource } from "$lib/titles";
 
  let docs: TreeDocument[] = $state([]);
@@ -17,7 +17,14 @@
 
  $effect(() => {
   currentDocId.value = null;
+  currentPageContext.value = { source: sourceName, category };
   loadCategory(sourceName, category);
+
+  return () => {
+   if (currentPageContext.value?.source === sourceName) {
+    currentPageContext.value = null;
+   }
+  };
  });
 
  async function loadCategory(name: string, cat: string) {

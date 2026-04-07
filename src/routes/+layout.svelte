@@ -4,7 +4,7 @@
  import Sidebar from "$lib/components/Sidebar.svelte";
  import ChatPanel from "$lib/components/ChatPanel.svelte";
  import SearchPanel from "$lib/components/SearchPanel.svelte";
- import { currentDocId } from "$lib/stores.svelte";
+ import { currentDocId, currentPageContext } from "$lib/stores.svelte";
  import { page } from "$app/state";
  import { MediaQuery } from "svelte/reactivity";
  import { onMount } from "svelte";
@@ -384,7 +384,7 @@
   <!-- svelte-ignore a11y_no_static_element_interactions -->
   <div class="chat-resize-handle" onmousedown={handleChatResizeStart}></div>
  {/if}
- <ChatPanel docId={currentDocId.value} expanded={chatExpanded} onToggleExpand={() => (chatExpanded = !chatExpanded)} />
+ <ChatPanel docId={currentDocId.value} pageContext={currentPageContext.value} expanded={chatExpanded} onToggleExpand={() => (chatExpanded = !chatExpanded)} />
 </aside>
 
 <svelte:window
