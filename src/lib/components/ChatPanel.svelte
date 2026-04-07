@@ -17,13 +17,23 @@
   docId = null,
   pageContext = null,
   expanded = false,
+  visible = false,
   onToggleExpand = () => {},
  }: {
   docId: string | null;
   pageContext: PageContext | null;
   expanded?: boolean;
+  visible?: boolean;
   onToggleExpand?: () => void;
  } = $props();
+
+ // Focus textarea when panel becomes visible
+ $effect(() => {
+  if (visible && textareaEl) {
+   // Small delay lets CSS transition start so the element is interactable
+   setTimeout(() => textareaEl?.focus(), 50);
+  }
+ });
 
  let hasContext = $derived(!!docId || !!pageContext);
  let contextLabel = $derived(

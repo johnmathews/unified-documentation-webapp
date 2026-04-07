@@ -384,7 +384,7 @@
   <!-- svelte-ignore a11y_no_static_element_interactions -->
   <div class="chat-resize-handle" onmousedown={handleChatResizeStart}></div>
  {/if}
- <ChatPanel docId={currentDocId.value} pageContext={currentPageContext.value} expanded={chatExpanded} onToggleExpand={() => (chatExpanded = !chatExpanded)} />
+ <ChatPanel docId={currentDocId.value} pageContext={currentPageContext.value} expanded={chatExpanded} visible={chatOpen} onToggleExpand={() => (chatExpanded = !chatExpanded)} />
 </aside>
 
 <svelte:window
