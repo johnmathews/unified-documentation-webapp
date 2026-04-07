@@ -35,6 +35,8 @@
    else if (cat === "learning_journal") docs = source.learning_journal ?? [];
    else if (cat === "engineering_team") docs = source.engineering_team ?? [];
    else if (cat === "research") docs = source.research ?? [];
+   else if (cat === "skills") docs = source.skills ?? [];
+   else if (cat === "runbooks") docs = source.runbooks ?? [];
    else if (cat === "pdf") docs = source.pdf ?? [];
    else {
     error = `Unknown category "${cat}"`;
@@ -87,9 +89,13 @@
        ? "Engineering Team"
        : category === "research"
          ? "Research"
-         : category === "pdf"
-           ? "PDF"
-           : "Documentation",
+         : category === "skills"
+           ? "Skills"
+           : category === "runbooks"
+             ? "Runbooks"
+             : category === "pdf"
+               ? "PDF"
+               : "Documentation",
  );
 </script>
 
