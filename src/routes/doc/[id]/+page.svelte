@@ -1,14 +1,16 @@
 <script lang="ts">
  import { page } from "$app/state";
- import { fetchDocument, type FullDocument } from "$lib/api";
+ import { fetchDocument, checkBookmarks, type FullDocument } from "$lib/api";
  import { currentDocId } from "$lib/stores.svelte";
  import Breadcrumbs from "$lib/components/Breadcrumbs.svelte";
+ import BookmarkButton from "$lib/components/BookmarkButton.svelte";
  import { displaySource, displayTitle, stripSourcePrefix } from "$lib/titles";
  import { renderMarkdownWithLinks } from "$lib/links";
 
  let doc: FullDocument | null = $state(null);
  let loading = $state(true);
  let error = $state("");
+ let isBookmarked = $state(false);
 
  let currentId = $derived(decodeURIComponent(page.params.id ?? ""));
 
@@ -32,6 +34,9 @@
 
   try {
    doc = await fetchDocument(docId);
+   // Check bookmark status
+   const status = await checkBookmarks([docId]);
+   isBookmarked = status[docId] ?? false;
   } catch (e) {
    error = e instanceof Error ? e.message : "Failed to load document";
   } finally {
@@ -90,6 +95,7 @@
   />
   <header class="doc-header">
    <div class="doc-meta-row">
+    <BookmarkButton docId={doc.doc_id} bind:bookmarked={isBookmarked} />
     <a href="/source/{encodeURIComponent(doc.source)}" class="source-badge"
      >{displaySource(doc.source)}</a
     >

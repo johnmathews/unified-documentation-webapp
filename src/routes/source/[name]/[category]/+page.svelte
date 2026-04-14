@@ -1,13 +1,15 @@
 <script lang="ts">
  import { page } from "$app/state";
- import { fetchTree, type TreeDocument } from "$lib/api";
+ import { fetchTree, checkBookmarks, type TreeDocument } from "$lib/api";
  import Breadcrumbs from "$lib/components/Breadcrumbs.svelte";
+ import BookmarkButton from "$lib/components/BookmarkButton.svelte";
  import { currentDocId, currentPageContext } from "$lib/stores.svelte";
  import { displayTitle, displaySource } from "$lib/titles";
 
  let docs: TreeDocument[] = $state([]);
  let loading = $state(true);
  let error = $state("");
+ let bookmarkStatus: Record<string, boolean> = $state({});
 
  type SortMode = "date" | "alpha";
  let sortMode: SortMode = $state("date");
@@ -48,6 +50,11 @@
    else {
     error = `Unknown category "${cat}"`;
     return;
+   }
+   // Load bookmark status for all docs
+   if (docs.length > 0) {
+    const ids = docs.map((d) => d.doc_id);
+    bookmarkStatus = await checkBookmarks(ids);
    }
   } catch (e) {
    error = e instanceof Error ? e.message : "Failed to load";
@@ -138,6 +145,7 @@
    <ul class="doc-list">
     {#each sortedDocs as doc}
      <li>
+      <BookmarkButton docId={doc.doc_id} bookmarked={bookmarkStatus[doc.doc_id] ?? false} size="small" onToggle={(val) => bookmarkStatus[doc.doc_id] = val} />
       <a href={docUrl(doc.doc_id)}>{displayTitle(doc)}</a>
       <span class="dates">
        {#if doc.modified_at}<span class="date">{formatDate(doc.modified_at)}</span>{/if}
@@ -221,10 +229,10 @@
  }
  .doc-list li {
   display: flex;
-  justify-content: space-between;
   align-items: baseline;
   padding: 6px 0;
   border-bottom: 1px solid var(--border);
+  gap: 6px;
  }
  .doc-list a {
   color: var(--link);
@@ -238,7 +246,8 @@
   display: flex;
   align-items: baseline;
   flex-shrink: 0;
-  margin-left: 15px;
+  margin-left: auto;
+  padding-left: 15px;
   gap: 10px;
  }
 

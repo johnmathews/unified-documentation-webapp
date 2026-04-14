@@ -311,6 +311,11 @@
       {#if currentPath === "/engineering-team"}<strong>Engineering Team</strong>{:else}Engineering Team{/if}
      </a>
     </li>
+    <li class="govuk-service-nav__item" class:govuk-service-nav__item--active={currentPath === "/bookmarks"}>
+     <a href="/bookmarks" class="govuk-service-nav__link">
+      {#if currentPath === "/bookmarks"}<strong>Bookmarks</strong>{:else}Bookmarks{/if}
+     </a>
+    </li>
    </ul>
   </div>
  </nav>

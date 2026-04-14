@@ -715,3 +715,112 @@ describe("future-proofing: new optional categories", () => {
   expect(sourceWithFutureField.journal).toHaveLength(1);
  });
 });
+
+// ---- Bookmark API functions ----
+
+describe("listBookmarks", () => {
+ beforeEach(() => {
+  vi.restoreAllMocks();
+ });
+
+ it("calls /api/bookmarks and returns parsed JSON", async () => {
+  const mockData = [
+   {
+    doc_id: "docs:setup.md",
+    user_id: "default",
+    bookmarked_at: "2025-01-01T00:00:00Z",
+    title: "Setup",
+    source: "docs",
+    file_path: "setup.md",
+    created_at: "2025-01-01T00:00:00Z",
+    modified_at: "2025-01-01T00:00:00Z",
+    size_bytes: 100,
+   },
+  ];
+  vi.stubGlobal(
+   "fetch",
+   vi.fn().mockResolvedValue({
+    ok: true,
+    json: () => Promise.resolve(mockData),
+   }),
+  );
+
+  const { listBookmarks } = await import("$lib/api");
+  const result = await listBookmarks();
+  expect(result).toHaveLength(1);
+  expect(result[0].doc_id).toBe("docs:setup.md");
+  expect(fetch).toHaveBeenCalledWith("/api/bookmarks", undefined);
+ });
+});
+
+describe("addBookmark", () => {
+ beforeEach(() => {
+  vi.restoreAllMocks();
+ });
+
+ it("sends POST with doc_id", async () => {
+  vi.stubGlobal(
+   "fetch",
+   vi.fn().mockResolvedValue({
+    ok: true,
+    json: () => Promise.resolve({ doc_id: "docs:setup.md" }),
+   }),
+  );
+
+  const { addBookmark } = await import("$lib/api");
+  await addBookmark("docs:setup.md");
+  expect(fetch).toHaveBeenCalledWith("/api/bookmarks", {
+   method: "POST",
+   headers: { "Content-Type": "application/json" },
+   body: JSON.stringify({ doc_id: "docs:setup.md" }),
+  });
+ });
+});
+
+describe("removeBookmark", () => {
+ beforeEach(() => {
+  vi.restoreAllMocks();
+ });
+
+ it("sends DELETE to the correct URL", async () => {
+  vi.stubGlobal(
+   "fetch",
+   vi.fn().mockResolvedValue({
+    ok: true,
+    json: () => Promise.resolve({ deleted: true }),
+   }),
+  );
+
+  const { removeBookmark } = await import("$lib/api");
+  await removeBookmark("docs:setup.md");
+  expect(fetch).toHaveBeenCalledWith(`/api/bookmarks/${encodeURIComponent("docs:setup.md")}`, {
+   method: "DELETE",
+  });
+ });
+});
+
+describe("checkBookmarks", () => {
+ beforeEach(() => {
+  vi.restoreAllMocks();
+ });
+
+ it("sends POST with doc_ids and returns status map", async () => {
+  const mockResult = { "docs:setup.md": true, "docs:other.md": false };
+  vi.stubGlobal(
+   "fetch",
+   vi.fn().mockResolvedValue({
+    ok: true,
+    json: () => Promise.resolve(mockResult),
+   }),
+  );
+
+  const { checkBookmarks } = await import("$lib/api");
+  const result = await checkBookmarks(["docs:setup.md", "docs:other.md"]);
+  expect(result).toEqual(mockResult);
+  expect(fetch).toHaveBeenCalledWith("/api/bookmarks/check", {
+   method: "POST",
+   headers: { "Content-Type": "application/json" },
+   body: JSON.stringify({ doc_ids: ["docs:setup.md", "docs:other.md"] }),
+  });
+ });
+});

@@ -297,3 +297,43 @@ export async function deleteConversation(id: string): Promise<void> {
   method: "DELETE",
  });
 }
+
+// ---- Bookmarks ----
+
+export interface BookmarkEntry {
+ doc_id: string;
+ user_id: string;
+ bookmarked_at: string;
+ title: string | null;
+ source: string | null;
+ file_path: string | null;
+ created_at: string | null;
+ modified_at: string | null;
+ size_bytes: number | null;
+}
+
+export async function listBookmarks(): Promise<BookmarkEntry[]> {
+ return apiFetch<BookmarkEntry[]>("/api/bookmarks");
+}
+
+export async function addBookmark(docId: string): Promise<void> {
+ await apiFetch<{ doc_id: string }>("/api/bookmarks", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({ doc_id: docId }),
+ });
+}
+
+export async function removeBookmark(docId: string): Promise<void> {
+ await apiFetch<{ deleted: boolean }>(`/api/bookmarks/${encodeURIComponent(docId)}`, {
+  method: "DELETE",
+ });
+}
+
+export async function checkBookmarks(docIds: string[]): Promise<Record<string, boolean>> {
+ return apiFetch<Record<string, boolean>>("/api/bookmarks/check", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({ doc_ids: docIds }),
+ });
+}

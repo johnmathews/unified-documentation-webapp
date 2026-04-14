@@ -41,6 +41,23 @@ export async function proxyGetRaw(path: string): Promise<Response> {
  }
 }
 
+export async function proxyDelete(path: string): Promise<Response> {
+ try {
+  const res = await fetch(`${getApiBase()}${path}`, {
+   method: "DELETE",
+  });
+  return new Response(res.body, {
+   status: res.status,
+   headers: { "Content-Type": "application/json" },
+  });
+ } catch {
+  return new Response(JSON.stringify({ error: "Backend unavailable" }), {
+   status: 502,
+   headers: { "Content-Type": "application/json" },
+  });
+ }
+}
+
 export async function proxyPost(path: string, body: unknown): Promise<Response> {
  try {
   const controller = new AbortController();
