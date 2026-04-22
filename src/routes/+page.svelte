@@ -287,7 +287,7 @@
  }
 
  .home {
-  max-width: 960px;
+  max-width: 880px;
   margin: 0 auto;
   padding-top: 40px;
  }
@@ -306,6 +306,7 @@
 
  /* GOV.UK-style table */
  .source-table {
+  width: 100%;
   border-collapse: collapse;
   font-size: 1rem;
   line-height: 1.25;
@@ -319,7 +320,7 @@
   text-align: left;
   font-weight: 700;
   font-size: 1rem;
-  padding: 10px 20px 10px 0;
+  padding: 10px 28px 10px 0;
   color: var(--text);
  }
 
@@ -343,7 +344,7 @@
  }
 
  .source-table td {
-  padding: 15px 20px 15px 0;
+  padding: 15px 28px 15px 0;
   vertical-align: top;
  }
 
@@ -379,6 +380,7 @@
 
  .col-count {
   text-align: right;
+  padding-right: 0;
  }
 
  .status-badge {
