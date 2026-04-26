@@ -127,6 +127,7 @@ export function displayTitle(doc: {
       if (word.length === 0) return word;
       // If the word is all-caps and very short (like SDK, API, DNS), keep it
       if (word === word.toUpperCase() && word.length <= 3) return word;
+      if (ACRONYMS.has(word.toLowerCase())) return word.toUpperCase();
       // Otherwise, capitalize first letter and lowercase the rest
       return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
     })
