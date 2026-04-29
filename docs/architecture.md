@@ -86,6 +86,31 @@ Routes:
 - `POST /api/chat` → proxies to backend `/api/chat`
 - `GET /api/health` → proxies to backend `/health`
 
+### Logging
+
+The webapp emits structured JSON logs to stdout (and stderr for errors), matching the backend's log shape so the
+streams aggregate cleanly when read together. The logger lives in `src/lib/server/logger.ts` and is wired into
+SvelteKit via `src/hooks.server.ts`. All entries include `timestamp`, `level`, `logger: "docwebapp"`, `message`, and
+an `event` discriminator.
+
+| Event             | When                                            | Notable fields                                                |
+| ----------------- | ----------------------------------------------- | ------------------------------------------------------------- |
+| `server_start`    | Once on boot                                    | `api_url`, `node_env`, `port`                                 |
+| `request_done`    | Every browser request that completes            | `request_id`, `method`, `path`, `status`, `duration_ms`       |
+| `request_error`   | Browser request threw before producing response | `request_id`, `method`, `path`, `duration_ms`, `error`        |
+| `server_error`    | SvelteKit `handleError` hook fires              | `request_id`, `path`, `error`, `stack`                        |
+| `upstream_call`   | Proxy fetch to backend completed                | `method`, `upstream_path`, `upstream_status`, `duration_ms`   |
+| `upstream_error`  | Proxy fetch threw or timed out                  | `method`, `upstream_path`, `duration_ms`, `error`             |
+
+Severity rules: `request_done` and `upstream_call` log at `info` for 2xx, `warn` for 4xx, `error` for 5xx.
+`upstream_call` also escalates to `warn` when `duration_ms ≥ 1000` (slow-call signal). Failures inside the proxy
+(`upstream_error`) — e.g. backend container down, DNS failure, 90s POST timeout — log at `error` with the underlying
+exception message; previously these were swallowed silently.
+
+A short per-request id (base36 counter) is generated in the `handle` hook, stored on `event.locals.requestId`, and
+included in every log line for the request, so a single user action can be traced through the request log and any
+errors it produced.
+
 ### Backend (Documentation MCP Server)
 
 The MCP server provides REST API endpoints alongside its existing MCP tools:

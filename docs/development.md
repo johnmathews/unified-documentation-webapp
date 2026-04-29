@@ -106,6 +106,22 @@ docker run -p 3001:3000 -e API_URL=http://host.docker.internal:8080 unified-docu
 
 In production, both services run via `docker-compose.yml` where the UI connects to the backend at `http://docserver:8080` (container-to-container networking).
 
+## Logs
+
+The server emits structured JSON logs to stdout (errors to stderr). One line per request plus a line per upstream
+proxy call. View them with:
+
+```bash
+# In Docker
+docker logs -f documentation-webapp
+
+# Locally, the dev server's `console`-style adapter output mixes with the JSON lines —
+# pipe through jq for readability:
+npm run dev 2>&1 | jq -R 'fromjson? // .'
+```
+
+See `docs/architecture.md` § Logging for the full list of events and fields.
+
 ## SSE streaming
 
 The chat feature uses Server-Sent Events for real-time progress during the agentic tool-use loop. The backend (`sse-starlette`) sends events with `\r\n` line endings (CRLF), which the frontend normalizes to `\n` (LF) before parsing. The `parseSSE()` function in `api.ts` extracts event type and data from each SSE frame. Event types: `status`, `tool_call`, `tool_result`, `reply`, `error`.
