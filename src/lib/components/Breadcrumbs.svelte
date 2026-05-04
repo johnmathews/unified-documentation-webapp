@@ -74,17 +74,17 @@
   padding-left: 0;
  }
 
- /* Chevron separator — GOV.UK rotated border trick */
+ /* Chevron separator — GOV.UK rotated border trick.
+    top is a fixed offset (not vertical-centered) so the chevron stays
+    aligned with the first line when a long breadcrumb wraps. */
  .govuk-breadcrumbs__list-item::before {
   content: "";
   display: block;
   position: absolute;
-  top: 0;
-  bottom: 0;
+  top: 0.375em;
   left: -0.206875em;
   width: 0.4375em;
   height: 0.4375em;
-  margin: auto 0;
   transform: rotate(45deg);
   border: solid;
   border-width: 1px 1px 0 0;
@@ -128,10 +128,12 @@
   .govuk-breadcrumbs__list-item {
    padding: 5px 0;
   }
+  /* Keep the 44px touch target but anchor text to the top of the box so it
+     stays aligned with the chevron (which is pinned to the li's top edge). */
   .govuk-breadcrumbs__link {
    min-height: 44px;
    display: inline-flex;
-   align-items: center;
+   align-items: flex-start;
   }
  }
 </style>

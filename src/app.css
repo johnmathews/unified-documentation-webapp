@@ -190,6 +190,10 @@ button {
 .markdown-content {
  font-size: 17px;
  line-height: 1.35;
+ /* Long URLs and identifiers should wrap rather than push the column wider
+    than its container — otherwise they create a page-level horizontal scroll
+    on narrow viewports. */
+ overflow-wrap: anywhere;
 }
 
 .markdown-content h1 {
@@ -270,8 +274,15 @@ button {
  line-height: 1.35;
 }
 
+/* Tables that are wider than the column scroll horizontally inside their own
+   box rather than forcing the whole page to scroll. `display: block` lets the
+   table act as its own overflow container; `white-space: normal` keeps cells
+   wrapping when the table fits. */
 .markdown-content table {
+ display: block;
+ max-width: 100%;
  width: 100%;
+ overflow-x: auto;
  border-collapse: collapse;
  margin-bottom: 20px;
  font-size: 15px;

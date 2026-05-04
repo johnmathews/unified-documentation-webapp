@@ -702,6 +702,7 @@
  .content {
   flex: 1;
   overflow-y: auto;
+  overflow-x: hidden;
   padding: 40px 30px;
   padding-bottom: calc(40px + env(safe-area-inset-bottom, 0));
   min-width: 0;
