@@ -125,8 +125,13 @@
  }
 
  @media (max-width: 640px) {
+  /* Add vertical padding for tap-spacing without resetting padding-left
+     (which the base rule needs to leave room for the chevron — using the
+     `padding` shorthand here would zero it and cause the chevron to land
+     on top of the first character). */
   .govuk-breadcrumbs__list-item {
-   padding: 5px 0;
+   padding-top: 5px;
+   padding-bottom: 5px;
   }
   /* Keep the 44px touch target but anchor text to the top of the box so it
      stays aligned with the chevron (which is pinned to the li's top edge). */
