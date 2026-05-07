@@ -2,8 +2,6 @@
  import { onMount } from "svelte";
  import { currentDocId, currentDocToc, type TocEntry } from "$lib/stores.svelte";
 
- let { onNavigate = () => {} }: { onNavigate?: () => void } = $props();
-
  let activeSlug = $state<string | null>(null);
  let observer: IntersectionObserver | null = null;
  let observedSlugs: string[] = [];
@@ -11,9 +9,7 @@
  let entries = $derived(currentDocToc.value);
  let docId = $derived(currentDocId.value);
 
- // Reset active highlight + reattach observer whenever the doc or its TOC changes.
  $effect(() => {
-  // Touch reactive deps so the effect re-runs.
   void docId;
   const list = entries;
   if (list.length === 0) {
@@ -21,7 +17,6 @@
    activeSlug = null;
    return;
   }
-  // Defer one frame so the doc page has rendered the headings into the DOM.
   const handle = requestAnimationFrame(() => attachObserver(list));
   return () => {
    cancelAnimationFrame(handle);
@@ -38,12 +33,10 @@
   if (targets.length === 0) return;
 
   observedSlugs = targets.map((el) => el.id);
-  // Default highlight to the first heading until the observer fires.
   activeSlug = observedSlugs[0] ?? null;
 
   observer = new IntersectionObserver(
    (changes) => {
-    // Pick the entry closest to the top that is currently intersecting.
     let bestId: string | null = null;
     let bestTop = Number.POSITIVE_INFINITY;
     for (const c of changes) {
@@ -58,15 +51,14 @@
     if (bestId) {
      activeSlug = bestId;
     } else {
-     // Nothing intersecting: pick the last heading above the viewport.
-     const root = document.querySelector<HTMLElement>(".content");
-     if (!root) return;
-     const scrollTop = root.scrollTop;
+     const scroller = document.querySelector<HTMLElement>(".content");
+     if (!scroller) return;
+     const scrollTop = scroller.scrollTop;
      let aboveId: string | null = null;
      for (const id of observedSlugs) {
       const el = document.getElementById(id);
       if (!el) continue;
-      if (el.offsetTop - root.offsetTop <= scrollTop + 1) {
+      if (el.offsetTop - scroller.offsetTop <= scrollTop + 1) {
        aboveId = id;
       } else {
        break;
@@ -77,7 +69,6 @@
    },
    {
     root,
-    // Treat headings as "active" when they enter the top portion of the viewport.
     rootMargin: "0px 0px -70% 0px",
     threshold: [0, 1],
    },
@@ -104,22 +95,17 @@
   const top = el.offsetTop - root.offsetTop - 12;
   root.scrollTo({ top, behavior: "smooth" });
   activeSlug = slug;
-  // Drop focus from the TOC button so the sidebar can be aria-hidden when closed.
   (ev.currentTarget as HTMLElement | null)?.blur();
-  onNavigate();
  }
 </script>
 
-<div class="toc-panel">
- {#if !docId}
-  <p class="toc-empty">Open a document to see its table of contents.</p>
- {:else if entries.length === 0}
-  <p class="toc-empty">This document has no headings.</p>
- {:else}
-  <nav class="toc-list" aria-label="Table of contents">
+{#if entries.length > 0}
+ <nav class="doc-toc" aria-label="Table of contents">
+  <div class="doc-toc-label">On this page</div>
+  <div class="doc-toc-list">
    {#each entries as entry (entry.slug)}
     <button
-     class="toc-item"
+     class="doc-toc-item"
      class:level-1={entry.level === 1}
      class:level-2={entry.level === 2}
      class:level-3={entry.level === 3}
@@ -130,85 +116,83 @@
      {entry.text}
     </button>
    {/each}
-  </nav>
- {/if}
-</div>
+  </div>
+ </nav>
+{/if}
 
 <style>
- .toc-panel {
-  flex: 1;
+ .doc-toc {
+  position: sticky;
+  top: 0;
+  width: 240px;
+  max-height: calc(100vh - var(--header-height) - 40px);
   overflow-y: auto;
-  padding: 10px 0 20px;
- }
-
- .toc-empty {
-  padding: 20px 15px;
-  color: var(--text-secondary);
+  padding: 4px 0 20px;
   font-size: 14px;
-  font-style: italic;
  }
 
- .toc-list {
+ .doc-toc-label {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-secondary);
+  padding: 0 12px 8px;
+ }
+
+ .doc-toc-list {
   display: flex;
   flex-direction: column;
  }
 
- .toc-item {
+ .doc-toc-item {
   display: block;
   width: 100%;
   text-align: left;
   background: none;
   border: none;
-  border-left: 4px solid transparent;
-  color: var(--text);
+  border-left: 3px solid transparent;
+  color: var(--text-secondary);
   font-size: 14px;
   line-height: 1.4;
-  padding: 6px 15px 6px 11px;
+  padding: 5px 12px 5px 9px;
   cursor: pointer;
   font-family: inherit;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  transition: background 0.1s, border-color 0.1s, color 0.1s;
+  transition: color 0.1s, border-color 0.1s, background 0.1s;
  }
 
- .toc-item:hover {
+ .doc-toc-item:hover {
+  color: var(--text);
   background: var(--bg-hover);
  }
 
- .toc-item.level-1 {
+ .doc-toc-item.level-1 {
   font-weight: 700;
-  font-size: 15px;
-  padding-left: 11px;
- }
-
- .toc-item.level-2 {
-  padding-left: 27px;
   color: var(--text);
+  padding-left: 9px;
  }
 
- .toc-item.level-3 {
-  padding-left: 43px;
-  color: var(--text-secondary);
+ .doc-toc-item.level-2 {
+  padding-left: 21px;
+ }
+
+ .doc-toc-item.level-3 {
+  padding-left: 33px;
   font-size: 13px;
  }
 
- .toc-item.active {
+ .doc-toc-item.active {
   border-left-color: var(--brand);
-  background: var(--bg-body);
   color: var(--text);
   font-weight: 700;
  }
 
- @media (max-width: 768px) {
-  .toc-item {
-   font-size: 16px;
-   min-height: 44px;
-   padding-top: 10px;
-   padding-bottom: 10px;
-  }
-  .toc-item.level-3 {
-   font-size: 14px;
+ @media print {
+  .doc-toc {
+   display: none;
   }
  }
 </style>

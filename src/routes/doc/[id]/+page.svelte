@@ -1,10 +1,11 @@
 <script lang="ts">
  import { page } from "$app/state";
  import { fetchDocument, checkBookmarks, type FullDocument } from "$lib/api";
- import { currentDocId, currentDocToc } from "$lib/stores.svelte";
+ import { currentDocId, currentDocToc, tocOpen } from "$lib/stores.svelte";
  import Breadcrumbs from "$lib/components/Breadcrumbs.svelte";
  import BookmarkButton from "$lib/components/BookmarkButton.svelte";
  import FloatingDocControls from "$lib/components/FloatingDocControls.svelte";
+ import DocToc from "$lib/components/DocToc.svelte";
  import { displaySource, displayTitle, stripSourcePrefix } from "$lib/titles";
  import { renderMarkdownWithLinks, extractHeadings } from "$lib/links";
 
@@ -87,6 +88,10 @@
   <a href="/">Back to home</a>
  </div>
 {:else if doc}
+ <div
+  class="doc-layout"
+  class:has-toc={!isPdf(doc) && !!doc.content && tocOpen.value && currentDocToc.value.length > 0}
+ >
  <article class="document">
   <Breadcrumbs
    source={doc.source}
@@ -136,6 +141,13 @@
   {/if}
  </article>
 
+ {#if !isPdf(doc) && doc.content && tocOpen.value && currentDocToc.value.length > 0}
+  <aside class="doc-toc-rail">
+   <DocToc />
+  </aside>
+ {/if}
+ </div>
+
  {#if !isPdf(doc) && doc.content}
   <FloatingDocControls docId={doc.doc_id} bind:bookmarked={isBookmarked} />
  {/if}
@@ -171,9 +183,22 @@
   }
  }
 
- .document {
+ .doc-layout {
   max-width: 960px;
   margin: 0 auto;
+ }
+
+ .document {
+  min-width: 0;
+ }
+
+ @media (min-width: 1200px) {
+  .doc-layout.has-toc {
+   display: grid;
+   grid-template-columns: minmax(0, 960px) 240px;
+   gap: 40px;
+   max-width: 1240px;
+  }
  }
 
  .doc-header {

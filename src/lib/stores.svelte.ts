@@ -15,32 +15,33 @@ export interface TocEntry {
 
 export const currentDocToc = $state<{ value: TocEntry[] }>({ value: [] });
 
-export type SidebarTab = "files" | "contents";
+const TOC_OPEN_KEY = "doc-toc-open";
 
-const SIDEBAR_TAB_KEY = "sidebar-tab";
-
-function loadSidebarTab(): SidebarTab {
- if (typeof localStorage === "undefined") return "contents";
- const v = localStorage.getItem(SIDEBAR_TAB_KEY);
- return v === "files" || v === "contents" ? v : "contents";
+function loadTocOpen(): boolean {
+ if (typeof localStorage === "undefined") return true;
+ const v = localStorage.getItem(TOC_OPEN_KEY);
+ return v === null ? true : v === "true";
 }
 
-function createSidebarTab() {
- let tab = $state<SidebarTab>(loadSidebarTab());
+function createTocOpen() {
+ let open = $state<boolean>(loadTocOpen());
  return {
   get value() {
-   return tab;
+   return open;
   },
-  set(next: SidebarTab) {
-   tab = next;
+  set(next: boolean) {
+   open = next;
    if (typeof localStorage !== "undefined") {
-    localStorage.setItem(SIDEBAR_TAB_KEY, next);
+    localStorage.setItem(TOC_OPEN_KEY, String(next));
    }
+  },
+  toggle() {
+   this.set(!open);
   },
  };
 }
 
-export const sidebarTab = createSidebarTab();
+export const tocOpen = createTocOpen();
 
 /** Document category definitions — the single source of truth for category keys and labels. */
 export const CATEGORIES = [

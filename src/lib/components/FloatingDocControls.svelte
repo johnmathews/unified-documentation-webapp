@@ -1,6 +1,7 @@
 <script lang="ts">
  import { onMount } from "svelte";
  import { addBookmark, removeBookmark } from "$lib/api";
+ import { tocOpen, currentDocToc } from "$lib/stores.svelte";
 
  interface Props {
   docId: string;
@@ -9,6 +10,9 @@
  }
 
  let { docId, bookmarked = $bindable(), onToggleBookmark }: Props = $props();
+
+ let hasToc = $derived(currentDocToc.value.length > 0);
+ let isTocOpen = $derived(tocOpen.value);
 
  let progress = $state(0);
  let toggling = $state(false);
@@ -61,9 +65,29 @@
 </script>
 
 <div class="floating-controls" role="group" aria-label="Document controls">
+ {#if hasToc}
+  <button
+   class="control-btn"
+   class:active={isTocOpen}
+   onclick={() => tocOpen.toggle()}
+   title={isTocOpen ? "Hide table of contents" : "Show table of contents"}
+   aria-label={isTocOpen ? "Hide table of contents" : "Show table of contents"}
+   aria-pressed={isTocOpen}
+  >
+   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+    <line x1="8" y1="6" x2="21" y2="6" />
+    <line x1="8" y1="12" x2="21" y2="12" />
+    <line x1="8" y1="18" x2="21" y2="18" />
+    <line x1="3" y1="6" x2="3.01" y2="6" />
+    <line x1="3" y1="12" x2="3.01" y2="12" />
+    <line x1="3" y1="18" x2="3.01" y2="18" />
+   </svg>
+  </button>
+  <span class="divider" aria-hidden="true"></span>
+ {/if}
  <button
-  class="bookmark-btn"
-  class:bookmarked
+  class="control-btn"
+  class:active={bookmarked}
   disabled={toggling}
   onclick={toggle}
   title={bookmarked ? "Remove bookmark" : "Add bookmark"}
@@ -101,7 +125,7 @@
   color: var(--text-secondary);
  }
 
- .bookmark-btn {
+ .control-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -116,21 +140,21 @@
   transition: color 0.15s, background 0.15s;
  }
 
- .bookmark-btn:hover {
+ .control-btn:hover {
   color: var(--brand);
   background: var(--bg-hover);
  }
 
- .bookmark-btn.bookmarked {
+ .control-btn.active {
   color: var(--brand);
  }
 
- .bookmark-btn:disabled {
+ .control-btn:disabled {
   opacity: 0.5;
   cursor: default;
  }
 
- .bookmark-btn svg {
+ .control-btn svg {
   width: 16px;
   height: 16px;
  }

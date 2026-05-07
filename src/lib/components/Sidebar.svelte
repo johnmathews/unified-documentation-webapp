@@ -1,8 +1,7 @@
 <script lang="ts">
  import { fetchTree, type TreeSource } from "$lib/api";
- import { currentDocId, categoryFilters, CATEGORIES, sidebarTab } from "$lib/stores.svelte";
+ import { currentDocId, categoryFilters, CATEGORIES } from "$lib/stores.svelte";
  import { displaySource } from "$lib/titles";
- import TocPanel from "$lib/components/TocPanel.svelte";
 
  let showFilters = $state(false);
 
@@ -97,30 +96,6 @@
 </script>
 
 <div class="sidebar-inner">
- <div class="tab-strip" role="tablist" aria-label="Sidebar sections">
-  <button
-   class="tab-btn"
-   class:active={sidebarTab.value === "files"}
-   role="tab"
-   aria-selected={sidebarTab.value === "files"}
-   onclick={() => sidebarTab.set("files")}
-  >
-   Files
-  </button>
-  <button
-   class="tab-btn"
-   class:active={sidebarTab.value === "contents"}
-   role="tab"
-   aria-selected={sidebarTab.value === "contents"}
-   onclick={() => sidebarTab.set("contents")}
-  >
-   Contents
-  </button>
- </div>
-
- {#if sidebarTab.value === "contents"}
-  <TocPanel {onNavigate} />
- {:else}
  <div class="filter-section">
   <button class="filter-toggle" onclick={() => (showFilters = !showFilters)}>
    <span class="filter-toggle-label">Filter categories</span>
@@ -522,48 +497,9 @@
    {/each}
   </nav>
  {/if}
- {/if}
 </div>
 
 <style>
- /* Tab strip */
- .tab-strip {
-  display: flex;
-  border-bottom: 1px solid var(--border);
-  flex-shrink: 0;
- }
-
- .tab-btn {
-  flex: 1;
-  background: none;
-  border: none;
-  border-bottom: 3px solid transparent;
-  padding: 10px 12px;
-  font-size: 14px;
-  font-weight: 700;
-  color: var(--text-secondary);
-  cursor: pointer;
-  font-family: inherit;
-  transition: color 0.1s, border-color 0.1s, background 0.1s;
- }
-
- .tab-btn:hover {
-  background: var(--bg-hover);
-  color: var(--text);
- }
-
- .tab-btn.active {
-  color: var(--text);
-  border-bottom-color: var(--brand);
- }
-
- @media (max-width: 768px) {
-  .tab-btn {
-   min-height: 44px;
-   font-size: 16px;
-  }
- }
-
  .sidebar-inner {
   display: flex;
   flex-direction: column;

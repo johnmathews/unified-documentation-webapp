@@ -15,18 +15,16 @@ documentation.
   actions (theme toggle, server status, print) and panel toggles (Files, Search, Chat), separated by a vertical border.
   The service navigation bar below the header contains page-level navigation links: Projects, Root Docs, Dev
   Journal, Learning Journal, and Engineering Team. The sidebar (file picker) and search panel have mutual exclusion — opening one closes
-  the other. Keyboard shortcuts toggle the side panels: `Cmd/Ctrl+B` (Files), `Cmd/Ctrl+K` (Search), `Cmd/Ctrl+J` (Chat).
-  Shortcuts ignore Shift/Alt modifiers to avoid colliding with browser/devtools combos.
-- **Sidebar**: Two-tab panel — **Files** (tree navigation) and **Contents** (table of contents for the current
-  document). The active tab is persisted in localStorage (`sidebar-tab` key, default `contents`).
-  The Files tab shows tree navigation organized by Source > Category (Root Docs/Documentation Directory/Development
-  Journal/Learning Journal/Engineering Team/Research/Skills/Runbooks/PDF) > Document, with expand/collapse controls inside the tree
-  section. Each source has a deterministic color tag for visual distinction. All nine categories are collapsible sections
-  with document counts. A collapsible "Filter categories" section with GOV.UK-style small checkboxes allows globally toggling category
-  visibility (persisted to localStorage). The `CATEGORIES` constant in `stores.svelte.ts` is the single source of truth
-  for category definitions. The Contents tab renders the h1–h3 headings of the current document with level-based
-  indentation; the active heading is tracked via `IntersectionObserver` on the `.content` scroller, and clicking an entry
-  smooth-scrolls the content pane to that heading.
+  the other. Keyboard shortcuts toggle the side panels: `Cmd/Ctrl+B` (Files), `Cmd/Ctrl+K` (Search), `Cmd/Ctrl+J` (Chat),
+  `Cmd/Ctrl+.` (table of contents), and `?` opens a modal listing all shortcuts (suppressed when focus is in an
+  input/textarea/contenteditable so search and chat keep accepting `?` as text). Shortcuts ignore Shift/Alt modifiers to
+  avoid colliding with browser/devtools combos.
+- **Sidebar**: Single-purpose Files panel — tree navigation organized by Source > Category (Root Docs/Documentation
+  Directory/Development Journal/Learning Journal/Engineering Team/Research/Skills/Runbooks/PDF) > Document, with
+  expand/collapse controls inside the tree section. Each source has a deterministic color tag for visual distinction. All
+  nine categories are collapsible sections with document counts. A collapsible "Filter categories" section with GOV.UK-style
+  small checkboxes allows globally toggling category visibility (persisted to localStorage). The `CATEGORIES` constant in
+  `stores.svelte.ts` is the single source of truth for category definitions.
 - **Mobile Responsiveness**: Full-screen modal sidebar and chat panels on mobile (100% width in both portrait and
   landscape) with slide-in/out animations for both panels, swipe gestures (edge-swipe to open/close panels), 44px minimum
   touch targets, safe-area-inset handling for notched devices (top bar, content, sidebar, and chat input all respect
@@ -40,7 +38,12 @@ documentation.
   still work on GitHub and locally. Links to `.md` files resolve to `/doc/{docId}` routes; links to other files (images,
   etc.) resolve to `/api/files/{docId}`. The link resolution logic lives in `src/lib/links.ts`, which also injects stable
   slug `id` attributes onto h1–h3 headings (deterministically deduplicated) and exposes `extractHeadings()` to populate
-  the sidebar Contents tab. A floating pill in the bottom-right corner shows scroll progress (percentage) and a bookmark
+  the document table of contents. The TOC renders as a sticky right-rail (`DocToc.svelte`, 240px wide) next to the
+  article column on viewports ≥1200px and hides below that breakpoint; the active heading is tracked via
+  `IntersectionObserver` on the `.content` scroller, and clicking an entry smooth-scrolls to that heading. The rail can
+  be toggled (open/closed) via `Cmd/Ctrl+.` or the list-icon button on the floating doc-controls pill, with the choice
+  persisted in `localStorage` (`doc-toc-open`). A floating pill in the bottom-right corner shows scroll progress
+  (percentage) and a bookmark
   toggle that stays in sync with the in-doc bookmark icon. The pill is hidden for PDFs and `@media print`. PDF files are detected by
   file extension and displayed in an inline iframe via the `/api/files/` proxy route, with "Open in new tab" and
   "Download" action buttons above the viewer. A print button in the top bar triggers `window.print()` with `@media print`

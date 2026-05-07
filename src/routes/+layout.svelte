@@ -4,7 +4,8 @@
  import Sidebar from "$lib/components/Sidebar.svelte";
  import ChatPanel from "$lib/components/ChatPanel.svelte";
  import SearchPanel from "$lib/components/SearchPanel.svelte";
- import { currentDocId, currentPageContext } from "$lib/stores.svelte";
+ import KeyboardShortcutsModal from "$lib/components/KeyboardShortcutsModal.svelte";
+ import { currentDocId, currentPageContext, tocOpen } from "$lib/stores.svelte";
  import { page } from "$app/state";
  import { MediaQuery } from "svelte/reactivity";
  import { onMount } from "svelte";
@@ -15,6 +16,7 @@
  let chatOpen = $state(false);
  let chatExpanded = $state(false);
  let searchOpen = $state(false);
+ let shortcutsOpen = $state(false);
  // eslint-disable-next-line svelte/prefer-writable-derived
  let darkMode = $state(false);
 
@@ -395,23 +397,40 @@
 <svelte:window
  onkeydown={(e) => {
   if (e.key === "Escape") {
-   if (chatOpen) {
+   if (shortcutsOpen) {
+    shortcutsOpen = false;
+   } else if (chatOpen) {
     chatOpen = false;
     chatExpanded = false;
    } else if (searchOpen) {
     searchOpen = false;
    } else if (sidebarOpen && isMobile.current) {
     sidebarOpen = false;
+   } else if (tocOpen.value) {
+    tocOpen.set(false);
    }
    return;
   }
 
-  // Cmd/Ctrl + B/K/J — toggle Files, Search, Chat. Shift/Alt must NOT be held
-  // so we don't collide with Cmd+Shift+K (Firefox dev tools), Cmd+Alt+J, etc.
+  // ? (shift+/) — toggle shortcuts dialog. Skip when the user is typing into
+  // an input/textarea/contenteditable so search and chat keep accepting "?".
+  if (e.key === "?" && !e.metaKey && !e.ctrlKey && !e.altKey) {
+   const t = e.target as HTMLElement | null;
+   const tag = t?.tagName;
+   const editable = t?.isContentEditable;
+   if (tag !== "INPUT" && tag !== "TEXTAREA" && !editable) {
+    e.preventDefault();
+    shortcutsOpen = !shortcutsOpen;
+    return;
+   }
+  }
+
+  // Cmd/Ctrl + B/K/J/. — toggle Files, Search, Chat, TOC. Shift/Alt must NOT
+  // be held so we don't collide with Cmd+Shift+K (Firefox dev tools) etc.
   const mod = e.metaKey || e.ctrlKey;
   if (!mod || e.shiftKey || e.altKey) return;
   const k = e.key.toLowerCase();
-  if (k !== "b" && k !== "k" && k !== "j") return;
+  if (k !== "b" && k !== "k" && k !== "j" && k !== ".") return;
 
   if (k === "b") {
    e.preventDefault();
@@ -425,9 +444,14 @@
    e.preventDefault();
    chatOpen = !chatOpen;
    if (!chatOpen) chatExpanded = false;
+  } else if (k === ".") {
+   e.preventDefault();
+   tocOpen.toggle();
   }
  }}
 />
+
+<KeyboardShortcutsModal open={shortcutsOpen} onClose={() => (shortcutsOpen = false)} />
 
 <style>
  .app-layout {
