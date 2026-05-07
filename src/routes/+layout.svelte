@@ -599,7 +599,6 @@
   max-width: 1100px;
   margin: 0 auto;
   padding: 0 15px;
-  border-top: 1px solid var(--brand-surface-border);
  }
 
  @media (min-width: 641px) {
