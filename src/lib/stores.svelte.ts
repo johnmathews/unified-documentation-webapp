@@ -7,6 +7,41 @@ export interface PageContext {
 
 export const currentPageContext = $state<{ value: PageContext | null }>({ value: null });
 
+export interface TocEntry {
+ level: 1 | 2 | 3;
+ text: string;
+ slug: string;
+}
+
+export const currentDocToc = $state<{ value: TocEntry[] }>({ value: [] });
+
+export type SidebarTab = "files" | "contents";
+
+const SIDEBAR_TAB_KEY = "sidebar-tab";
+
+function loadSidebarTab(): SidebarTab {
+ if (typeof localStorage === "undefined") return "contents";
+ const v = localStorage.getItem(SIDEBAR_TAB_KEY);
+ return v === "files" || v === "contents" ? v : "contents";
+}
+
+function createSidebarTab() {
+ let tab = $state<SidebarTab>(loadSidebarTab());
+ return {
+  get value() {
+   return tab;
+  },
+  set(next: SidebarTab) {
+   tab = next;
+   if (typeof localStorage !== "undefined") {
+    localStorage.setItem(SIDEBAR_TAB_KEY, next);
+   }
+  },
+ };
+}
+
+export const sidebarTab = createSidebarTab();
+
 /** Document category definitions — the single source of truth for category keys and labels. */
 export const CATEGORIES = [
  { key: "root_docs", label: "Root Docs" },

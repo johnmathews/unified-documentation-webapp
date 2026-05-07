@@ -1,5 +1,11 @@
 import { describe, it, expect } from "vitest";
-import { resolveDocLink, normalizePath, renderMarkdownWithLinks } from "$lib/links";
+import {
+ resolveDocLink,
+ normalizePath,
+ renderMarkdownWithLinks,
+ extractHeadings,
+ slugify,
+} from "$lib/links";
 
 describe("resolveDocLink", () => {
  const source = "proxmox-setup";
@@ -156,5 +162,81 @@ describe("renderMarkdownWithLinks", () => {
  it("handles link with fragment", () => {
   const html = renderMarkdownWithLinks("[Setup](setup.md#install)", source, filePath);
   expect(html).toContain('href="/doc/my-repo%3Adocs%2Fsetup.md#install"');
+ });
+
+ it("injects id attributes on h1-h3 matching extracted slugs", () => {
+  const md = "# Intro\n\n## Getting Started\n\n### Install steps\n";
+  const html = renderMarkdownWithLinks(md, source, filePath);
+  expect(html).toContain('<h1 id="intro">');
+  expect(html).toContain('<h2 id="getting-started">');
+  expect(html).toContain('<h3 id="install-steps">');
+ });
+
+ it("does not add id attributes to h4+ headings", () => {
+  const html = renderMarkdownWithLinks("#### Deep heading\n", source, filePath);
+  expect(html).toContain("<h4>");
+  expect(html).not.toMatch(/<h4\s+id=/);
+ });
+
+ it("dedupes repeated heading slugs", () => {
+  const md = "## Setup\n\n## Setup\n\n## Setup\n";
+  const html = renderMarkdownWithLinks(md, source, filePath);
+  expect(html).toContain('id="setup"');
+  expect(html).toContain('id="setup-2"');
+  expect(html).toContain('id="setup-3"');
+ });
+});
+
+describe("slugify", () => {
+ it("lowercases and hyphenates", () => {
+  expect(slugify("Hello World")).toBe("hello-world");
+ });
+
+ it("strips punctuation", () => {
+  expect(slugify("What's up?")).toBe("whats-up");
+ });
+
+ it("collapses whitespace and underscores", () => {
+  expect(slugify("foo   bar_baz")).toBe("foo-bar-baz");
+ });
+
+ it("trims leading and trailing hyphens", () => {
+  expect(slugify("  --hello--  ")).toBe("hello");
+ });
+});
+
+describe("extractHeadings", () => {
+ it("returns h1-h3 entries in document order", () => {
+  const md = "# A\n\nbody\n\n## B\n\n### C\n\n#### D should be skipped\n\n## E";
+  const entries = extractHeadings(md);
+  expect(entries).toEqual([
+   { level: 1, text: "A", slug: "a" },
+   { level: 2, text: "B", slug: "b" },
+   { level: 3, text: "C", slug: "c" },
+   { level: 2, text: "E", slug: "e" },
+  ]);
+ });
+
+ it("strips inline markdown formatting from heading text", () => {
+  const md = "## Use `npm install` to **set up**";
+  const entries = extractHeadings(md);
+  expect(entries).toEqual([
+   { level: 2, text: "Use npm install to set up", slug: "use-npm-install-to-set-up" },
+  ]);
+ });
+
+ it("dedupes repeated slugs deterministically with the renderer", () => {
+  const md = "## Setup\n\n## Setup\n\n## Setup\n";
+  const entries = extractHeadings(md);
+  const html = renderMarkdownWithLinks(md, "src", "f.md");
+  expect(entries.map((e) => e.slug)).toEqual(["setup", "setup-2", "setup-3"]);
+  for (const slug of entries.map((e) => e.slug)) {
+   expect(html).toContain(`id="${slug}"`);
+  }
+ });
+
+ it("returns empty array when there are no h1-h3 headings", () => {
+  expect(extractHeadings("just a paragraph")).toEqual([]);
+  expect(extractHeadings("#### only h4\n")).toEqual([]);
  });
 });

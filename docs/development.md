@@ -70,16 +70,19 @@ src/
   lib/
     api.ts                # Client-side API types, fetch wrappers, SSE streaming
     sse.test.ts           # Tests for SSE parser and streaming chat
-    stores.svelte.ts      # Shared reactive state (doc ID, category filters)
+    stores.svelte.ts      # Shared reactive state (doc ID, category filters, TOC entries, sidebar tab)
     colors.ts             # Deterministic source tag colors
     titles.ts             # Display formatting for sources and titles
     server/
       api.ts              # Server-side proxy utilities (proxyGet/proxyPost)
     components/
-      Sidebar.svelte      # File tree navigation + category filters
+      Sidebar.svelte      # File tree navigation + Files/Contents tab strip + category filters
+      TocPanel.svelte     # Table of contents for the current document (active heading tracking)
+      FloatingDocControls.svelte  # Bottom-right pill: scroll progress + bookmark toggle
       SearchPanel.svelte   # Search with source and date filters
       ChatPanel.svelte    # RAG chat interface
       Breadcrumbs.svelte  # Breadcrumb navigation
+      BookmarkButton.svelte  # Bookmark toggle (header doc-meta-row)
   routes/
     +layout.svelte        # Main layout (header, sidebar, search, chat panels)
     +page.svelte          # Home page (project list with metadata)

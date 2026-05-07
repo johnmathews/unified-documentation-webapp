@@ -68,11 +68,76 @@ export function normalizePath(path: string): string {
  return result.join("/");
 }
 
+/** A heading entry suitable for table-of-contents rendering. */
+export interface TocEntry {
+ level: 1 | 2 | 3;
+ text: string;
+ slug: string;
+}
+
+/** Convert heading text into a URL-safe slug. */
+export function slugify(text: string): string {
+ return text
+  .toLowerCase()
+  .trim()
+  .replace(/[^\w\s-]/g, "")
+  .replace(/[\s_]+/g, "-")
+  .replace(/^-+|-+$/g, "");
+}
+
+/**
+ * Build a stateful slug allocator that deduplicates repeated headings by
+ * appending `-2`, `-3`, etc. The same input sequence always produces the
+ * same output sequence, so a renderer pass and an extraction pass agree.
+ */
+function createSlugger() {
+ const seen = new Map<string, number>();
+ return (text: string): string => {
+  const base = slugify(text) || "section";
+  const count = seen.get(base) ?? 0;
+  seen.set(base, count + 1);
+  return count === 0 ? base : `${base}-${count + 1}`;
+ };
+}
+
+/**
+ * Strip basic markdown formatting from heading text so the TOC label and
+ * the heading slug are computed against the plain text.
+ */
+function plainText(raw: string): string {
+ return raw
+  .replace(/`([^`]*)`/g, "$1")
+  .replace(/\*\*([^*]+)\*\*/g, "$1")
+  .replace(/\*([^*]+)\*/g, "$1")
+  .replace(/_([^_]+)_/g, "$1")
+  .replace(/\[([^\]]+)\]\([^)]*\)/g, "$1");
+}
+
+/**
+ * Walk the markdown source and return a list of h1-h3 headings with stable slugs.
+ * Slugs match the IDs injected by `renderMarkdownWithLinks` for the same input.
+ */
+export function extractHeadings(content: string): TocEntry[] {
+ const tokens = new Marked().lexer(content);
+ const slugger = createSlugger();
+ const entries: TocEntry[] = [];
+ for (const token of tokens) {
+  if (token.type === "heading" && token.depth >= 1 && token.depth <= 3) {
+   const text = plainText(token.text);
+   const slug = slugger(text);
+   entries.push({ level: token.depth as 1 | 2 | 3, text, slug });
+  }
+ }
+ return entries;
+}
+
 /**
  * Render markdown to HTML with relative links rewritten to app URLs.
  *
  * Creates a fresh Marked instance with a custom renderer that resolves
  * relative links and images against the current document's source and path.
+ * h1-h3 headings get an `id` attribute computed by the same slugger used
+ * by `extractHeadings`, so TOC anchor links resolve correctly.
  */
 export function renderMarkdownWithLinks(
  content: string,
@@ -80,6 +145,7 @@ export function renderMarkdownWithLinks(
  filePath: string,
 ): string {
  const instance = new Marked();
+ const slugger = createSlugger();
  instance.use({
   renderer: {
    link({ href, title, tokens }: Tokens.Link): string {
@@ -95,6 +161,14 @@ export function renderMarkdownWithLinks(
     const titleAttr = title ? ` title="${escapeAttr(title)}"` : "";
     const altAttr = text ? ` alt="${escapeAttr(text)}"` : "";
     return `<img src="${escapeAttr(finalSrc)}"${altAttr}${titleAttr} />`;
+   },
+   heading({ tokens, depth, text }: Tokens.Heading): string {
+    const inner = this.parser.parseInline(tokens);
+    if (depth >= 1 && depth <= 3) {
+     const slug = slugger(plainText(text));
+     return `<h${depth} id="${escapeAttr(slug)}">${inner}</h${depth}>\n`;
+    }
+    return `<h${depth}>${inner}</h${depth}>\n`;
    },
   },
  });

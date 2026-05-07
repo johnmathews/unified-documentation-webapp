@@ -403,6 +403,28 @@
    } else if (sidebarOpen && isMobile.current) {
     sidebarOpen = false;
    }
+   return;
+  }
+
+  // Cmd/Ctrl + B/K/J — toggle Files, Search, Chat. Shift/Alt must NOT be held
+  // so we don't collide with Cmd+Shift+K (Firefox dev tools), Cmd+Alt+J, etc.
+  const mod = e.metaKey || e.ctrlKey;
+  if (!mod || e.shiftKey || e.altKey) return;
+  const k = e.key.toLowerCase();
+  if (k !== "b" && k !== "k" && k !== "j") return;
+
+  if (k === "b") {
+   e.preventDefault();
+   sidebarOpen = !sidebarOpen;
+   if (sidebarOpen) searchOpen = false;
+  } else if (k === "k") {
+   e.preventDefault();
+   searchOpen = !searchOpen;
+   if (searchOpen) sidebarOpen = false;
+  } else if (k === "j") {
+   e.preventDefault();
+   chatOpen = !chatOpen;
+   if (!chatOpen) chatExpanded = false;
   }
  }}
 />

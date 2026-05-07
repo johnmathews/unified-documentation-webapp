@@ -1,11 +1,12 @@
 <script lang="ts">
  import { page } from "$app/state";
  import { fetchDocument, checkBookmarks, type FullDocument } from "$lib/api";
- import { currentDocId } from "$lib/stores.svelte";
+ import { currentDocId, currentDocToc } from "$lib/stores.svelte";
  import Breadcrumbs from "$lib/components/Breadcrumbs.svelte";
  import BookmarkButton from "$lib/components/BookmarkButton.svelte";
+ import FloatingDocControls from "$lib/components/FloatingDocControls.svelte";
  import { displaySource, displayTitle, stripSourcePrefix } from "$lib/titles";
- import { renderMarkdownWithLinks } from "$lib/links";
+ import { renderMarkdownWithLinks, extractHeadings } from "$lib/links";
 
  let doc: FullDocument | null = $state(null);
  let loading = $state(true);
@@ -24,6 +25,7 @@
    if (currentDocId.value === id) {
     currentDocId.value = null;
    }
+   currentDocToc.value = [];
   };
  });
 
@@ -31,9 +33,13 @@
   loading = true;
   error = "";
   doc = null;
+  currentDocToc.value = [];
 
   try {
    doc = await fetchDocument(docId);
+   if (doc.content && !doc.file_path.toLowerCase().endsWith(".pdf")) {
+    currentDocToc.value = extractHeadings(doc.content);
+   }
    // Check bookmark status
    const status = await checkBookmarks([docId]);
    isBookmarked = status[docId] ?? false;
@@ -129,6 +135,10 @@
    <p class="no-content">This document has no content.</p>
   {/if}
  </article>
+
+ {#if !isPdf(doc) && doc.content}
+  <FloatingDocControls docId={doc.doc_id} bind:bookmarked={isBookmarked} />
+ {/if}
 {/if}
 
 <style>

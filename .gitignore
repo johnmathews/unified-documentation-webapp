@@ -30,3 +30,6 @@ vite.config.ts.timestamp-*
 
 # Claude Code local config
 .claude/
+
+# Coverage reports
+coverage/
