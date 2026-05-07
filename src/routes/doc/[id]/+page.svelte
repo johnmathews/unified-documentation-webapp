@@ -209,14 +209,6 @@
   border-bottom: 1px solid var(--border);
  }
 
- .doc-meta {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-top: 10px;
-  margin-bottom: 10px;
- }
-
  .source-badge {
   font-size: 16px;
   font-weight: bold;

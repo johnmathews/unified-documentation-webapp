@@ -915,11 +915,6 @@
   .context-hint {
    font-size: 14px;
   }
-  .restore-hint {
-   min-height: 44px;
-   padding: 10px 20px;
-   font-size: 16px;
-  }
   .chat-input {
    padding-bottom: calc(15px + env(safe-area-inset-bottom, 0));
   }

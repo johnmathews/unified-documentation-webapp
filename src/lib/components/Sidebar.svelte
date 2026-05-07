@@ -609,29 +609,6 @@
   outline-offset: 1px;
  }
 
- .tree-actions {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 10px 15px;
-  border-bottom: 1px solid var(--border);
- }
-
- .journal-link {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  color: var(--text-secondary);
-  font-size: 16px;
-  text-decoration: none;
-  transition: color 0.15s;
- }
-
- .journal-link:hover {
-  color: var(--text);
-  text-decoration: underline;
- }
-
  .tree-header {
   display: flex;
   align-items: center;
@@ -754,10 +731,6 @@
   padding: 0;
  }
 
- .root-docs {
-  padding-left: 0;
- }
-
  .tree-item {
   display: flex;
   align-items: center;
@@ -826,12 +799,6 @@
   }
   .tree-text-sep {
    font-size: 14px;
-  }
-  .journal-link {
-   min-height: 44px;
-   display: inline-flex;
-   align-items: center;
-   font-size: 16px;
   }
   .source-tag {
    font-size: 16px;

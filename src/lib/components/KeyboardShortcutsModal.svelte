@@ -26,9 +26,11 @@
   role="dialog"
   aria-modal="true"
   aria-labelledby="shortcuts-title"
-  onclick={onClose}
+  tabindex="-1"
+  onclick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+  onkeydown={(e) => { if (e.key === "Escape") onClose(); }}
  >
-  <div class="modal" role="document" onclick={(e) => e.stopPropagation()}>
+  <div class="modal">
    <header class="modal-header">
     <h2 id="shortcuts-title">Keyboard shortcuts</h2>
     <button class="close-btn" onclick={onClose} aria-label="Close">

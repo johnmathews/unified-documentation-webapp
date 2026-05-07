@@ -570,14 +570,6 @@
   outline: none;
  }
 
- .govuk-header__separator {
-  width: 1px;
-  height: 24px;
-  background: rgba(255, 255, 255, 0.3);
-  flex-shrink: 0;
-  margin: 0 4px;
- }
-
  .govuk-header__btn-label {
   font-size: 16px;
   font-weight: 400;
@@ -858,11 +850,6 @@
    min-width: 44px;
    padding: 10px 8px;
    justify-content: center;
-  }
-
-  .govuk-header__separator {
-   height: 28px;
-   margin: 0 2px;
   }
 
   .govuk-header__link--homepage {
