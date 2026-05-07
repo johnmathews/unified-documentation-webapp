@@ -3,6 +3,7 @@
  import BookmarkButton from "$lib/components/BookmarkButton.svelte";
  import { currentDocId } from "$lib/stores.svelte";
  import { displayTitle, displaySource } from "$lib/titles";
+ import { SvelteMap } from "svelte/reactivity";
 
  let bookmarks: BookmarkEntry[] = $state([]);
  let loading = $state(true);
@@ -53,13 +54,13 @@
  };
 
  let grouped = $derived.by(() => {
-  const bySource = new Map<string, Map<string, BookmarkEntry[]>>();
+  const bySource = new SvelteMap<string, SvelteMap<string, BookmarkEntry[]>>();
 
   for (const bm of visibleBookmarks) {
    const source = bm.source || "unknown";
    const cat = bm.file_path ? categorizeFilePath(bm.file_path) : "docs";
 
-   if (!bySource.has(source)) bySource.set(source, new Map());
+   if (!bySource.has(source)) bySource.set(source, new SvelteMap());
    const cats = bySource.get(source)!;
    if (!cats.has(cat)) cats.set(cat, []);
    cats.get(cat)!.push(bm);
@@ -139,14 +140,14 @@
   {#if visibleBookmarks.length === 0}
    <p class="empty">No bookmarked documents yet. Use the bookmark icon on any document to save it here.</p>
   {:else}
-   {#each grouped as group}
+   {#each grouped as group (group.source)}
     <section class="source-group">
      <h2 class="source-header">{displaySource(group.source)}</h2>
-     {#each group.categories as cat}
+     {#each group.categories as cat (cat.category)}
       <div class="category-group">
        <h3 class="category-header">{cat.label}</h3>
        <ul class="doc-list">
-        {#each cat.entries as entry}
+        {#each cat.entries as entry (entry.doc_id)}
          <li>
           <BookmarkButton docId={entry.doc_id} bookmarked={true} size="small" onToggle={(val) => handleRemove(entry.doc_id, val)} />
           <a href={docUrl(entry.doc_id)}>{displayTitle({ title: entry.title, file_path: entry.file_path || "", source: entry.source || undefined })}</a>

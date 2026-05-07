@@ -1,6 +1,7 @@
 <script lang="ts">
  import { fetchTree, type TreeDocument } from "$lib/api";
  import { currentDocId } from "$lib/stores.svelte";
+ import { SvelteSet } from "svelte/reactivity";
 
  interface JournalEntry extends TreeDocument {
   source: string;
@@ -25,7 +26,7 @@
   try {
    const tree = await fetchTree();
    const all: JournalEntry[] = [];
-   const srcSet = new Set<string>();
+   const srcSet = new SvelteSet<string>();
    for (const source of tree) {
     if (source.journal.length > 0) srcSet.add(source.source);
     for (const doc of source.journal) {
@@ -118,7 +119,7 @@
   {#if sources.length > 1}
    <div class="source-filters">
     <button class="filter-btn" class:active={activeSource === null} onclick={() => activeSource = null}>All</button>
-    {#each sources as src}
+    {#each sources as src (src)}
      <button class="filter-btn" class:active={activeSource === src} onclick={() => activeSource = activeSource === src ? null : src}>{displaySource(src)}</button>
     {/each}
    </div>
@@ -128,11 +129,11 @@
    <p class="empty">No journal entries found{activeSource ? ` for ${displaySource(activeSource)}` : ""}.</p>
   {:else}
    <div class="timeline">
-    {#each groupedEntries as group}
+    {#each groupedEntries as group (group.month)}
      <div class="month-group">
       <h2 class="month-header">{group.month}</h2>
       <div class="entries">
-       {#each group.entries as entry, i}
+       {#each group.entries as entry, i (entry.doc_id)}
         {@const day = formatDay(entry.created_at || entry.modified_at)}
         {@const prevDay = i > 0 ? formatDay(group.entries[i - 1].created_at || group.entries[i - 1].modified_at) : ""}
         <a href={docUrl(entry.doc_id)} class="entry-card">

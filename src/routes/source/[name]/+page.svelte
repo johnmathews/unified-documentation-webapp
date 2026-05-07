@@ -120,7 +120,7 @@
    <section>
     <h2>Root Docs</h2>
     <ul class="doc-list">
-     {#each sortDocs(source.root_docs) as doc}
+     {#each sortDocs(source.root_docs) as doc (doc.doc_id)}
       <li>
        <a href={docUrl(doc.doc_id)}>{displayTitle(doc)}</a>
        <span class="dates">
@@ -137,7 +137,7 @@
    <section>
     <h2><a href="/source/{encodeURIComponent(source.source)}/docs">Documentation</a></h2>
     <ul class="doc-list">
-     {#each sortDocs(source.docs) as doc}
+     {#each sortDocs(source.docs) as doc (doc.doc_id)}
       <li>
        <a href={docUrl(doc.doc_id)}>{displayTitle(doc)}</a>
        <span class="dates">
@@ -154,7 +154,7 @@
    <section>
     <h2><a href="/source/{encodeURIComponent(source.source)}/journal">Development Journal</a></h2>
     <ul class="doc-list">
-     {#each sortDocs(source.journal) as doc}
+     {#each sortDocs(source.journal) as doc (doc.doc_id)}
       <li>
        <a href={docUrl(doc.doc_id)}>{displayTitle(doc)}</a>
        <span class="dates">
@@ -171,7 +171,7 @@
    <section>
     <h2><a href="/source/{encodeURIComponent(source.source)}/learning_journal">Learning Journal</a></h2>
     <ul class="doc-list">
-     {#each sortDocs(source.learning_journal ?? []) as doc}
+     {#each sortDocs(source.learning_journal ?? []) as doc (doc.doc_id)}
       <li>
        <a href={docUrl(doc.doc_id)}>{displayTitle(doc)}</a>
        <span class="dates">
@@ -188,7 +188,7 @@
    <section>
     <h2><a href="/source/{encodeURIComponent(source.source)}/engineering_team">Engineering Team</a></h2>
     <ul class="doc-list">
-     {#each sortDocs(source.engineering_team ?? []) as doc}
+     {#each sortDocs(source.engineering_team ?? []) as doc (doc.doc_id)}
       <li>
        <a href={docUrl(doc.doc_id)}>{displayTitle(doc)}</a>
        <span class="dates">
@@ -205,7 +205,7 @@
    <section>
     <h2><a href="/source/{encodeURIComponent(source.source)}/research">Research</a></h2>
     <ul class="doc-list">
-     {#each sortDocs(source.research ?? []) as doc}
+     {#each sortDocs(source.research ?? []) as doc (doc.doc_id)}
       <li>
        <a href={docUrl(doc.doc_id)}>{displayTitle(doc)}</a>
        <span class="dates">
@@ -222,7 +222,7 @@
    <section>
     <h2><a href="/source/{encodeURIComponent(source.source)}/skills">Skills</a></h2>
     <ul class="doc-list">
-     {#each sortDocs(source.skills ?? []) as doc}
+     {#each sortDocs(source.skills ?? []) as doc (doc.doc_id)}
       <li>
        <a href={docUrl(doc.doc_id)}>{displayTitle(doc)}</a>
        <span class="dates">
@@ -239,7 +239,7 @@
    <section>
     <h2><a href="/source/{encodeURIComponent(source.source)}/runbooks">Runbooks</a></h2>
     <ul class="doc-list">
-     {#each sortDocs(source.runbooks ?? []) as doc}
+     {#each sortDocs(source.runbooks ?? []) as doc (doc.doc_id)}
       <li>
        <a href={docUrl(doc.doc_id)}>{displayTitle(doc)}</a>
        <span class="dates">
@@ -256,7 +256,7 @@
    <section>
     <h2><a href="/source/{encodeURIComponent(source.source)}/pdf">PDF</a></h2>
     <ul class="doc-list">
-     {#each sortDocs(source.pdf ?? []) as doc}
+     {#each sortDocs(source.pdf ?? []) as doc (doc.doc_id)}
       <li>
        <a href={docUrl(doc.doc_id)}>{displayTitle(doc)}</a>
        <span class="dates">

@@ -118,7 +118,7 @@
 
   {#if showFilters}
    <fieldset class="filter-checkboxes">
-    {#each CATEGORIES as cat}
+    {#each CATEGORIES as cat (cat.key)}
      <div class="filter-checkbox-item">
       <input
        class="filter-checkbox-input"
@@ -154,7 +154,7 @@
      {/if}
     </div>
    </div>
-   {#each tree as source}
+   {#each tree as source (source.source)}
     <div class="tree-source">
      <button class="tree-toggle" onclick={() => toggleSource(source.source)}>
       <svg
@@ -195,7 +195,7 @@
 
         {#if expandedCategories[`${source.source}:root_docs`]}
          <div class="tree-items">
-          {#each source.root_docs as doc}
+          {#each source.root_docs as doc (doc.doc_id)}
            <a href={docUrl(doc.doc_id)} class="tree-item" class:active={isActive(doc.doc_id)} onclick={onNavigate}>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
@@ -230,7 +230,7 @@
 
         {#if expandedCategories[`${source.source}:docs`]}
          <div class="tree-items">
-          {#each source.docs as doc}
+          {#each source.docs as doc (doc.doc_id)}
            <a href={docUrl(doc.doc_id)} class="tree-item" class:active={isActive(doc.doc_id)} onclick={onNavigate}>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
@@ -265,7 +265,7 @@
 
         {#if expandedCategories[`${source.source}:journal`]}
          <div class="tree-items">
-          {#each source.journal as doc}
+          {#each source.journal as doc (doc.doc_id)}
            <a href={docUrl(doc.doc_id)} class="tree-item" class:active={isActive(doc.doc_id)} onclick={onNavigate}>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
              <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
@@ -302,7 +302,7 @@
 
         {#if expandedCategories[`${source.source}:learning_journal`]}
          <div class="tree-items">
-          {#each source.learning_journal ?? [] as doc}
+          {#each source.learning_journal ?? [] as doc (doc.doc_id)}
            <a href={docUrl(doc.doc_id)} class="tree-item" class:active={isActive(doc.doc_id)} onclick={onNavigate}>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
              <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" />
@@ -337,7 +337,7 @@
 
         {#if expandedCategories[`${source.source}:engineering_team`]}
          <div class="tree-items">
-          {#each source.engineering_team ?? [] as doc}
+          {#each source.engineering_team ?? [] as doc (doc.doc_id)}
            <a href={docUrl(doc.doc_id)} class="tree-item" class:active={isActive(doc.doc_id)} onclick={onNavigate}>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
              <circle cx="12" cy="12" r="3" />
@@ -374,7 +374,7 @@
 
         {#if expandedCategories[`${source.source}:research`]}
          <div class="tree-items">
-          {#each source.research ?? [] as doc}
+          {#each source.research ?? [] as doc (doc.doc_id)}
            <a href={docUrl(doc.doc_id)} class="tree-item" class:active={isActive(doc.doc_id)} onclick={onNavigate}>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
              <circle cx="11" cy="11" r="8" />
@@ -409,7 +409,7 @@
 
         {#if expandedCategories[`${source.source}:skills`]}
          <div class="tree-items">
-          {#each source.skills ?? [] as doc}
+          {#each source.skills ?? [] as doc (doc.doc_id)}
            <a href={docUrl(doc.doc_id)} class="tree-item" class:active={isActive(doc.doc_id)} onclick={onNavigate}>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
              <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
@@ -443,7 +443,7 @@
 
         {#if expandedCategories[`${source.source}:runbooks`]}
          <div class="tree-items">
-          {#each source.runbooks ?? [] as doc}
+          {#each source.runbooks ?? [] as doc (doc.doc_id)}
            <a href={docUrl(doc.doc_id)} class="tree-item" class:active={isActive(doc.doc_id)} onclick={onNavigate}>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
              <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
@@ -478,7 +478,7 @@
 
         {#if expandedCategories[`${source.source}:pdf`]}
          <div class="tree-items">
-          {#each source.pdf ?? [] as doc}
+          {#each source.pdf ?? [] as doc (doc.doc_id)}
            <a href={docUrl(doc.doc_id)} class="tree-item" class:active={isActive(doc.doc_id)} onclick={onNavigate}>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />

@@ -9,7 +9,6 @@
   type ConversationSummary,
  } from "$lib/api";
  import { tick } from "svelte";
- import { browser } from "$app/environment";
  import { marked } from "marked";
  import { renderMarkdownWithLinks } from "$lib/links";
 
@@ -300,8 +299,7 @@
     {:else if conversations.length === 0}
      <p class="history-empty">No previous conversations.</p>
     {:else}
-     {#each conversations as conv}
-      <!-- svelte-ignore a11y_no_static_element_interactions -->
+     {#each conversations as conv (conv.id)}
       <div class="history-item" onclick={() => resumeConversation(conv.id)} onkeydown={(e) => { if (e.key === 'Enter') resumeConversation(conv.id); }} role="button" tabindex="0">
        <div class="history-item-header">
         <span class="history-title">{conv.title}</span>
@@ -333,7 +331,7 @@
     {/if}
    </div>
   {:else}
-   {#each messages as msg, i}
+   {#each messages as msg, i (i)}
     <div
      class="message"
      class:user={msg.role === "user"}
@@ -343,6 +341,7 @@
     >
      <div class="message-bubble" class:markdown-content={msg.role === "assistant"}>
       {#if msg.role === "assistant"}
+       <!-- eslint-disable-next-line svelte/no-at-html-tags -->
        {@html renderMarkdown(msg.content)}
       {:else}
        {msg.content}

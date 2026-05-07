@@ -2,6 +2,7 @@
  import { fetchTree, type TreeDocument } from "$lib/api";
  import { currentDocId } from "$lib/stores.svelte";
  import { displayTitle, displaySource } from "$lib/titles";
+ import { SvelteSet } from "svelte/reactivity";
 
  interface RootDoc extends TreeDocument {
   source: string;
@@ -25,7 +26,7 @@
   try {
    const tree = await fetchTree();
    const all: RootDoc[] = [];
-   const srcSet = new Set<string>();
+   const srcSet = new SvelteSet<string>();
    for (const source of tree) {
     if (source.root_docs.length > 0) srcSet.add(source.source);
     for (const doc of source.root_docs) {
@@ -127,7 +128,7 @@
    {#if sources.length > 1}
     <div class="source-filters">
      <button class="filter-btn" class:active={activeSource === null} onclick={() => activeSource = null}>All</button>
-     {#each sources as src}
+     {#each sources as src (src)}
       <button class="filter-btn" class:active={activeSource === src} onclick={() => activeSource = activeSource === src ? null : src}>{displaySource(src)}</button>
      {/each}
     </div>
@@ -143,13 +144,13 @@
    <p class="empty">No root documents found{activeSource ? ` for ${displaySource(activeSource)}` : ""}.</p>
   {:else}
    <div class="doc-groups">
-    {#each groupedDocs as group}
+    {#each groupedDocs as group (group.source)}
      <div class="source-group">
       <h2 class="source-header">
        <span class="source-tag">{displaySource(group.source)}</span>
       </h2>
       <ul class="doc-list">
-       {#each sortDocs(group.docs) as doc}
+       {#each sortDocs(group.docs) as doc (doc.doc_id)}
         <li>
          <a href={docUrl(doc.doc_id)}>{displayTitle(doc)}</a>
          <span class="dates">

@@ -190,7 +190,7 @@
       }}
      >
       <option value="">All sources</option>
-      {#each availableSources as source}
+      {#each availableSources as source (source)}
        <option value={source}>{displaySource(source)}</option>
       {/each}
      </select>
@@ -456,7 +456,7 @@
    <div class="search-msg">No results found</div>
   {:else if searchResults.length > 0}
    <div class="results-count">{searchResults.length} result{searchResults.length === 1 ? "" : "s"}</div>
-   {#each searchResults as result}
+   {#each searchResults as result (result.doc_id)}
     <a
      href={docUrl(result.doc_id)}
      class="result-item"

@@ -195,7 +195,7 @@
     </tr>
    </thead>
    <tbody>
-    {#each sortedTree as source}
+    {#each sortedTree as source (source.source)}
      {@const h = healthBySource[source.source]}
      {@const updated = lastUpdated(source)}
      <tr>

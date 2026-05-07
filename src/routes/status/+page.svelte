@@ -182,7 +182,7 @@
     </tr>
    </thead>
    <tbody>
-    {#each sortedSources as source}
+    {#each sortedSources as source (source.source)}
      <tr>
       <td>
        <a href="/source/{source.source}" class="source-link">

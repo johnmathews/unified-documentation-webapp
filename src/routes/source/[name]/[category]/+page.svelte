@@ -143,7 +143,7 @@
    <p class="empty">No documents in this category.</p>
   {:else}
    <ul class="doc-list">
-    {#each sortedDocs as doc}
+    {#each sortedDocs as doc (doc.doc_id)}
      <li>
       <BookmarkButton docId={doc.doc_id} bookmarked={bookmarkStatus[doc.doc_id] ?? false} size="small" onToggle={(val) => bookmarkStatus[doc.doc_id] = val} />
       <a href={docUrl(doc.doc_id)}>{displayTitle(doc)}</a>

@@ -134,6 +134,7 @@
    </div>
   {:else if doc.content}
    <div class="markdown-content">
+    <!-- eslint-disable-next-line svelte/no-at-html-tags -->
     {@html renderMarkdownWithLinks(doc.content, doc.source, doc.file_path)}
    </div>
   {:else}
