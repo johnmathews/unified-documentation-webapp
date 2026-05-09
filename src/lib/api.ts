@@ -73,6 +73,19 @@ export interface ScanStats {
  errors: number;
 }
 
+export interface ScanProgress {
+ phase: "starting" | "syncing" | "discovery_done" | "processing";
+ // discovery_done fields
+ total_docs?: number;
+ sources_changed?: number;
+ sources_total?: number;
+ // processing fields
+ current?: number;
+ total?: number;
+ source?: string;
+ doc?: string;
+}
+
 export interface HealthStatus {
  status: "healthy" | "degraded" | "error";
  total_sources: number;
@@ -82,6 +95,7 @@ export interface HealthStatus {
  last_ingestion?: { completed_at?: string } | null;
  last_stats?: Record<string, ScanStats> | null;
  ingestion_running?: boolean;
+ current_progress?: ScanProgress | null;
 }
 
 async function apiFetch<T>(path: string, options?: RequestInit): Promise<T> {
@@ -141,10 +155,19 @@ export async function triggerScan(): Promise<ScanTriggerResponse> {
  * Resolves with the per-source stats summary once the scan completes, or
  * `null` if it times out before completion. Honours an `AbortSignal` so the
  * caller can cancel (e.g. on component unmount).
+ *
+ * If `onProgress` is supplied, it fires on every poll with the latest
+ * `current_progress` payload (or `null` if the backend isn't reporting one
+ * yet). Lets the UI render "Processing X/N" without owning a separate poll.
  */
-export async function pollUntilScanDone(
+export async function pollScan(
  triggeredAtMs: number,
- opts: { intervalMs?: number; timeoutMs?: number; signal?: AbortSignal } = {},
+ opts: {
+  intervalMs?: number;
+  timeoutMs?: number;
+  signal?: AbortSignal;
+  onProgress?: (progress: ScanProgress | null) => void;
+ } = {},
 ): Promise<ScanSummary | null> {
  const interval = opts.intervalMs ?? 2000;
  const timeout = opts.timeoutMs ?? 600_000;
@@ -162,6 +185,8 @@ export async function pollUntilScanDone(
    continue; // transient — keep polling
   }
 
+  opts.onProgress?.(health.current_progress ?? null);
+
   const completedAt = health.last_ingestion?.completed_at;
   if (
    !health.ingestion_running &&
@@ -172,6 +197,16 @@ export async function pollUntilScanDone(
   }
  }
  return null;
+}
+
+/**
+ * Backwards-compatible shim. New code should call `pollScan` directly.
+ */
+export async function pollUntilScanDone(
+ triggeredAtMs: number,
+ opts: { intervalMs?: number; timeoutMs?: number; signal?: AbortSignal } = {},
+): Promise<ScanSummary | null> {
+ return pollScan(triggeredAtMs, opts);
 }
 
 export function summariseScan(

@@ -14,11 +14,15 @@ documentation.
   name "Documentation Library" (shortened to "Library" on mobile) on the left and two icon groups on the right: utility
   actions (theme toggle, scan now, server status, print) and panel toggles (Files, Search, Chat), separated by a
   vertical border. The "scan now" button triggers an immediate ingestion via `POST /api/scan` — the icon (refresh-cw)
-  spins while scanning, and a toast anchored to the top-right corner of the viewport shows the result text
-  ("Scanning…", then "Scan complete — N added, M updated, K removed", "Scan complete — no changes", or
-  "Scan failed: …"). The banner has a coloured left border (brand-blue while scanning, GOV.UK green for
-  success-with-changes, GOV.UK red for errors) and a × dismiss button; it auto-clears 6 s after completion. Pages that
-  display scan-affected data (homepage, `/status`) subscribe to a `scanTick` store and re-fetch when it ticks.
+  spins while scanning, and a banner anchored to the top-right corner of the viewport shows live progress. The banner
+  text walks through: "Checking sources for changes…" (sync), "Found N documents from M sources to update" or
+  "No changes detected" (after discovery), "Processing X/N — <doc path>" (per-file as work proceeds), and finally
+  "Scan complete — N added, M updated, K removed" (or "Scan failed: …" / "Scan timed out"). Progress is polled from
+  `/api/health` every 2 s during a scan; the backend exposes a `current_progress` field that mirrors the latest
+  `scan_progress` event from the ingestion worker. The banner has a coloured left border (brand-blue while scanning,
+  GOV.UK green for success-with-changes, GOV.UK red for errors) and a × dismiss button; it auto-clears 6 s after
+  completion. Pages that display scan-affected data (homepage, `/status`) subscribe to a `scanTick` store and re-fetch
+  when it ticks.
   The service navigation bar below the header contains page-level navigation links: Projects, Root Docs, Dev
   Journal, Learning Journal, and Engineering Team. The sidebar (file picker) and search panel have mutual exclusion — opening one closes
   the other. Keyboard shortcuts toggle the side panels: `Cmd/Ctrl+B` (Files), `Cmd/Ctrl+K` (Search), `Cmd/Ctrl+J` (Chat),

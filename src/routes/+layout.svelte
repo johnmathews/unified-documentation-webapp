@@ -6,7 +6,7 @@
  import SearchPanel from "$lib/components/SearchPanel.svelte";
  import KeyboardShortcutsModal from "$lib/components/KeyboardShortcutsModal.svelte";
  import { currentDocId, currentPageContext, tocOpen, scanTick } from "$lib/stores.svelte";
- import { triggerScan, pollUntilScanDone, type ScanSummary } from "$lib/api";
+ import { triggerScan, pollScan, type ScanSummary, type ScanProgress } from "$lib/api";
  import { page } from "$app/state";
  import { MediaQuery } from "svelte/reactivity";
  import { onMount } from "svelte";
@@ -183,6 +183,7 @@
  let scanAlreadyRunning = $state(false);
  let scanSummary: ScanSummary | null = $state(null);
  let scanError = $state("");
+ let scanProgress: ScanProgress | null = $state(null);
  let scanResultTimer: ReturnType<typeof setTimeout> | null = null;
 
  function clearScanResultLater(ms = 6000) {
@@ -216,6 +217,7 @@
   scanAlreadyRunning = false;
   scanSummary = null;
   scanError = "";
+  scanProgress = null;
   if (scanResultTimer) {
    clearTimeout(scanResultTimer);
    scanResultTimer = null;
@@ -224,7 +226,11 @@
   try {
    const trig = await triggerScan();
    if (trig.status === "already_running") scanAlreadyRunning = true;
-   const result = await pollUntilScanDone(triggeredAtMs);
+   const result = await pollScan(triggeredAtMs, {
+    onProgress: (p) => {
+     scanProgress = p;
+    },
+   });
    if (result === null) {
     scanError = "Scan timed out";
    } else {
@@ -235,13 +241,35 @@
    scanError = e instanceof Error ? e.message : "Scan failed";
   } finally {
    scanning = false;
+   scanProgress = null;
    clearScanResultLater();
   }
+ }
+
+ function truncate(s: string, max: number): string {
+  return s.length > max ? `…${s.slice(s.length - max + 1)}` : s;
  }
 
  function scanTitle(): string {
   if (scanError) return scanError;
   if (scanning && scanAlreadyRunning) return "Already scanning…";
+  if (scanning && scanProgress) {
+   const p = scanProgress;
+   if (p.phase === "discovery_done") {
+    const total = p.total_docs ?? 0;
+    if (total === 0) return "No changes detected";
+    const sources = p.sources_changed ?? 0;
+    const docNoun = total === 1 ? "document" : "documents";
+    const srcNoun = sources === 1 ? "source" : "sources";
+    return `Found ${total} ${docNoun} from ${sources} ${srcNoun} to update`;
+   }
+   if (p.phase === "processing" && p.current && p.total) {
+    const doc = p.doc ? ` — ${truncate(p.doc, 50)}` : "";
+    return `Processing ${p.current}/${p.total}${doc}`;
+   }
+   if (p.phase === "syncing") return "Checking sources for changes…";
+   // "starting" or any other state — fall through to default.
+  }
   if (scanning) return "Scanning…";
   if (scanSummary) {
    const { added, updated, removed } = scanSummary;

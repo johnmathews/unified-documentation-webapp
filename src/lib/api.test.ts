@@ -984,3 +984,90 @@ describe("pollUntilScanDone", () => {
   expect(result).toEqual({ added: 0, updated: 0, removed: 2, errors: 0 });
  });
 });
+
+describe("pollScan onProgress", () => {
+ beforeEach(() => {
+  vi.restoreAllMocks();
+ });
+
+ it("calls onProgress with each polled current_progress, then resolves with summary", async () => {
+  const triggeredAt = Date.now();
+  const completedAt = new Date(triggeredAt + 1000).toISOString();
+  const responses = [
+   {
+    status: "healthy", total_sources: 1, total_chunks: 0, poll_interval_seconds: 1800, sources: [],
+    ingestion_running: true,
+    last_ingestion: { completed_at: new Date(triggeredAt - 5000).toISOString() },
+    last_stats: null,
+    current_progress: { phase: "syncing" },
+   },
+   {
+    status: "healthy", total_sources: 1, total_chunks: 0, poll_interval_seconds: 1800, sources: [],
+    ingestion_running: true,
+    last_ingestion: { completed_at: new Date(triggeredAt - 5000).toISOString() },
+    last_stats: null,
+    current_progress: { phase: "discovery_done", total_docs: 3, sources_changed: 1, sources_total: 1 },
+   },
+   {
+    status: "healthy", total_sources: 1, total_chunks: 0, poll_interval_seconds: 1800, sources: [],
+    ingestion_running: true,
+    last_ingestion: { completed_at: new Date(triggeredAt - 5000).toISOString() },
+    last_stats: null,
+    current_progress: { phase: "processing", current: 2, total: 3, source: "src", doc: "x.md" },
+   },
+   {
+    status: "healthy", total_sources: 1, total_chunks: 0, poll_interval_seconds: 1800, sources: [],
+    ingestion_running: false,
+    last_ingestion: { completed_at: completedAt },
+    last_stats: { src: { upserted: 1, deleted: 0, skipped: 0, new: 1, modified: 0, files: 1, errors: 0 } },
+    current_progress: null,
+   },
+  ];
+  let callIdx = 0;
+  vi.stubGlobal(
+   "fetch",
+   vi.fn().mockImplementation(() => {
+    const r = responses[callIdx++] ?? responses[responses.length - 1];
+    return Promise.resolve({ ok: true, json: () => Promise.resolve(r) });
+   }),
+  );
+
+  const captured: Array<unknown> = [];
+  const { pollScan } = await import("$lib/api");
+  const result = await pollScan(triggeredAt, {
+   intervalMs: 5,
+   timeoutMs: 5000,
+   onProgress: (p) => captured.push(p),
+  });
+
+  expect(result).toEqual({ added: 1, updated: 0, removed: 0, errors: 0 });
+  expect(captured).toEqual([
+   { phase: "syncing" },
+   { phase: "discovery_done", total_docs: 3, sources_changed: 1, sources_total: 1 },
+   { phase: "processing", current: 2, total: 3, source: "src", doc: "x.md" },
+   null,
+  ]);
+ });
+
+ it("passes null to onProgress when current_progress is missing from health", async () => {
+  // Older backends don't include the field at all — frontend must handle that.
+  const triggeredAt = Date.now();
+  vi.stubGlobal(
+   "fetch",
+   vi.fn().mockResolvedValue({
+    ok: true,
+    json: () => Promise.resolve({
+     status: "healthy", total_sources: 0, total_chunks: 0, poll_interval_seconds: 1800, sources: [],
+     ingestion_running: false,
+     last_ingestion: { completed_at: new Date(triggeredAt + 100).toISOString() },
+     last_stats: null,
+     // current_progress field omitted entirely
+    }),
+   }),
+  );
+  const captured: Array<unknown> = [];
+  const { pollScan } = await import("$lib/api");
+  await pollScan(triggeredAt, { intervalMs: 5, timeoutMs: 5000, onProgress: (p) => captured.push(p) });
+  expect(captured).toEqual([null]);
+ });
+});
