@@ -2,7 +2,6 @@
  import { fetchHealth, type HealthStatus } from "$lib/api";
  import { currentDocId, scanTick } from "$lib/stores.svelte";
  import { displaySource } from "$lib/titles";
- import ScanNowButton from "$lib/components/ScanNowButton.svelte";
 
  let health: HealthStatus | null = $state(null);
  let loading = $state(true);
@@ -150,7 +149,6 @@
    <button class="refresh-btn" onclick={refresh} disabled={refreshing}>
     {refreshing ? "Refreshing..." : "Refresh"}
    </button>
-   <ScanNowButton onComplete={loadHealth} />
   </div>
 
   <table class="source-table">

@@ -194,6 +194,22 @@
   }, ms);
  }
 
+ function dismissScanResult() {
+  if (scanResultTimer) {
+   clearTimeout(scanResultTimer);
+   scanResultTimer = null;
+  }
+  scanSummary = null;
+  scanError = "";
+  scanAlreadyRunning = false;
+ }
+
+ let scanHadChanges = $derived.by(() => {
+  const s = scanSummary;
+  if (!s) return false;
+  return s.added > 0 || s.updated > 0 || s.removed > 0;
+ });
+
  async function handleScanClick() {
   if (scanning) return;
   scanning = true;
@@ -330,39 +346,25 @@
      </button>
      <button
       class="govuk-header__action-btn"
-      class:scan-done={!!scanSummary && !scanning && !scanError}
-      class:scan-error={!!scanError}
       onclick={handleScanClick}
       disabled={scanning}
       title={scanTitle()}
       aria-label={scanTitle()}
      >
-      {#if scanError}
-       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <circle cx="12" cy="12" r="10" />
-        <line x1="12" y1="8" x2="12" y2="12" />
-        <line x1="12" y1="16" x2="12.01" y2="16" />
-       </svg>
-      {:else if scanSummary && !scanning}
-       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-        <polyline points="20 6 9 17 4 12" />
-       </svg>
-      {:else}
-       <svg
-        class:spinning={scanning}
-        width="18"
-        height="18"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        stroke-width="2"
-       >
-        <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
-        <path d="M3 3v5h5" />
-        <path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16" />
-        <path d="M16 16h5v5" />
-       </svg>
-      {/if}
+      <svg
+       class:spinning={scanning}
+       width="18"
+       height="18"
+       viewBox="0 0 24 24"
+       fill="none"
+       stroke="currentColor"
+       stroke-width="2"
+      >
+       <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+       <path d="M3 3v5h5" />
+       <path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16" />
+       <path d="M16 16h5v5" />
+      </svg>
      </button>
      <a href="/status" class="govuk-header__action-btn" title="Server status">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -418,6 +420,28 @@
    </ul>
   </div>
  </nav>
+
+ {#if scanning || scanSummary || scanError}
+  <div
+   class="scan-banner"
+   class:scan-banner--scanning={scanning}
+   class:scan-banner--success={!scanning && !scanError && scanHadChanges}
+   class:scan-banner--neutral={!scanning && !scanError && !!scanSummary && !scanHadChanges}
+   class:scan-banner--error={!!scanError}
+   role="status"
+   aria-live="polite"
+  >
+   <span class="scan-banner__text">{scanTitle()}</span>
+   {#if !scanning}
+    <button
+     class="scan-banner__close"
+     onclick={dismissScanResult}
+     aria-label="Dismiss scan result"
+     title="Dismiss"
+    >✕</button>
+   {/if}
+  </div>
+ {/if}
 
  {#if sidebarOpen || chatOpen || searchOpen}
   <button
@@ -681,17 +705,88 @@
   animation: spin 0.8s linear infinite;
  }
 
- .govuk-header__action-btn.scan-done {
-  color: #00703c;
- }
-
- .govuk-header__action-btn.scan-error {
-  color: #f47738;
- }
-
  @keyframes spin {
   to {
    transform: rotate(360deg);
+  }
+ }
+
+ .scan-banner {
+  position: fixed;
+  top: var(--header-height);
+  right: 16px;
+  z-index: 102;
+  margin-top: 8px;
+  padding: 10px 12px 10px 16px;
+  background: var(--bg-surface);
+  color: var(--text);
+  border-left: 4px solid var(--brand);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.3;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  max-width: calc(100vw - 32px);
+  animation: scan-banner-in 180ms ease;
+ }
+
+ .scan-banner--success {
+  border-left-color: #00703c;
+ }
+
+ .scan-banner--neutral {
+  border-left-color: var(--border-strong);
+ }
+
+ .scan-banner--error {
+  border-left-color: #d4351c;
+ }
+
+ .scan-banner__text {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+ }
+
+ .scan-banner__close {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 2px 6px;
+  margin: -2px -4px -2px 0;
+  color: var(--text-muted);
+  font-size: 16px;
+  line-height: 1;
+ }
+
+ .scan-banner__close:hover {
+  color: var(--text);
+ }
+
+ .scan-banner__close:focus {
+  color: var(--focus-text);
+  background: var(--focus);
+  outline: none;
+ }
+
+ @keyframes scan-banner-in {
+  from {
+   opacity: 0;
+   transform: translateY(-6px);
+  }
+  to {
+   opacity: 1;
+   transform: translateY(0);
+  }
+ }
+
+ @media (max-width: 640px) {
+  .scan-banner {
+   right: 8px;
+   left: 8px;
+   max-width: none;
   }
  }
 
