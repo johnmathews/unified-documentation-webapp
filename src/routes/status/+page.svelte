@@ -1,6 +1,6 @@
 <script lang="ts">
  import { fetchHealth, type HealthStatus } from "$lib/api";
- import { currentDocId } from "$lib/stores.svelte";
+ import { currentDocId, scanTick } from "$lib/stores.svelte";
  import { displaySource } from "$lib/titles";
  import ScanNowButton from "$lib/components/ScanNowButton.svelte";
 
@@ -51,6 +51,7 @@
 
  $effect(() => {
   currentDocId.value = null;
+  void scanTick.value;
   loadHealth();
  });
 

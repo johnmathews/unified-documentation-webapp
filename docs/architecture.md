@@ -12,7 +12,11 @@ documentation.
 
 - **Layout**: Three-panel layout with sidebar, content area, and collapsible chat panel. The header bar has the product
   name "Documentation Library" (shortened to "Library" on mobile) on the left and two icon groups on the right: utility
-  actions (theme toggle, server status, print) and panel toggles (Files, Search, Chat), separated by a vertical border.
+  actions (theme toggle, scan now, server status, print) and panel toggles (Files, Search, Chat), separated by a
+  vertical border. The "scan now" button triggers an immediate ingestion via `POST /api/scan` and reflects state via
+  icon (refresh-cw spins during the scan, green check on success, alert on error) with the human-readable result in
+  the button's title attribute. Pages that display scan-affected data (homepage, `/status`) subscribe to a `scanTick`
+  store and re-fetch when it ticks.
   The service navigation bar below the header contains page-level navigation links: Projects, Root Docs, Dev
   Journal, Learning Journal, and Engineering Team. The sidebar (file picker) and search panel have mutual exclusion — opening one closes
   the other. Keyboard shortcuts toggle the side panels: `Cmd/Ctrl+B` (Files), `Cmd/Ctrl+K` (Search), `Cmd/Ctrl+J` (Chat),

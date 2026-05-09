@@ -1,8 +1,7 @@
 <script lang="ts">
  import { fetchTree, fetchHealth, type TreeSource, type TreeDocument, type HealthStatus, type HealthSource } from "$lib/api";
- import { currentDocId } from "$lib/stores.svelte";
+ import { currentDocId, scanTick } from "$lib/stores.svelte";
  import { displaySource } from "$lib/titles";
- import ScanNowButton from "$lib/components/ScanNowButton.svelte";
 
  let tree: TreeSource[] = $state([]);
  let health: HealthStatus | null = $state(null);
@@ -53,6 +52,7 @@
 
  $effect(() => {
   currentDocId.value = null;
+  void scanTick.value;
   loadData();
  });
 
@@ -163,8 +163,8 @@
    <p>Check that the MCP server is running and has sources configured.</p>
   </div>
  {:else}
-  <div class="home-status-row">
-   {#if health}
+  {#if health}
+   <div class="home-status-row">
     <a
      class="status-badge"
      class:ok={health.status === "healthy"}
@@ -178,9 +178,8 @@
        : "Error: All sources are failing or unreachable."}>
      {health.status === "healthy" ? "Healthy" : health.status === "degraded" ? "Degraded" : "Error"}
     </a>
-   {/if}
-   <ScanNowButton onComplete={loadData} />
-  </div>
+   </div>
+  {/if}
   <table class="source-table">
    <thead>
     <tr>

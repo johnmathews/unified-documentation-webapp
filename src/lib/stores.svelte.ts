@@ -1,5 +1,7 @@
 export const currentDocId = $state<{ value: string | null }>({ value: null });
 
+export const scanTick = $state<{ value: number }>({ value: 0 });
+
 export interface PageContext {
  source?: string;
  category?: string;

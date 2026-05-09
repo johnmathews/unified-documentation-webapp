@@ -5,7 +5,8 @@
  import ChatPanel from "$lib/components/ChatPanel.svelte";
  import SearchPanel from "$lib/components/SearchPanel.svelte";
  import KeyboardShortcutsModal from "$lib/components/KeyboardShortcutsModal.svelte";
- import { currentDocId, currentPageContext, tocOpen } from "$lib/stores.svelte";
+ import { currentDocId, currentPageContext, tocOpen, scanTick } from "$lib/stores.svelte";
+ import { triggerScan, pollUntilScanDone, type ScanSummary } from "$lib/api";
  import { page } from "$app/state";
  import { MediaQuery } from "svelte/reactivity";
  import { onMount } from "svelte";
@@ -177,6 +178,66 @@
  }
 
  let currentPath = $derived(page.url.pathname);
+
+ let scanning = $state(false);
+ let scanAlreadyRunning = $state(false);
+ let scanSummary: ScanSummary | null = $state(null);
+ let scanError = $state("");
+ let scanResultTimer: ReturnType<typeof setTimeout> | null = null;
+
+ function clearScanResultLater(ms = 6000) {
+  if (scanResultTimer) clearTimeout(scanResultTimer);
+  scanResultTimer = setTimeout(() => {
+   scanSummary = null;
+   scanError = "";
+   scanAlreadyRunning = false;
+  }, ms);
+ }
+
+ async function handleScanClick() {
+  if (scanning) return;
+  scanning = true;
+  scanAlreadyRunning = false;
+  scanSummary = null;
+  scanError = "";
+  if (scanResultTimer) {
+   clearTimeout(scanResultTimer);
+   scanResultTimer = null;
+  }
+  const triggeredAtMs = Date.now();
+  try {
+   const trig = await triggerScan();
+   if (trig.status === "already_running") scanAlreadyRunning = true;
+   const result = await pollUntilScanDone(triggeredAtMs);
+   if (result === null) {
+    scanError = "Scan timed out";
+   } else {
+    scanSummary = result;
+    scanTick.value += 1;
+   }
+  } catch (e) {
+   scanError = e instanceof Error ? e.message : "Scan failed";
+  } finally {
+   scanning = false;
+   clearScanResultLater();
+  }
+ }
+
+ function scanTitle(): string {
+  if (scanError) return scanError;
+  if (scanning && scanAlreadyRunning) return "Already scanning…";
+  if (scanning) return "Scanning…";
+  if (scanSummary) {
+   const { added, updated, removed } = scanSummary;
+   if (added === 0 && updated === 0 && removed === 0) return "Scan complete — no changes";
+   const parts: string[] = [];
+   if (added) parts.push(`${added} added`);
+   if (updated) parts.push(`${updated} updated`);
+   if (removed) parts.push(`${removed} removed`);
+   return `Scan complete — ${parts.join(", ")}`;
+  }
+  return "Scan now";
+ }
 </script>
 
 <svelte:head>
@@ -264,6 +325,42 @@
       {:else}
        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+       </svg>
+      {/if}
+     </button>
+     <button
+      class="govuk-header__action-btn"
+      class:scan-done={!!scanSummary && !scanning && !scanError}
+      class:scan-error={!!scanError}
+      onclick={handleScanClick}
+      disabled={scanning}
+      title={scanTitle()}
+      aria-label={scanTitle()}
+     >
+      {#if scanError}
+       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="12" cy="12" r="10" />
+        <line x1="12" y1="8" x2="12" y2="12" />
+        <line x1="12" y1="16" x2="12.01" y2="16" />
+       </svg>
+      {:else if scanSummary && !scanning}
+       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+        <polyline points="20 6 9 17 4 12" />
+       </svg>
+      {:else}
+       <svg
+        class:spinning={scanning}
+        width="18"
+        height="18"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+       >
+        <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+        <path d="M3 3v5h5" />
+        <path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16" />
+        <path d="M16 16h5v5" />
        </svg>
       {/if}
      </button>
@@ -574,6 +671,28 @@
   font-size: 16px;
   font-weight: 400;
   color: inherit;
+ }
+
+ .govuk-header__action-btn:disabled {
+  cursor: default;
+ }
+
+ .govuk-header__action-btn .spinning {
+  animation: spin 0.8s linear infinite;
+ }
+
+ .govuk-header__action-btn.scan-done {
+  color: #00703c;
+ }
+
+ .govuk-header__action-btn.scan-error {
+  color: #f47738;
+ }
+
+ @keyframes spin {
+  to {
+   transform: rotate(360deg);
+  }
  }
 
  /* ============================================================
