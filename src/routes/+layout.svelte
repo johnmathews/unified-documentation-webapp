@@ -433,12 +433,9 @@
   >
    <span class="scan-banner__text">{scanTitle()}</span>
    {#if !scanning}
-    <button
-     class="scan-banner__close"
-     onclick={dismissScanResult}
-     aria-label="Dismiss scan result"
-     title="Dismiss"
-    >✕</button>
+    <button class="scan-banner__close" onclick={dismissScanResult} aria-label="Dismiss scan result" title="Dismiss"
+     >✕</button
+    >
    {/if}
   </div>
  {/if}
@@ -512,7 +509,13 @@
   <!-- svelte-ignore a11y_no_static_element_interactions -->
   <div class="chat-resize-handle" onmousedown={handleChatResizeStart}></div>
  {/if}
- <ChatPanel docId={currentDocId.value} pageContext={currentPageContext.value} expanded={chatExpanded} visible={chatOpen} onToggleExpand={() => (chatExpanded = !chatExpanded)} />
+ <ChatPanel
+  docId={currentDocId.value}
+  pageContext={currentPageContext.value}
+  expanded={chatExpanded}
+  visible={chatOpen}
+  onToggleExpand={() => (chatExpanded = !chatExpanded)}
+ />
 </aside>
 
 <svelte:window
@@ -714,7 +717,7 @@
  .scan-banner {
   position: fixed;
   top: 8px;
-  right: 16px;
+  right: 8px;
   z-index: 300;
   padding: 10px 12px 10px 16px;
   background: var(--bg-surface);
