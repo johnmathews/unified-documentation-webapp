@@ -713,10 +713,9 @@
 
  .scan-banner {
   position: fixed;
-  top: var(--header-height);
+  top: 8px;
   right: 16px;
-  z-index: 102;
-  margin-top: 8px;
+  z-index: 300;
   padding: 10px 12px 10px 16px;
   background: var(--bg-surface);
   color: var(--text);

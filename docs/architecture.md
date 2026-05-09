@@ -14,7 +14,7 @@ documentation.
   name "Documentation Library" (shortened to "Library" on mobile) on the left and two icon groups on the right: utility
   actions (theme toggle, scan now, server status, print) and panel toggles (Files, Search, Chat), separated by a
   vertical border. The "scan now" button triggers an immediate ingestion via `POST /api/scan` — the icon (refresh-cw)
-  spins while scanning, and a small notification banner anchored under the header shows the result text
+  spins while scanning, and a toast anchored to the top-right corner of the viewport shows the result text
   ("Scanning…", then "Scan complete — N added, M updated, K removed", "Scan complete — no changes", or
   "Scan failed: …"). The banner has a coloured left border (brand-blue while scanning, GOV.UK green for
   success-with-changes, GOV.UK red for errors) and a × dismiss button; it auto-clears 6 s after completion. Pages that
