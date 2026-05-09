@@ -2,6 +2,7 @@
  import { fetchTree, fetchHealth, type TreeSource, type TreeDocument, type HealthStatus, type HealthSource } from "$lib/api";
  import { currentDocId } from "$lib/stores.svelte";
  import { displaySource } from "$lib/titles";
+ import ScanNowButton from "$lib/components/ScanNowButton.svelte";
 
  let tree: TreeSource[] = $state([]);
  let health: HealthStatus | null = $state(null);
@@ -162,21 +163,24 @@
    <p>Check that the MCP server is running and has sources configured.</p>
   </div>
  {:else}
-  {#if health}
-   <a
-    class="status-badge"
-    class:ok={health.status === "healthy"}
-    class:warn={health.status === "degraded"}
-    class:err={health.status === "error"}
-    href="/status"
-    title={health.status === "healthy"
-     ? "Healthy: All sources are scanning successfully."
-     : health.status === "degraded"
-      ? "Degraded: One or more sources have scan failures or are stale."
-      : "Error: All sources are failing or unreachable."}>
-    {health.status === "healthy" ? "Healthy" : health.status === "degraded" ? "Degraded" : "Error"}
-   </a>
-  {/if}
+  <div class="home-status-row">
+   {#if health}
+    <a
+     class="status-badge"
+     class:ok={health.status === "healthy"}
+     class:warn={health.status === "degraded"}
+     class:err={health.status === "error"}
+     href="/status"
+     title={health.status === "healthy"
+      ? "Healthy: All sources are scanning successfully."
+      : health.status === "degraded"
+       ? "Degraded: One or more sources have scan failures or are stale."
+       : "Error: All sources are failing or unreachable."}>
+     {health.status === "healthy" ? "Healthy" : health.status === "degraded" ? "Degraded" : "Error"}
+    </a>
+   {/if}
+   <ScanNowButton onComplete={loadData} />
+  </div>
   <table class="source-table">
    <thead>
     <tr>
@@ -383,12 +387,19 @@
   padding-right: 0;
  }
 
+ .home-status-row {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+ }
+
  .status-badge {
   display: inline-block;
   font-size: 16px;
   font-weight: 700;
   padding: 4px 12px;
-  margin-bottom: 20px;
   text-decoration: none;
  }
 

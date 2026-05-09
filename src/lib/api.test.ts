@@ -824,3 +824,163 @@ describe("checkBookmarks", () => {
   });
  });
 });
+
+describe("summariseScan", () => {
+ it("returns zeros when stats are null", async () => {
+  const { summariseScan } = await import("$lib/api");
+  expect(summariseScan(null)).toEqual({ added: 0, updated: 0, removed: 0, errors: 0 });
+ });
+
+ it("sums new/modified/deleted/errors across sources", async () => {
+  const { summariseScan } = await import("$lib/api");
+  const result = summariseScan({
+   "tech-blog": { upserted: 4, deleted: 1, skipped: 12, new: 3, modified: 1, files: 16, errors: 0 },
+   "home-server": { upserted: 2, deleted: 0, skipped: 8, new: 0, modified: 2, files: 10, errors: 1 },
+  });
+  expect(result).toEqual({ added: 3, updated: 3, removed: 1, errors: 1 });
+ });
+});
+
+describe("triggerScan", () => {
+ beforeEach(() => {
+  vi.restoreAllMocks();
+ });
+
+ it("returns started on 200", async () => {
+  vi.stubGlobal(
+   "fetch",
+   vi.fn().mockResolvedValue({
+    ok: true,
+    status: 200,
+    json: () => Promise.resolve({ status: "started", sources: "all", force: false }),
+   }),
+  );
+  const { triggerScan } = await import("$lib/api");
+  const result = await triggerScan();
+  expect(result.status).toBe("started");
+  expect(fetch).toHaveBeenCalledWith("/api/scan", {
+   method: "POST",
+   headers: { "Content-Type": "application/json" },
+  });
+ });
+
+ it("returns already_running on 409 without throwing", async () => {
+  vi.stubGlobal(
+   "fetch",
+   vi.fn().mockResolvedValue({
+    ok: false,
+    status: 409,
+    json: () => Promise.resolve({ status: "already_running" }),
+   }),
+  );
+  const { triggerScan } = await import("$lib/api");
+  const result = await triggerScan();
+  expect(result.status).toBe("already_running");
+ });
+
+ it("throws on other non-ok responses", async () => {
+  vi.stubGlobal(
+   "fetch",
+   vi.fn().mockResolvedValue({
+    ok: false,
+    status: 500,
+    statusText: "Internal Server Error",
+    json: () => Promise.resolve({ error: "boom" }),
+   }),
+  );
+  const { triggerScan } = await import("$lib/api");
+  await expect(triggerScan()).rejects.toThrow("boom");
+ });
+});
+
+describe("pollUntilScanDone", () => {
+ beforeEach(() => {
+  vi.restoreAllMocks();
+ });
+
+ it("resolves with summary once health reports a fresh completion", async () => {
+  const triggeredAt = Date.now();
+  const completedAt = new Date(triggeredAt + 1000).toISOString();
+
+  // 1st poll: still running. 2nd poll: done.
+  const responses = [
+   { status: "healthy", total_sources: 1, total_chunks: 0, poll_interval_seconds: 1800, sources: [],
+    ingestion_running: true, last_ingestion: { completed_at: new Date(triggeredAt - 5000).toISOString() }, last_stats: null },
+   { status: "healthy", total_sources: 1, total_chunks: 0, poll_interval_seconds: 1800, sources: [],
+    ingestion_running: false, last_ingestion: { completed_at: completedAt },
+    last_stats: { src: { upserted: 1, deleted: 0, skipped: 0, new: 1, modified: 0, files: 1, errors: 0 } } },
+  ];
+  let callIdx = 0;
+  vi.stubGlobal(
+   "fetch",
+   vi.fn().mockImplementation(() => {
+    const r = responses[callIdx++] ?? responses[responses.length - 1];
+    return Promise.resolve({ ok: true, json: () => Promise.resolve(r) });
+   }),
+  );
+
+  const { pollUntilScanDone } = await import("$lib/api");
+  const result = await pollUntilScanDone(triggeredAt, { intervalMs: 5, timeoutMs: 5000 });
+  expect(result).toEqual({ added: 1, updated: 0, removed: 0, errors: 0 });
+ });
+
+ it("returns null on timeout", async () => {
+  vi.stubGlobal(
+   "fetch",
+   vi.fn().mockResolvedValue({
+    ok: true,
+    json: () => Promise.resolve({
+     status: "healthy", total_sources: 0, total_chunks: 0, poll_interval_seconds: 1800, sources: [],
+     ingestion_running: true, last_ingestion: null, last_stats: null,
+    }),
+   }),
+  );
+  const { pollUntilScanDone } = await import("$lib/api");
+  const result = await pollUntilScanDone(Date.now(), { intervalMs: 5, timeoutMs: 30 });
+  expect(result).toBeNull();
+ });
+
+ it("aborts when signal is triggered", async () => {
+  vi.stubGlobal(
+   "fetch",
+   vi.fn().mockResolvedValue({
+    ok: true,
+    json: () => Promise.resolve({
+     status: "healthy", total_sources: 0, total_chunks: 0, poll_interval_seconds: 1800, sources: [],
+     ingestion_running: true, last_ingestion: null, last_stats: null,
+    }),
+   }),
+  );
+  const { pollUntilScanDone } = await import("$lib/api");
+  const ctrl = new AbortController();
+  const promise = pollUntilScanDone(Date.now(), { intervalMs: 50, timeoutMs: 5000, signal: ctrl.signal });
+  setTimeout(() => ctrl.abort(), 10);
+  expect(await promise).toBeNull();
+ });
+
+ it("survives transient health-fetch failures and keeps polling", async () => {
+  const triggeredAt = Date.now();
+  let callIdx = 0;
+  vi.stubGlobal(
+   "fetch",
+   vi.fn().mockImplementation(() => {
+    callIdx++;
+    if (callIdx === 1) {
+     return Promise.reject(new Error("network blip"));
+    }
+    return Promise.resolve({
+     ok: true,
+     json: () => Promise.resolve({
+      status: "healthy", total_sources: 0, total_chunks: 0, poll_interval_seconds: 1800, sources: [],
+      ingestion_running: false,
+      last_ingestion: { completed_at: new Date(triggeredAt + 100).toISOString() },
+      last_stats: { src: { upserted: 0, deleted: 2, skipped: 0, new: 0, modified: 0, files: 0, errors: 0 } },
+     }),
+    });
+   }),
+  );
+  const { pollUntilScanDone } = await import("$lib/api");
+  const result = await pollUntilScanDone(triggeredAt, { intervalMs: 5, timeoutMs: 5000 });
+  expect(result).toEqual({ added: 0, updated: 0, removed: 2, errors: 0 });
+ });
+});

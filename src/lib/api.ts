@@ -63,12 +63,25 @@ export interface HealthSource {
  consecutive_failures: number;
 }
 
+export interface ScanStats {
+ upserted: number;
+ deleted: number;
+ skipped: number;
+ new: number;
+ modified: number;
+ files: number;
+ errors: number;
+}
+
 export interface HealthStatus {
  status: "healthy" | "degraded" | "error";
  total_sources: number;
  total_chunks: number;
  poll_interval_seconds: number;
  sources: HealthSource[];
+ last_ingestion?: { completed_at?: string } | null;
+ last_stats?: Record<string, ScanStats> | null;
+ ingestion_running?: boolean;
 }
 
 async function apiFetch<T>(path: string, options?: RequestInit): Promise<T> {
@@ -82,6 +95,97 @@ async function apiFetch<T>(path: string, options?: RequestInit): Promise<T> {
 
 export async function fetchHealth(): Promise<HealthStatus> {
  return apiFetch<HealthStatus>("/api/health");
+}
+
+// ---- Manual scan trigger ----
+
+export type ScanTriggerStatus = "started" | "already_running" | "error";
+
+export interface ScanTriggerResponse {
+ status: ScanTriggerStatus;
+ sources?: string | string[];
+ force?: boolean;
+}
+
+export interface ScanSummary {
+ added: number;
+ updated: number;
+ removed: number;
+ errors: number;
+}
+
+/**
+ * POST /api/scan. Returns immediately — the scan runs asynchronously on the
+ * server. Resolves to {status: "started"} on success or {status: "already_running"}
+ * if a scan was already in flight.
+ */
+export async function triggerScan(): Promise<ScanTriggerResponse> {
+ const res = await fetch("/api/scan", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+ });
+ if (res.status === 409) {
+  return { status: "already_running" };
+ }
+ if (!res.ok) {
+  const body = await res.json().catch(() => ({ error: res.statusText }));
+  throw new Error(body.error || `API error ${res.status}`);
+ }
+ return res.json();
+}
+
+/**
+ * Poll /api/health until the supervisor has finished a scan that started
+ * after `triggeredAtMs` (wall-clock ms when the user clicked the button).
+ *
+ * Resolves with the per-source stats summary once the scan completes, or
+ * `null` if it times out before completion. Honours an `AbortSignal` so the
+ * caller can cancel (e.g. on component unmount).
+ */
+export async function pollUntilScanDone(
+ triggeredAtMs: number,
+ opts: { intervalMs?: number; timeoutMs?: number; signal?: AbortSignal } = {},
+): Promise<ScanSummary | null> {
+ const interval = opts.intervalMs ?? 2000;
+ const timeout = opts.timeoutMs ?? 600_000;
+ const deadline = Date.now() + timeout;
+
+ while (Date.now() < deadline) {
+  if (opts.signal?.aborted) return null;
+  await new Promise((r) => setTimeout(r, interval));
+  if (opts.signal?.aborted) return null;
+
+  let health: HealthStatus;
+  try {
+   health = await fetchHealth();
+  } catch {
+   continue; // transient — keep polling
+  }
+
+  const completedAt = health.last_ingestion?.completed_at;
+  if (
+   !health.ingestion_running &&
+   completedAt &&
+   Date.parse(completedAt) >= triggeredAtMs
+  ) {
+   return summariseScan(health.last_stats ?? null);
+  }
+ }
+ return null;
+}
+
+export function summariseScan(
+ perSource: Record<string, ScanStats> | null | undefined,
+): ScanSummary {
+ const out: ScanSummary = { added: 0, updated: 0, removed: 0, errors: 0 };
+ if (!perSource) return out;
+ for (const s of Object.values(perSource)) {
+  out.added += s.new ?? 0;
+  out.updated += s.modified ?? 0;
+  out.removed += s.deleted ?? 0;
+  out.errors += s.errors ?? 0;
+ }
+ return out;
 }
 
 export async function fetchTree(): Promise<TreeSource[]> {
