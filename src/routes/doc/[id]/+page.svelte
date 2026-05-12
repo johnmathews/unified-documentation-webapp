@@ -269,10 +269,17 @@
   .doc-sticky-title {
    display: block;
    position: sticky;
-   top: 0;
+   /* .content has padding-top: 40px, which insets the sticky element from the
+      visible top of the scroll area. Pull the stuck position up by that
+      amount so the bar sits flush against the nav with no document text
+      bleeding through above it. The matching negative margin-top keeps the
+      element's contribution to flow height the same as a 0-padded bar, so
+      the doc-header below doesn't gain an extra 40px of dead space at the
+      top of the page. */
+   top: -40px;
    z-index: 50;
-   margin: 0 -12px;
-   padding: 8px 12px;
+   margin: -40px -12px 0;
+   padding: 48px 12px 8px;
    background: var(--bg-body);
    border-bottom: 1px solid var(--border);
    font-size: 0.95rem;
