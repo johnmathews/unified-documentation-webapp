@@ -47,20 +47,26 @@ module:
 11 vitest tests cover add/update/dismiss/clear, ttl auto-dismiss, sticky
 toasts, and independent dismissal of stacked toasts (fake timers).
 
-### W4 — Sticky doc title on desktop
-A `.doc-sticky-title` div sits between `<Breadcrumbs>` and `<header
-class="doc-header">` inside `.document`. Default `display: none`; inside
-`@media (min-width: 1200px)` it's `position: sticky; top: 0` and toggles
-opacity via a `.visible` class.
+### W4 — Sticky doc header on desktop
+On desktop (`min-width: 1200px`) the existing `<header class="doc-header">`
+gets `position: sticky` so the bookmark icon, source link, file path,
+Created/Modified dates and Words/Lines counters stay visible while the
+reader scrolls. No new element, no JS observers — the header already had
+everything we want pinned.
 
-First pass used an `IntersectionObserver` set up in a `$effect`; that turned
-out to be timing-sensitive (the observer fired before `{@html ...}` materialized
-the H1, so the initial intersection report was "no h1" and never updated).
-Final implementation uses `onMount` with a `scroll` listener on `.content`
-(the same scroll element `FloatingDocControls` already uses for reading
-progress) plus a `ResizeObserver` for layout shifts — `stickyVisible =
-h1.getBoundingClientRect().bottom < 0`. Simpler and matches the existing
-pattern in the codebase.
+The `.content` scroll container has `padding-top: 40px`, which would inset
+the sticky element from the visible top of the scroll area and leave 40px
+of document text bleeding through the gap above it. Fix: `top: -40px;
+margin-top: -40px; padding-top: 48px;` — the sticky position is pulled up
+40px so the header sits flush against the navbar; matching negative
+margin-top cancels the extra padding so the at-rest layout (scrollTop=0)
+is unchanged; opaque `background: var(--bg-body)` hides the document
+content scrolling underneath.
+
+Earlier iterations used a separate `.doc-sticky-title` element with
+IntersectionObserver or scroll-listener visibility toggling — both worked
+but were strictly worse than pinning the header itself: redundant title
+information, extra DOM, extra state. Replaced wholesale.
 
 ### W5 — Highlight passages (MVP)
 Client-side only this round. New files:

@@ -11,24 +11,17 @@
  import { renderMarkdownWithLinks, extractHeadings } from "$lib/links";
  import { countDocStats } from "$lib/docStats";
  import { applyHighlights, loadHighlights } from "$lib/highlights";
- import { onMount } from "svelte";
 
  let doc: FullDocument | null = $state(null);
  let loading = $state(true);
  let error = $state("");
  let isBookmarked = $state(false);
- let stickyVisible = $state(false);
  let mdEl = $state<HTMLElement | null>(null);
 
  let currentId = $derived(decodeURIComponent(page.params.id ?? ""));
  let stats = $derived.by(() => {
   if (!doc || !doc.content) return null;
   return countDocStats(doc.content);
- });
- let stickyTitle = $derived.by(() => {
-  if (!doc) return "";
-  if (doc.title) return stripSourcePrefix(doc.title, doc.source);
-  return doc.file_path.split("/").pop() ?? doc.file_path;
  });
 
  $effect(() => {
@@ -87,35 +80,6 @@
   }
  }
 
- onMount(() => {
-  const scrollEl = document.querySelector(".content") as HTMLElement | null;
-  if (!scrollEl) return;
-  function update() {
-   const h1 = document.querySelector(".markdown-content h1") as HTMLElement | null;
-   if (!h1) {
-    stickyVisible = false;
-    return;
-   }
-   stickyVisible = h1.getBoundingClientRect().bottom < 0;
-  }
-  scrollEl.addEventListener("scroll", update, { passive: true });
-  // Recompute after layout shifts (images loading, font swaps, doc switches).
-  const ro = new ResizeObserver(update);
-  ro.observe(scrollEl);
-  requestAnimationFrame(update);
-  return () => {
-   scrollEl.removeEventListener("scroll", update);
-   ro.disconnect();
-  };
- });
-
- $effect(() => {
-  // When the loaded doc changes, hide the sticky bar until the next scroll
-  // recomputes it. Reads currentId so it re-runs on navigation.
-  void currentId;
-  stickyVisible = false;
- });
-
  $effect(() => {
   // Depend on both the bound element and the content string so this fires
   // exactly once after the markdown lands in the DOM, and again when the
@@ -159,7 +123,6 @@
         : "docs"}
    title={doc.title ? stripSourcePrefix(doc.title, doc.source) : doc.file_path.split("/").pop() || doc.file_path}
   />
-  <div class="doc-sticky-title" class:visible={stickyVisible} aria-hidden="true">{stickyTitle}</div>
   <header class="doc-header">
    <div class="doc-meta-row">
     <BookmarkButton docId={doc.doc_id} bind:bookmarked={isBookmarked} />
@@ -254,10 +217,6 @@
   min-width: 0;
  }
 
- .doc-sticky-title {
-  display: none;
- }
-
  @media (min-width: 1200px) {
   .doc-layout.has-toc {
    display: grid;
@@ -266,36 +225,21 @@
    max-width: 1240px;
   }
 
-  .doc-sticky-title {
-   display: block;
+  /* On desktop, pin the doc-header (bookmark, source, file path, dates,
+     word/line counts) to the top of the scroll area so the reader can see
+     where they are without scrolling back up. `.content` has padding-top:
+     40px which insets the sticky element from the visible top of the
+     scroll area, so pull the stuck position up by that amount and grow
+     padding-top to compensate — keeps the bar flush against the navbar
+     with no document text bleeding through above it. Background is opaque
+     so document content scrolling underneath is hidden. */
+  .doc-header {
    position: sticky;
-   /* .content has padding-top: 40px, which insets the sticky element from the
-      visible top of the scroll area. Pull the stuck position up by that
-      amount so the bar sits flush against the nav with no document text
-      bleeding through above it. The matching negative margin-top keeps the
-      element's contribution to flow height the same as a 0-padded bar, so
-      the doc-header below doesn't gain an extra 40px of dead space at the
-      top of the page. */
    top: -40px;
    z-index: 50;
-   margin: -40px -12px 0;
-   padding: 48px 12px 8px;
+   margin-top: -40px;
+   padding-top: 48px;
    background: var(--bg-body);
-   border-bottom: 1px solid var(--border);
-   font-size: 0.95rem;
-   font-weight: 700;
-   color: var(--text);
-   white-space: nowrap;
-   overflow: hidden;
-   text-overflow: ellipsis;
-   opacity: 0;
-   pointer-events: none;
-   transition: opacity 150ms;
-  }
-
-  .doc-sticky-title.visible {
-   opacity: 1;
-   pointer-events: auto;
   }
  }
 
