@@ -107,69 +107,64 @@
   <a href="/">Back to home</a>
  </div>
 {:else if doc}
- <div
-  class="doc-layout"
-  class:has-toc={!isPdf(doc) && !!doc.content && tocOpen.value && currentDocToc.value.length > 0}
- >
- <article class="document">
-  <Breadcrumbs
-   source={doc.source}
-   category={doc.file_path.toLowerCase().endsWith(".pdf")
-    ? "pdf"
-    : doc.file_path.includes("journal/")
-      ? "journal"
-      : doc.file_path.includes(".engineering-team/")
-        ? "engineering_team"
-        : "docs"}
-   title={doc.title ? stripSourcePrefix(doc.title, doc.source) : doc.file_path.split("/").pop() || doc.file_path}
-  />
-  <header class="doc-header">
-   <div class="doc-meta-row">
-    <BookmarkButton docId={doc.doc_id} bind:bookmarked={isBookmarked} />
-    <a href="/source/{encodeURIComponent(doc.source)}" class="source-badge"
-     >{displaySource(doc.source)}</a
-    >
-    <span class="file-path">{doc.file_path}</span>
-   </div>
-   {#if doc.created_at || doc.modified_at || stats}
-    <div class="doc-dates-row">
-     {#if doc.created_at}
-      <span>Created: {formatDate(doc.created_at)}</span>
-     {/if}
-     {#if doc.modified_at}
-      <span>Modified: {formatDate(doc.modified_at)}</span>
-     {/if}
-     {#if stats}
-      <span>Words: {stats.words.toLocaleString()}</span>
-      <span>Lines: {stats.lines.toLocaleString()}</span>
-     {/if}
+ <div class="doc-layout" class:has-toc={!isPdf(doc) && !!doc.content && tocOpen.value && currentDocToc.value.length > 0}>
+  <article class="document">
+   <Breadcrumbs
+    source={doc.source}
+    category={doc.file_path.toLowerCase().endsWith(".pdf")
+     ? "pdf"
+     : doc.file_path.includes("journal/")
+       ? "journal"
+       : doc.file_path.includes(".engineering-team/")
+         ? "engineering_team"
+         : "docs"}
+    title={doc.title ? stripSourcePrefix(doc.title, doc.source) : doc.file_path.split("/").pop() || doc.file_path}
+   />
+   <header class="doc-header">
+    <div class="doc-meta-row">
+     <BookmarkButton docId={doc.doc_id} bind:bookmarked={isBookmarked} />
+     <a href="/source/{encodeURIComponent(doc.source)}" class="source-badge">{displaySource(doc.source)}</a>
+     <span class="file-path">{doc.file_path}</span>
     </div>
+    {#if doc.created_at || doc.modified_at || stats}
+     <div class="doc-dates-row">
+      {#if doc.created_at}
+       <span>Created: {formatDate(doc.created_at)}</span>
+      {/if}
+      {#if doc.modified_at}
+       <span>Modified: {formatDate(doc.modified_at)}</span>
+      {/if}
+      {#if stats}
+       <span>Words: {stats.words.toLocaleString()}</span>
+       <span>Lines: {stats.lines.toLocaleString()}</span>
+      {/if}
+     </div>
+    {/if}
+   </header>
+
+   {#if isPdf(doc)}
+    <div class="pdf-viewer">
+     <div class="pdf-toolbar">
+      <a href={pdfUrl(doc.doc_id)} target="_blank" rel="noopener" class="pdf-open-btn">Open in new tab</a>
+      <a href={pdfUrl(doc.doc_id)} download class="pdf-download-btn">Download</a>
+     </div>
+     <iframe src={pdfUrl(doc.doc_id)} class="pdf-embed" title={doc.title || doc.file_path}></iframe>
+    </div>
+   {:else if doc.content}
+    <div class="markdown-content" bind:this={mdEl}>
+     <!-- eslint-disable-next-line svelte/no-at-html-tags -->
+     {@html renderMarkdownWithLinks(doc.content, doc.source, doc.file_path)}
+    </div>
+   {:else}
+    <p class="no-content">This document has no content.</p>
    {/if}
-  </header>
+  </article>
 
-  {#if isPdf(doc)}
-   <div class="pdf-viewer">
-    <div class="pdf-toolbar">
-     <a href={pdfUrl(doc.doc_id)} target="_blank" rel="noopener" class="pdf-open-btn">Open in new tab</a>
-     <a href={pdfUrl(doc.doc_id)} download class="pdf-download-btn">Download</a>
-    </div>
-    <iframe src={pdfUrl(doc.doc_id)} class="pdf-embed" title={doc.title || doc.file_path}></iframe>
-   </div>
-  {:else if doc.content}
-   <div class="markdown-content" bind:this={mdEl}>
-    <!-- eslint-disable-next-line svelte/no-at-html-tags -->
-    {@html renderMarkdownWithLinks(doc.content, doc.source, doc.file_path)}
-   </div>
-  {:else}
-   <p class="no-content">This document has no content.</p>
+  {#if !isPdf(doc) && doc.content && tocOpen.value && currentDocToc.value.length > 0}
+   <aside class="doc-toc-rail">
+    <DocToc />
+   </aside>
   {/if}
- </article>
-
- {#if !isPdf(doc) && doc.content && tocOpen.value && currentDocToc.value.length > 0}
-  <aside class="doc-toc-rail">
-   <DocToc />
-  </aside>
- {/if}
  </div>
 
  {#if !isPdf(doc) && doc.content}
@@ -238,7 +233,6 @@
    top: -40px;
    z-index: 50;
    margin-top: -40px;
-   padding-top: 48px;
    background: var(--bg-body);
   }
  }
