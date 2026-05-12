@@ -6,15 +6,30 @@
  import BookmarkButton from "$lib/components/BookmarkButton.svelte";
  import FloatingDocControls from "$lib/components/FloatingDocControls.svelte";
  import DocToc from "$lib/components/DocToc.svelte";
+ import HighlightPopover from "$lib/components/HighlightPopover.svelte";
  import { displaySource, displayTitle, stripSourcePrefix } from "$lib/titles";
  import { renderMarkdownWithLinks, extractHeadings } from "$lib/links";
+ import { countDocStats } from "$lib/docStats";
+ import { applyHighlights, loadHighlights } from "$lib/highlights";
+ import { onMount } from "svelte";
 
  let doc: FullDocument | null = $state(null);
  let loading = $state(true);
  let error = $state("");
  let isBookmarked = $state(false);
+ let stickyVisible = $state(false);
+ let mdEl = $state<HTMLElement | null>(null);
 
  let currentId = $derived(decodeURIComponent(page.params.id ?? ""));
+ let stats = $derived.by(() => {
+  if (!doc || !doc.content) return null;
+  return countDocStats(doc.content);
+ });
+ let stickyTitle = $derived.by(() => {
+  if (!doc) return "";
+  if (doc.title) return stripSourcePrefix(doc.title, doc.source);
+  return doc.file_path.split("/").pop() ?? doc.file_path;
+ });
 
  $effect(() => {
   const id = currentId;
@@ -71,6 +86,46 @@
    return dateStr;
   }
  }
+
+ onMount(() => {
+  const scrollEl = document.querySelector(".content") as HTMLElement | null;
+  if (!scrollEl) return;
+  function update() {
+   const h1 = document.querySelector(".markdown-content h1") as HTMLElement | null;
+   if (!h1) {
+    stickyVisible = false;
+    return;
+   }
+   stickyVisible = h1.getBoundingClientRect().bottom < 0;
+  }
+  scrollEl.addEventListener("scroll", update, { passive: true });
+  // Recompute after layout shifts (images loading, font swaps, doc switches).
+  const ro = new ResizeObserver(update);
+  ro.observe(scrollEl);
+  requestAnimationFrame(update);
+  return () => {
+   scrollEl.removeEventListener("scroll", update);
+   ro.disconnect();
+  };
+ });
+
+ $effect(() => {
+  // When the loaded doc changes, hide the sticky bar until the next scroll
+  // recomputes it. Reads currentId so it re-runs on navigation.
+  void currentId;
+  stickyVisible = false;
+ });
+
+ $effect(() => {
+  // Depend on both the bound element and the content string so this fires
+  // exactly once after the markdown lands in the DOM, and again when the
+  // doc switches.
+  const root = mdEl;
+  const content = doc?.content;
+  const docId = doc?.doc_id;
+  if (!root || !content || !docId) return;
+  applyHighlights(root, loadHighlights(docId));
+ });
 </script>
 
 <svelte:head>
@@ -104,6 +159,7 @@
         : "docs"}
    title={doc.title ? stripSourcePrefix(doc.title, doc.source) : doc.file_path.split("/").pop() || doc.file_path}
   />
+  <div class="doc-sticky-title" class:visible={stickyVisible} aria-hidden="true">{stickyTitle}</div>
   <header class="doc-header">
    <div class="doc-meta-row">
     <BookmarkButton docId={doc.doc_id} bind:bookmarked={isBookmarked} />
@@ -112,13 +168,17 @@
     >
     <span class="file-path">{doc.file_path}</span>
    </div>
-   {#if doc.created_at || doc.modified_at}
+   {#if doc.created_at || doc.modified_at || stats}
     <div class="doc-dates-row">
      {#if doc.created_at}
       <span>Created: {formatDate(doc.created_at)}</span>
      {/if}
      {#if doc.modified_at}
       <span>Modified: {formatDate(doc.modified_at)}</span>
+     {/if}
+     {#if stats}
+      <span>Words: {stats.words.toLocaleString()}</span>
+      <span>Lines: {stats.lines.toLocaleString()}</span>
      {/if}
     </div>
    {/if}
@@ -133,7 +193,7 @@
     <iframe src={pdfUrl(doc.doc_id)} class="pdf-embed" title={doc.title || doc.file_path}></iframe>
    </div>
   {:else if doc.content}
-   <div class="markdown-content">
+   <div class="markdown-content" bind:this={mdEl}>
     <!-- eslint-disable-next-line svelte/no-at-html-tags -->
     {@html renderMarkdownWithLinks(doc.content, doc.source, doc.file_path)}
    </div>
@@ -151,6 +211,7 @@
 
  {#if !isPdf(doc) && doc.content}
   <FloatingDocControls docId={doc.doc_id} bind:bookmarked={isBookmarked} />
+  <HighlightPopover docId={doc.doc_id} />
  {/if}
 {/if}
 
@@ -193,12 +254,41 @@
   min-width: 0;
  }
 
+ .doc-sticky-title {
+  display: none;
+ }
+
  @media (min-width: 1200px) {
   .doc-layout.has-toc {
    display: grid;
    grid-template-columns: minmax(0, 960px) 240px;
    gap: 40px;
    max-width: 1240px;
+  }
+
+  .doc-sticky-title {
+   display: block;
+   position: sticky;
+   top: 0;
+   z-index: 50;
+   margin: 0 -12px;
+   padding: 8px 12px;
+   background: var(--bg-body);
+   border-bottom: 1px solid var(--border);
+   font-size: 0.95rem;
+   font-weight: 700;
+   color: var(--text);
+   white-space: nowrap;
+   overflow: hidden;
+   text-overflow: ellipsis;
+   opacity: 0;
+   pointer-events: none;
+   transition: opacity 150ms;
+  }
+
+  .doc-sticky-title.visible {
+   opacity: 1;
+   pointer-events: auto;
   }
  }
 

@@ -5,8 +5,10 @@
  import ChatPanel from "$lib/components/ChatPanel.svelte";
  import SearchPanel from "$lib/components/SearchPanel.svelte";
  import KeyboardShortcutsModal from "$lib/components/KeyboardShortcutsModal.svelte";
+ import Toaster from "$lib/components/Toaster.svelte";
  import { currentDocId, currentPageContext, tocOpen, scanTick } from "$lib/stores.svelte";
- import { triggerScan, pollScan, type ScanSummary, type ScanProgress } from "$lib/api";
+ import { triggerScan, pollScan, type ScanProgress } from "$lib/api";
+ import { toasts } from "$lib/toasts.svelte";
  import { page } from "$app/state";
  import { MediaQuery } from "svelte/reactivity";
  import { onMount } from "svelte";
@@ -180,107 +182,100 @@
  let currentPath = $derived(page.url.pathname);
 
  let scanning = $state(false);
- let scanAlreadyRunning = $state(false);
- let scanSummary: ScanSummary | null = $state(null);
- let scanError = $state("");
- let scanProgress: ScanProgress | null = $state(null);
- let scanResultTimer: ReturnType<typeof setTimeout> | null = null;
-
- function clearScanResultLater(ms = 6000) {
-  if (scanResultTimer) clearTimeout(scanResultTimer);
-  scanResultTimer = setTimeout(() => {
-   scanSummary = null;
-   scanError = "";
-   scanAlreadyRunning = false;
-  }, ms);
- }
-
- function dismissScanResult() {
-  if (scanResultTimer) {
-   clearTimeout(scanResultTimer);
-   scanResultTimer = null;
-  }
-  scanSummary = null;
-  scanError = "";
-  scanAlreadyRunning = false;
- }
-
- let scanHadChanges = $derived.by(() => {
-  const s = scanSummary;
-  if (!s) return false;
-  return s.added > 0 || s.updated > 0 || s.removed > 0;
- });
-
- async function handleScanClick() {
-  if (scanning) return;
-  scanning = true;
-  scanAlreadyRunning = false;
-  scanSummary = null;
-  scanError = "";
-  scanProgress = null;
-  if (scanResultTimer) {
-   clearTimeout(scanResultTimer);
-   scanResultTimer = null;
-  }
-  const triggeredAtMs = Date.now();
-  try {
-   const trig = await triggerScan();
-   if (trig.status === "already_running") scanAlreadyRunning = true;
-   const result = await pollScan(triggeredAtMs, {
-    onProgress: (p) => {
-     scanProgress = p;
-    },
-   });
-   if (result === null) {
-    scanError = "Scan timed out";
-   } else {
-    scanSummary = result;
-    scanTick.value += 1;
-   }
-  } catch (e) {
-   scanError = e instanceof Error ? e.message : "Scan failed";
-  } finally {
-   scanning = false;
-   scanProgress = null;
-   clearScanResultLater();
-  }
- }
+ let scanButtonLabel = $state("Scan now");
 
  function truncate(s: string, max: number): string {
   return s.length > max ? `…${s.slice(s.length - max + 1)}` : s;
  }
 
- function scanTitle(): string {
-  if (scanError) return scanError;
-  if (scanning && scanAlreadyRunning) return "Already scanning…";
-  if (scanning && scanProgress) {
-   const p = scanProgress;
-   if (p.phase === "discovery_done") {
-    const total = p.total_docs ?? 0;
-    if (total === 0) return "No changes detected";
-    const sources = p.sources_changed ?? 0;
-    const docNoun = total === 1 ? "document" : "documents";
-    const srcNoun = sources === 1 ? "source" : "sources";
-    return `Found ${total} ${docNoun} from ${sources} ${srcNoun} to update`;
-   }
-   if (p.phase === "processing" && p.current && p.total) {
-    const doc = p.doc ? ` — ${truncate(p.doc, 50)}` : "";
-    return `Processing ${p.current}/${p.total}${doc}`;
-   }
-   if (p.phase === "syncing") return "Checking sources for changes…";
-   // "starting" or any other state — fall through to default.
+ function scanProgressMessage(p: ScanProgress): string | null {
+  if (p.phase === "discovery_done") {
+   const total = p.total_docs ?? 0;
+   if (total === 0) return "No changes detected";
+   const sources = p.sources_changed ?? 0;
+   const docNoun = total === 1 ? "document" : "documents";
+   const srcNoun = sources === 1 ? "source" : "sources";
+   return `Found ${total} ${docNoun} from ${sources} ${srcNoun} to update`;
   }
-  if (scanning) return "Scanning…";
-  if (scanSummary) {
-   const { added, updated, removed } = scanSummary;
-   if (added === 0 && updated === 0 && removed === 0) return "Scan complete — no changes";
-   const parts: string[] = [];
-   if (added) parts.push(`${added} added`);
-   if (updated) parts.push(`${updated} updated`);
-   if (removed) parts.push(`${removed} removed`);
-   return `Scan complete — ${parts.join(", ")}`;
+  if (p.phase === "processing" && p.current && p.total) {
+   const doc = p.doc ? ` — ${truncate(p.doc, 50)}` : "";
+   return `Processing ${p.current}/${p.total}${doc}`;
   }
-  return "Scan now";
+  if (p.phase === "syncing") return "Checking sources for changes…";
+  return null;
+ }
+
+ async function handleScanClick() {
+  if (scanning) return;
+  scanning = true;
+  scanButtonLabel = "Scanning…";
+  const triggeredAtMs = Date.now();
+  const toastId = toasts.add({
+   message: "Scanning…",
+   kind: "info",
+   dismissable: false,
+   ttlMs: null,
+  });
+  try {
+   const trig = await triggerScan();
+   if (trig.status === "already_running") {
+    toasts.update(toastId, { message: "Already scanning…" });
+   }
+   const result = await pollScan(triggeredAtMs, {
+    onProgress: (p) => {
+     if (!p) return;
+     const msg = scanProgressMessage(p);
+     if (msg) {
+      scanButtonLabel = msg;
+      toasts.update(toastId, { message: msg });
+     }
+    },
+   });
+   if (result === null) {
+    toasts.update(toastId, {
+     message: "Scan timed out",
+     kind: "error",
+     dismissable: true,
+     ttlMs: 3000,
+    });
+    scanButtonLabel = "Scan timed out";
+   } else {
+    const { added, updated, removed } = result;
+    const hadChanges = added > 0 || updated > 0 || removed > 0;
+    let message: string;
+    if (!hadChanges) {
+     message = "Scan complete — no changes";
+    } else {
+     const parts: string[] = [];
+     if (added) parts.push(`${added} added`);
+     if (updated) parts.push(`${updated} updated`);
+     if (removed) parts.push(`${removed} removed`);
+     message = `Scan complete — ${parts.join(", ")}`;
+    }
+    toasts.update(toastId, {
+     message,
+     kind: hadChanges ? "success" : "neutral",
+     dismissable: true,
+     ttlMs: 3000,
+    });
+    scanButtonLabel = message;
+    scanTick.value += 1;
+   }
+  } catch (e) {
+   const message = e instanceof Error ? e.message : "Scan failed";
+   toasts.update(toastId, {
+    message,
+    kind: "error",
+    dismissable: true,
+    ttlMs: 3000,
+   });
+   scanButtonLabel = message;
+  } finally {
+   scanning = false;
+   setTimeout(() => {
+    scanButtonLabel = "Scan now";
+   }, 3500);
+  }
  }
 </script>
 
@@ -376,8 +371,8 @@
       class="govuk-header__action-btn"
       onclick={handleScanClick}
       disabled={scanning}
-      title={scanTitle()}
-      aria-label={scanTitle()}
+      title={scanButtonLabel}
+      aria-label={scanButtonLabel}
      >
       <svg
        class:spinning={scanning}
@@ -448,25 +443,6 @@
    </ul>
   </div>
  </nav>
-
- {#if scanning || scanSummary || scanError}
-  <div
-   class="scan-banner"
-   class:scan-banner--scanning={scanning}
-   class:scan-banner--success={!scanning && !scanError && scanHadChanges}
-   class:scan-banner--neutral={!scanning && !scanError && !!scanSummary && !scanHadChanges}
-   class:scan-banner--error={!!scanError}
-   role="status"
-   aria-live="polite"
-  >
-   <span class="scan-banner__text">{scanTitle()}</span>
-   {#if !scanning}
-    <button class="scan-banner__close" onclick={dismissScanResult} aria-label="Dismiss scan result" title="Dismiss"
-     >✕</button
-    >
-   {/if}
-  </div>
- {/if}
 
  {#if sidebarOpen || chatOpen || searchOpen}
   <button
@@ -605,6 +581,8 @@
 
 <KeyboardShortcutsModal open={shortcutsOpen} onClose={() => (shortcutsOpen = false)} />
 
+<Toaster />
+
 <style>
  .app-layout {
   display: flex;
@@ -739,84 +717,6 @@
  @keyframes spin {
   to {
    transform: rotate(360deg);
-  }
- }
-
- .scan-banner {
-  position: fixed;
-  top: 8px;
-  right: 8px;
-  z-index: 300;
-  padding: 10px 12px 10px 16px;
-  background: var(--bg-surface);
-  color: var(--text);
-  border-left: 4px solid var(--brand);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-  font-size: 14px;
-  font-weight: 700;
-  line-height: 1.3;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  max-width: calc(100vw - 32px);
-  animation: scan-banner-in 180ms ease;
- }
-
- .scan-banner--success {
-  border-left-color: #00703c;
- }
-
- .scan-banner--neutral {
-  border-left-color: var(--border-strong);
- }
-
- .scan-banner--error {
-  border-left-color: #d4351c;
- }
-
- .scan-banner__text {
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
- }
-
- .scan-banner__close {
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 2px 6px;
-  margin: -2px -4px -2px 0;
-  color: var(--text-muted);
-  font-size: 16px;
-  line-height: 1;
- }
-
- .scan-banner__close:hover {
-  color: var(--text);
- }
-
- .scan-banner__close:focus {
-  color: var(--focus-text);
-  background: var(--focus);
-  outline: none;
- }
-
- @keyframes scan-banner-in {
-  from {
-   opacity: 0;
-   transform: translateY(-6px);
-  }
-  to {
-   opacity: 1;
-   transform: translateY(0);
-  }
- }
-
- @media (max-width: 640px) {
-  .scan-banner {
-   right: 8px;
-   left: 8px;
-   max-width: none;
   }
  }
 

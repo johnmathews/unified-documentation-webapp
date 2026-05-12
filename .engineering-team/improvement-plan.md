@@ -1,338 +1,295 @@
-# Mobile Responsiveness Improvement Plan
+# Document-view UX improvements — improvement plan
 
-## Overview
+Worktree: `.claude/worktrees/eng-doc-view-improvements/` on `worktree-eng-doc-view-improvements`.
+Baseline: `npm test` → 226/226 passing (7 files). No backend changes anywhere in this plan — every
+change is in `documentation-webapp`.
 
-Transform the documentation UI from a desktop-first app with mobile afterthoughts into a mobile-friendly experience that's a joy to use on phones. The approach: fix touch targets globally, add proper mobile navigation patterns (backdrop, swipe, bottom nav), fix overflow issues, and handle safe areas.
+## Non-goals
 
-**Scope:** This plan targets screens < 600px (phones in portrait). Tablet improvements (600-1024px) are secondary and noted where applicable.
+1. **No backend changes.** Word/line counts are computed client-side from `doc.content`; the
+   `FullDocument` API shape stays the same. If we want server-side stats later, that's a separate
+   change touching `documentation-server`.
+2. **No per-passage bookmark in the existing bookmark store.** W5 stores highlights in
+   `localStorage` only. Promoting highlights into the server-side bookmark schema is a follow-up.
+3. **No annotation text on highlights in this round.** Just colored highlights + remove. Notes
+   on highlights are a follow-up — the user said "highlight, annotate, *or* bookmark", so we
+   ship the highlight slice and surface the others as next steps.
+4. **No toast infrastructure for non-scan events yet.** The new toast module is built generically,
+   but the only producer wired in this round is the scan flow. W5's "highlight saved" message
+   is the only opportunistic second producer.
+5. **No mobile-specific sticky title.** W4 is desktop-only (`min-width: 1200px`). On small
+   screens the title-staying-visible problem is less acute (the user explicitly said "on
+   desktops").
 
----
+## Decisions & tradeoffs (cross-cutting)
 
-## Work Unit 1: Global Touch Target Fix (CRITICAL)
+1. **Title is the first H1 in the markdown body, not a separately-rendered field.** The
+   "Fitness Multi-User Plan" heading in Image #1 is produced by `renderMarkdownWithLinks` on
+   the doc content (`src/routes/doc/[id]/+page.svelte:138`). So W1 changes
+   `.markdown-content h1` in `src/app.css`, not a Svelte template. W4's sticky bar prefers
+   `doc.title` (the JSON field) and falls back to the first H1 only if `doc.title` is empty.
 
-**Priority:** Critical
-**Dependencies:** None
-**Estimated scope:** 6 files modified
+2. **Toast positioning: viewport-fixed, anchored to the scan-button column, not a popover on
+   the button itself.** A true CSS-anchored popover on the scan button would re-position when
+   the header reflows on resize and would clip on narrow screens. Instead we use
+   `position: fixed; top: calc(var(--header-height) + 8px); right: 30px` so the stack sits
+   just under the header in roughly the scan-button column. On mobile we span across
+   (`left: 8px; right: 8px`). This matches the user's "anchored below the scan button"
+   intent without coupling to scan-button geometry.
 
-### Changes
+3. **Scan progress is one toast that updates, not many that stack.** The user wants stacking
+   for "scan-started / scan-complete / second-scan-complete" — *separate events*. But during
+   a single scan, `pollScan`'s `onProgress` fires 5–20 times; stacking each one would be
+   noisy garbage. The toast API supports `update(id, patch)` for this; `handleScanClick`
+   creates one toast on start and updates it through the run, then finalizes it (3s
+   auto-dismiss starts).
 
-**`src/app.css` — Add global mobile touch target minimum**
+4. **Highlights stored by anchor (prefix + text + suffix), not by DOM path.** DOM paths
+   break when the markdown is re-rendered (line numbers change, surrounding markup shifts).
+   Storing the highlighted text plus ~20 chars of context on either side lets us re-locate
+   highlights deterministically on load using `String.indexOf`, even if the document is
+   edited slightly upstream. This is the standard "fuzzy anchor" pattern (Hypothes.is
+   uses a variant). Keyed by `doc_id` in `localStorage` under
+   `docs-webapp:highlights:{docId}`.
 
-Add a mobile media query that increases padding on all interactive elements:
+5. **No new dependencies.** All five units are doable with what's already installed
+   (`marked`, Svelte 5 runes, MediaQuery). Adding a toast library or annotation library
+   would be more code to learn than the ~80 lines this plan needs.
 
-```css
-@media (max-width: 600px) {
-  /* Minimum 44px touch targets on mobile */
-  button, .icon-btn, .header-btn, .tree-action-btn {
-    min-height: 44px;
-    min-width: 44px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-  }
-}
-```
+## Ordering
 
-**`src/lib/components/Sidebar.svelte` — Increase tree item tap targets**
-
-- `.tree-toggle`, `.category-toggle`: increase padding to `0.75rem` vertical (from 0.4rem) → 44px+ height
-- `.tree-item` (doc links): increase padding to `0.75rem` vertical (from 0.35rem) → 44px+ height
-- `.tree-action-btn` (expand/collapse all): increase to `min-height: 44px; min-width: 44px`
-- `.search-result-item`: increase padding to `0.75rem` vertical
-- Search `<input>`: set `min-height: 44px`
-
-**`src/lib/components/ChatPanel.svelte` — Increase chat button targets**
-
-- `.header-btn`: increase to `min-height: 44px; min-width: 44px; padding: 0.5rem`
-- `.send-btn`: increase to `min-height: 44px; min-width: 44px`
-- Chat `<input>`: set `min-height: 44px`
-
-**`src/routes/+layout.svelte` — Increase top bar button targets**
-
-- `.icon-btn`: increase to `min-height: 44px; min-width: 44px; padding: 0.6rem`
-- `.app-title` link: add padding to create a 44px tall tap target
-
-**`src/lib/components/Breadcrumbs.svelte` — Increase breadcrumb tap targets**
-
-- Breadcrumb links: add `padding: 0.5rem 0.25rem` and `min-height: 44px` with flex alignment
-- Increase font-size from 0.8rem to 0.9rem on mobile
-
-**Content pages — Increase list item tap targets**
-
-- `source/[name]/+page.svelte` `.doc-list li`: increase padding to `0.75rem 0` on mobile
-- `source/[name]/[category]/+page.svelte` `.doc-list li`: same increase
-- `doc/[id]/+page.svelte` `.source-badge`: increase padding to `0.4rem 0.75rem`
-
-### Acceptance Criteria
-- All interactive elements measure >= 44px in both dimensions on mobile
-- Desktop layout is unchanged (all changes scoped to `@media (max-width: 600px)`)
-- No visual regression on desktop
+Foundation-then-risk: W1 and W2 are tiny CSS / formatting changes that ship value quickly.
+W3 (toast refactor) is the structural change with the largest blast radius on existing UX,
+so it goes before W4 and W5 — W5 then gets to call into the new toast API for "highlight
+saved" feedback. W5 is largest and last so any time-pressure cut-back lands there cleanly.
 
 ---
 
-## Work Unit 2: Sidebar Mobile Overhaul (HIGH)
+## Work units
 
-**Priority:** High
-**Dependencies:** None (can run parallel with Unit 1)
-**Estimated scope:** 2 files modified
+### W1 — Bigger document title (first H1)
 
-### Changes
+- **Priority:** Medium
+- **Risk:** Low (visual-only CSS in global stylesheet)
+- **Size:** S (under 30 min)
+- **Changes:**
+  - `src/app.css:199` — `.markdown-content h1` font-size from `2rem` (32px) → `2.4rem` (~38.4px).
+    Bump `line-height` from `1.125` to `1.15` to keep the heading airy.
+  - `src/app.css:399` (mobile h1 override inside `@media (max-width: 640px)`) — read the
+    exact current value first, then scale proportionally (target ~1.9rem on small screens).
+  - `src/app.css:486` (very-narrow override) — leave alone unless it conflicts.
+- **Test impact:** None. CSS changes don't have unit tests; visual verification via
+  Playwright in Phase 3.
+- **Reversibility:** Trivial — revert the CSS commit.
+- **Dependencies:** None.
+- **Acceptance criteria:**
+  1. The first H1 in `/doc/<any-doc-id>` is visibly larger than now but smaller than `3rem`.
+  2. Mobile (`browser_resize` to 375×800) doesn't overflow the column or wrap awkwardly.
 
-**`src/routes/+layout.svelte` — Drawer pattern with backdrop**
+### W2 — Word & line count in metadata bar
 
-1. **Add backdrop/scrim element:**
-   ```svelte
-   {#if sidebarOpen && isMobile}
-     <button class="backdrop" onclick={() => sidebarOpen = false} aria-label="Close sidebar"></button>
-   {/if}
-   ```
-   Style: `position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 99;` (sidebar at z-index 100)
+- **Priority:** Medium
+- **Risk:** Low (pure client-side compute on already-loaded `doc.content`)
+- **Size:** S (about an hour incl. test)
+- **Changes:**
+  - New file `src/lib/docStats.ts` exporting
+    `countDocStats(content: string | null): { words: number; lines: number }`.
+    Treats empty / null content as `{words: 0, lines: 0}`. Counts lines as
+    `content.split('\n').length` but trims a trailing newline so a file ending in `\n`
+    doesn't add a phantom line.
+  - `src/routes/doc/[id]/+page.svelte` — import `countDocStats`, derive
+    `const stats = $derived(doc?.content ? countDocStats(doc.content) : null)`,
+    and append two new `<span>`s to the `.doc-dates-row` (lines 116–123):
+    `Words: {stats.words.toLocaleString()}` and `Lines: {stats.lines.toLocaleString()}`.
+    Render the row whenever any of {created_at, modified_at, stats} is present.
+  - Hide for PDFs (no markdown content; already guarded by `doc.content` check).
+- **Test impact:** New file `src/lib/docStats.test.ts` covering: empty content, single
+  word, multi-line, content with only whitespace, multi-byte chars, content ending in
+  newline (no phantom line). No existing tests need updates — `+page.svelte` currently
+  has no test file.
+- **Reversibility:** Revert the commit; `docStats.ts` is new and the template change is
+  additive.
+- **Dependencies:** None.
+- **Acceptance criteria:**
+  1. `npm test` includes 5+ new passing tests for `countDocStats`.
+  2. On `/doc/<a-markdown-doc>`, the dates row shows the dates plus
+     `Words: N` and `Lines: M` with thousands separators.
+  3. On a PDF doc the counts are not shown.
 
-2. **Reduce sidebar width on mobile from 100% to ~85%:**
-   ```css
-   @media (max-width: 600px) {
-     .sidebar.open { width: 85%; max-width: 320px; }
-   }
-   ```
-   This leaves ~56px visible of the underlying content, giving users spatial context.
+### W3 — Proper toast module, stacking, anchored below scan button
 
-3. **Add escape key handler:**
-   ```svelte
-   <svelte:window onkeydown={(e) => { if (e.key === 'Escape') { sidebarOpen = false; chatOpen = false; }}} />
-   ```
+- **Priority:** High (the user's most detailed ask; current top-right banner has bugs they
+  named explicitly — only the last toast has an `x`).
+- **Risk:** Medium. Replaces the only existing notification surface. If the refactor drops
+  a state (e.g. `scanAlreadyRunning`), the user gets silent scans. Mitigation: enumerate
+  every branch in the existing `scanTitle()` and assert each maps to a toast in the new flow.
+- **Size:** M (one focused session)
+- **Changes:**
+  - New file `src/lib/toasts.svelte.ts` — module-level `$state` array of
+    `{ id, message, kind: 'info'|'success'|'neutral'|'error', dismissable, ttlMs }`,
+    plus exports `add(toast)`, `update(id, patch)`, `dismiss(id)`, `clear()`.
+    Default `ttlMs = 3000`. `add` schedules auto-dismiss via `setTimeout` when `ttlMs`
+    is not null; `update` may reset the timer or skip it depending on patch contents.
+  - New file `src/lib/components/Toaster.svelte` — renders the array as a stack with
+    `position: fixed; top: calc(var(--header-height) + 8px); right: 30px;`
+    `display: flex; flex-direction: column; gap: 8px;`
+    `max-width: min(360px, calc(100vw - 60px));`.
+    `border-radius: 10px` (soft corners). Per-toast `border-left: 4px solid <kind-color>`,
+    `box-shadow`, `padding: 10px 12px`. Entry animation: slide+fade from
+    `translateY(-6px)`. Exit animation via Svelte `transition:fade` on each item.
+    Each toast has a `<button aria-label="Dismiss">✕</button>` regardless of kind.
+    Mobile (`max-width: 640px`): `left: 8px; right: 8px;
+    top: calc(var(--header-height) + 8px)`.
+  - `src/routes/+layout.svelte`:
+    - Remove the inline `.scan-banner` markup (lines 452–469) and its CSS
+      (lines 745–821).
+    - Mount `<Toaster />` once, near the closing of the outer wrapper.
+    - Refactor `handleScanClick`: at start,
+      `const id = toasts.add({message: 'Scanning…', kind: 'info', dismissable: false,
+      ttlMs: null})`. Inside `onProgress` and after result,
+      `toasts.update(id, {...})`. On completion:
+      `toasts.update(id, {message: 'Scan complete — no changes' | …,
+      kind: 'neutral'|'success', dismissable: true, ttlMs: 3000})`. On error:
+      same with `kind: 'error'`. The "already running" branch adds a separate
+      short-lived `info` toast.
+    - Drop now-unused `scanResultTimer`, `clearScanResultLater`, `dismissScanResult`,
+      `scanHadChanges` — that lifecycle lives inside the toast module now.
+  - No existing tests reference `.scan-banner` (grep confirmed: 0 hits in test files).
+- **Test impact:**
+  - New file `src/lib/toasts.test.ts` — vitest fake timers; covers: `add` returns id;
+    `ttlMs` auto-dismisses; `ttlMs=null` persists; `update` patches in place;
+    `dismiss` removes by id; `clear` empties array; multiple toasts stack in insertion
+    order.
+  - No existing test deletions / updates needed.
+- **Reversibility:** Revert the commit; the old banner code is in git history.
+- **Dependencies:** None (W1, W2 independent).
+- **Acceptance criteria:**
+  1. Click Scan Now twice in succession with a 4-second gap → two scan-complete toasts
+     visible, stacked, each with its own `✕` (verify with Playwright + screenshot).
+  2. Every toast dismisses on its own after 3s (verify by waiting and re-snapshotting).
+  3. Clicking `✕` on the middle of three stacked toasts removes just that one;
+     the others remain.
+  4. Toast appears below the scan-now button on a 1440-wide viewport
+     (screenshot shows toast aligned roughly under the scan-button column).
+  5. `npm test` passes including new toast tests; `grep -r "scan-banner" src/` → 0 hits.
 
-4. **Add swipe-to-close gesture:**
-   Track touch start/move/end on the sidebar. If the user swipes left > 50px, close the sidebar. Use `touch-action: pan-y` on the sidebar to allow vertical scrolling while capturing horizontal swipes.
+### W4 — Sticky document title on desktop
 
-5. **Add swipe-from-edge-to-open gesture:**
-   On the main content area, detect touch starting within 20px of the left edge. If it moves right > 50px, open the sidebar.
+- **Priority:** Medium
+- **Risk:** Low (additive desktop-only layout)
+- **Size:** S–M
+- **Changes:**
+  - `src/routes/doc/[id]/+page.svelte`:
+    - After the `<Breadcrumbs>` line and before `<header class="doc-header">`, insert
+      `<div class="doc-sticky-title" class:visible={stickyVisible} aria-hidden="true">
+      {stickyTitle}</div>` where `stickyTitle = $derived(doc?.title ?
+      stripSourcePrefix(doc.title, doc.source) :
+      doc?.file_path.split('/').pop() ?? '')`.
+    - `aria-hidden="true"` — the real H1 inside the markdown is the accessible heading;
+      the sticky bar is purely visual.
+    - Add `$effect` using `IntersectionObserver` on the first
+      `.markdown-content h1` element. When the H1 is not intersecting and the user
+      has scrolled past it (`boundingClientRect.top < 0`), set `stickyVisible = true`;
+      otherwise false.
+  - CSS in the same file (scoped):
+    - `.doc-sticky-title { display: none; }` by default.
+    - Inside `@media (min-width: 1200px)`:
+      `display: block; position: sticky; top: 0; z-index: 50;
+      background: var(--bg-body); padding: 8px 12px; margin: 0 -12px 0;
+      font-size: 0.95rem; font-weight: 700; color: var(--text);
+      border-bottom: 1px solid var(--border); white-space: nowrap;
+      overflow: hidden; text-overflow: ellipsis;
+      opacity: 0; pointer-events: none; transition: opacity 150ms;`.
+    - `.doc-sticky-title.visible { opacity: 1; pointer-events: auto; }`.
+  - The sticky element lives inside `.document`, so it sticks within the
+    scroll container `.content` (confirmed in `src/routes/+layout.svelte:983-991`).
+- **Test impact:** None for unit tests (`IntersectionObserver` is jsdom-flaky).
+  Verify via Playwright: scroll past the H1, take screenshot, assert title bar is
+  visible at the top of the content scroll area.
+- **Reversibility:** Revert; nothing else depends on the new element.
+- **Dependencies:** None.
+- **Acceptance criteria:**
+  1. At 1440-wide viewport on `/doc/<long-doc>`: scroll halfway down → title bar
+     shows the doc title at the top of the content area.
+  2. At 800-wide viewport: sticky bar is `display: none`.
+  3. At the very top of the doc (H1 still visible), the sticky bar is invisible
+     (`opacity: 0`).
 
-6. **Use `isMobile` reactive media query** (Svelte 5 `MediaQuery` class):
-   ```svelte
-   import { MediaQuery } from 'svelte/reactivity';
-   const isMobile = new MediaQuery('max-width: 600px');
-   ```
+### W5 — Highlight passages (MVP)
 
-### Acceptance Criteria
-- Tapping outside sidebar (on backdrop) closes it
-- Escape key closes sidebar
-- Swiping left on sidebar closes it
-- Swiping right from left edge opens sidebar
-- Sidebar shows ~85% width on mobile, not 100%
-- Backdrop has semi-transparent dark overlay
-- Desktop layout unchanged
-
----
-
-## Work Unit 3: Chat Panel Mobile Overhaul (HIGH)
-
-**Priority:** High
-**Dependencies:** Unit 2 (shares the `isMobile` query and backdrop pattern)
-
-### Changes
-
-**`src/routes/+layout.svelte` — Chat backdrop**
-
-1. **Add backdrop for chat panel** (same pattern as sidebar):
-   ```svelte
-   {#if chatOpen && isMobile}
-     <button class="backdrop" onclick={() => chatOpen = false} aria-label="Close chat"></button>
-   {/if}
-   ```
-
-2. **Full-screen chat on mobile with back button:**
-   On mobile, the chat panel should take the full screen with a clear back/close button at top-left (44px+ tap target). The current close button at top-right is fine but should also have a larger tap target.
-
-**`src/lib/components/ChatPanel.svelte` — Mobile chat UX**
-
-1. **Safe-area padding for input:**
-   ```css
-   @media (max-width: 600px) {
-     .input-area { padding-bottom: env(safe-area-inset-bottom, 0); }
-   }
-   ```
-
-2. **Larger message bubbles and text on mobile:**
-   ```css
-   @media (max-width: 600px) {
-     .message { font-size: 1rem; padding: 0.75rem 1rem; }
-   }
-   ```
-
-3. **Swipe-right to close chat panel** (mirror of sidebar swipe-left-to-close)
-
-### Acceptance Criteria
-- Chat has backdrop on mobile
-- Chat input accounts for safe-area-inset-bottom (iPhone home indicator)
-- Chat messages are comfortably readable on mobile
-- Swipe right closes chat
-- Back button clearly visible and 44px+ touch target
-
----
-
-## Work Unit 4: Fix Horizontal Overflow Issues (MEDIUM)
-
-**Priority:** Medium
-**Dependencies:** None (can run parallel)
-
-### Changes
-
-**`src/routes/+page.svelte` — Sources grid**
-- Change `minmax(380px, 1fr)` to `minmax(min(380px, 100%), 1fr)` to prevent overflow on screens between 380-640px
-
-**`src/routes/doc/[id]/+page.svelte` — Metadata layout**
-- Add `flex-wrap: wrap` to `.doc-meta` (line 152)
-- Add `flex-wrap: wrap` to `.doc-dates` (line 188)
-- Add `min-width: 0; overflow-wrap: break-word` to file path element
-
-**`src/routes/source/[name]/+page.svelte` — Doc list mobile stacking**
-```css
-@media (max-width: 600px) {
-  .doc-list li { flex-direction: column; align-items: flex-start; gap: 0.25rem; }
-  .date { margin-left: 0; }
-}
-```
-
-**`src/routes/source/[name]/[category]/+page.svelte` — Same doc list fix**
-Apply same column-stack pattern.
-
-**`src/app.css` — Markdown table overflow**
-Wrap tables in a scrollable container:
-```css
-.doc-content table { display: block; overflow-x: auto; -webkit-overflow-scrolling: touch; }
-```
-
-### Acceptance Criteria
-- No horizontal scroll on any page at 375px width
-- Doc metadata wraps gracefully on narrow screens
-- Tables scroll horizontally within their container
-- Desktop layout unchanged
-
----
-
-## Work Unit 5: Responsive Typography (MEDIUM)
-
-**Priority:** Medium
-**Dependencies:** None
-
-### Changes
-
-**`src/app.css` — Fluid typography**
-
-Replace fixed font sizes with `clamp()` values:
-```css
-body { font-size: clamp(0.875rem, 0.85rem + 0.15vw, 1rem); }
-```
-
-**Content page headings (scoped changes):**
-```css
-@media (max-width: 600px) {
-  h1 { font-size: 1.5rem; }  /* down from 2rem */
-  h2 { font-size: 1.15rem; } /* down from ~1.3rem */
-}
-```
-
-**Source page title** (`source/[name]/+page.svelte`):
-- `h1` at 2rem → `clamp(1.5rem, 1.3rem + 1vw, 2rem)`
-
-### Acceptance Criteria
-- Headings scale down gracefully on mobile
-- Body text remains legible (minimum 14px)
-- Desktop sizes unchanged or negligibly different
-
----
-
-## Work Unit 6: Safe Area & Viewport Fixes (MEDIUM)
-
-**Priority:** Medium
-**Dependencies:** None
-
-### Changes
-
-**`src/routes/+layout.svelte` — Safe area insets**
-
-1. **Top bar:** Add `padding-top: env(safe-area-inset-top, 0)` to account for notch/dynamic island
-2. **Bottom of content area:** Add `padding-bottom: env(safe-area-inset-bottom, 0)`
-
-**`src/app.css` — Dynamic viewport height**
-
-Replace `100vh` with `100dvh` (with fallback):
-```css
-.app-layout {
-  height: 100vh;      /* fallback for older browsers */
-  height: 100dvh;     /* dynamic viewport height for iOS Safari */
-}
-```
-
-**`src/app.html` — Viewport meta**
-
-Add `viewport-fit=cover` to enable safe-area-inset environment variables:
-```html
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-```
-
-### Acceptance Criteria
-- Content not obscured by notch/dynamic island on iPhone X+
-- Chat input not hidden behind home indicator
-- Full height layout works correctly in iOS Safari (no content behind URL bar)
-- No regression on non-notched devices
-
----
-
-## Work Unit 7: Mobile Navigation Enhancement (LOW)
-
-**Priority:** Low (polish, after core fixes)
-**Dependencies:** Units 2, 3
-
-### Changes
-
-**`src/routes/+layout.svelte` — Slide animation for panels**
-
-Add CSS transitions for sidebar and chat panel open/close:
-```css
-.sidebar {
-  transition: transform 250ms cubic-bezier(0.4, 0, 0.2, 1);
-}
-.sidebar:not(.open) {
-  transform: translateX(-100%);
-}
-```
-Same for chat panel (translateX(100%) when closed).
-
-Currently the panels use `display: none` / `display: flex` toggling which causes an instant show/hide. Slide animations provide spatial context — the user understands where the panel came from and where it went.
-
-**Backdrop fade animation:**
-```css
-.backdrop {
-  animation: fadeIn 200ms ease;
-}
-@keyframes fadeIn {
-  from { opacity: 0; } to { opacity: 1; }
-}
-```
-
-### Acceptance Criteria
-- Sidebar slides in from left, chat slides in from right
-- Backdrop fades in smoothly
-- Animations feel responsive (< 300ms)
-- No animation on desktop (or only if panels are in overlay mode)
+- **Priority:** Medium (the user's last ask, framed exploratorily: "could be useful")
+- **Risk:** Medium-High (DOM manipulation over `{@html}`-rendered markdown; selection
+  edge cases — across paragraphs, inside code blocks, across links). Mitigated by
+  restricting to single-Range selections that stay within a single block-level element
+  in `.markdown-content`, and gracefully bailing on cross-block selections.
+- **Size:** L (kept unitary because partial highlight without persistence is worse
+  than nothing)
+- **Changes:**
+  - New file `src/lib/highlights.ts`:
+    - Type `HighlightAnchor = { id: string; text: string; prefix: string;
+      suffix: string; createdAt: string }`.
+    - `loadHighlights(docId)`, `saveHighlight(docId, anchor)`,
+      `removeHighlight(docId, id)` — `localStorage` under
+      `docs-webapp:highlights:{docId}`. Defensive JSON parsing.
+    - `anchorFromSelection(root, sel): HighlightAnchor | null` — extracts text and
+      20-char prefix/suffix from `root.textContent`. Returns null if selection is
+      empty, not inside root, < 2 chars, or crosses block boundaries.
+    - `applyHighlights(root, anchors)` — for each anchor, find its text in
+      `root.textContent` using prefix+text+suffix, then walk text nodes to wrap the
+      matching range in `<mark class="hl-mark" data-hl-id="…">…</mark>`. Skips
+      anchors that don't match (doc was edited upstream).
+  - New file `src/lib/components/HighlightPopover.svelte`:
+    - Listens to `selectionchange` / `mouseup` on `document`; appears only if the
+      current selection is inside `.markdown-content`.
+    - Renders a small floating popover above the selection with a "Highlight" button.
+    - Click → `anchorFromSelection` → `saveHighlight` → re-`applyHighlights` →
+      `toasts.add({message: 'Highlight saved', kind: 'success', ttlMs: 3000})`.
+    - Also handles "click an existing `<mark.hl-mark>`" → show a small "Remove"
+      affordance anchored to that mark.
+  - `src/routes/doc/[id]/+page.svelte`:
+    - After `{@html renderMarkdownWithLinks(...)}` renders and is in the DOM, run an
+      `$effect` that calls `applyHighlights` on the `.markdown-content` element using
+      `loadHighlights(doc.doc_id)`.
+    - Mount `<HighlightPopover />` once inside the article.
+  - CSS in `app.css`:
+    - `.markdown-content mark.hl-mark { background: rgba(255, 235, 59, 0.45);
+      padding: 0 2px; border-radius: 2px; cursor: pointer; }`.
+    - `[data-theme='dark'] .markdown-content mark.hl-mark {
+      background: rgba(255, 235, 59, 0.25); color: inherit; }`.
+- **Test impact:**
+  - New file `src/lib/highlights.test.ts`: anchor round-trip on simple text; ambiguous
+    text disambiguated by prefix+suffix; anchor not found returns gracefully;
+    save/load/remove round-trip via mocked `localStorage`. DOM mutation tested in
+    Playwright, not jsdom.
+- **Reversibility:** Revert the commit. Saved highlights stay in `localStorage` but
+  become inert — no UI to render them.
+- **Dependencies:** Soft dependency on W3 (`toasts.add`). If W3 dropped, replace with
+  no-op.
+- **Acceptance criteria:**
+  1. Select 2+ words inside the markdown body → popover appears within 200ms with a
+     Highlight button.
+  2. Click Highlight → selected text gains a yellow background; a
+     "Highlight saved" toast appears.
+  3. Hard-reload the page → highlight still visible in the same place.
+  4. Click a highlighted span → small Remove affordance; clicking removes the
+     highlight and persists the removal.
+  5. Selection spanning multiple paragraphs OR inside a code block: popover does
+     not appear (the simplest valid behavior).
+  6. `npm test` includes the new `highlights.test.ts` and all tests pass.
 
 ---
 
-## Implementation Order
+## Final verification (after all units)
 
-```
-Phase 1 (parallel):  Unit 1 (touch targets) + Unit 4 (overflow) + Unit 5 (typography) + Unit 6 (safe area)
-Phase 2 (parallel):  Unit 2 (sidebar) + Unit 3 (chat panel)
-Phase 3:             Unit 7 (animations — depends on Units 2 & 3)
-```
-
-Units 1, 4, 5, and 6 are independent CSS-only changes that can all be implemented in parallel. Units 2 and 3 involve Svelte logic (media queries, touch handlers, backdrop elements) and share patterns, so they run together after Phase 1. Unit 7 is polish that layers on top of the new panel behavior.
-
-## Testing Strategy
-
-- **Visual testing:** Use browser DevTools device emulation at 375px (iPhone SE), 390px (iPhone 14), and 428px (iPhone 14 Pro Max)
-- **Touch target verification:** Use Chrome DevTools "Show touch targets" or manually measure computed sizes
-- **Real device testing:** Test on an actual iPhone in Safari — DevTools emulation misses iOS-specific issues (safe areas, 100vh bug, momentum scrolling)
-- **Desktop regression:** Verify all pages at 1440px and 1024px look identical to before
-- **Overflow check:** At 375px, confirm no horizontal scrollbar on any page
+1. `npm run lint` clean.
+2. `npm run check` (svelte-check) clean.
+3. `npm test` — 226 baseline + new tests, all green.
+4. Playwright walk-through on `/doc/journal-insights-server:docs/fitness-multiuser-plan.md`
+   (the doc in the user's screenshots):
+   - H1 looks bigger.
+   - Metadata bar shows Words + Lines.
+   - Click Scan Now twice → two stacked toasts under the scan button.
+   - Scroll → sticky title appears in the content area top.
+   - Select text → popover → click Highlight → reload → highlight persists.
+5. Journal entry in `journal/YYMMDD-doc-view-ux-improvements.md` capturing the five
+   units and any decisions deviated from this plan.
