@@ -39,36 +39,38 @@ describe("TreeNode", () => {
 		expect(folderBtn?.textContent).toContain("docs");
 	});
 
-	it("auto-expands top two levels and collapses deeper folders", () => {
+	it("starts every folder collapsed", () => {
 		const root = buildFolderTree([doc("a/b/c/leaf.md")]);
 		const { container } = render(TreeNode, { props: { node: root, depth: 0 } });
-		// All three folder toggles should be present; "a" and "b" auto-expanded
-		// (depth 0 and 1), "c" collapsed.
+		// Only the outermost folder is rendered before the user expands anything.
+		// Nested folders live inside collapsed children and aren't in the DOM
+		// yet, so we just assert the visible toggles report aria-expanded=false.
 		const toggles = container.querySelectorAll(".folder-toggle");
-		expect(toggles.length).toBeGreaterThanOrEqual(2);
-		const expandedStates = Array.from(toggles).map((t) =>
-			t.getAttribute("aria-expanded"),
-		);
-		expect(expandedStates[0]).toBe("true"); // a
-		expect(expandedStates[1]).toBe("true"); // b
-		// c is at depth 2 — collapsed by default
-		expect(expandedStates[2]).toBe("false");
+		expect(toggles.length).toBeGreaterThanOrEqual(1);
+		Array.from(toggles).forEach((t) => {
+			expect(t.getAttribute("aria-expanded")).toBe("false");
+		});
 	});
 
 	it("toggles open/closed when the folder button is clicked", async () => {
 		const root = buildFolderTree([doc("a/b/c/leaf.md")]);
 		const { container } = render(TreeNode, { props: { node: root, depth: 0 } });
 		const aToggle = container.querySelectorAll(".folder-toggle")[0] as HTMLButtonElement;
-		expect(aToggle.getAttribute("aria-expanded")).toBe("true");
-		await fireEvent.click(aToggle);
 		expect(aToggle.getAttribute("aria-expanded")).toBe("false");
 		await fireEvent.click(aToggle);
 		expect(aToggle.getAttribute("aria-expanded")).toBe("true");
+		await fireEvent.click(aToggle);
+		expect(aToggle.getAttribute("aria-expanded")).toBe("false");
 	});
 
 	it("applies depth-based left padding to nested folders", () => {
 		const root = buildFolderTree([doc("a/b/leaf.md")]);
-		const { container } = render(TreeNode, { props: { node: root, depth: 0 } });
+		// Force everything expanded so the nested folders are in the DOM —
+		// otherwise "b" lives inside collapsed "a" and we can't inspect its
+		// padding.
+		const { container } = render(TreeNode, {
+			props: { node: root, depth: 0, expanded: true },
+		});
 		// The outer .tree-folder has padding-left: 0 (depth=0 root).
 		const folders = container.querySelectorAll<HTMLElement>(".tree-folder");
 		expect(folders.length).toBeGreaterThanOrEqual(2);
@@ -127,7 +129,8 @@ describe("TreeNode", () => {
 		const sortDocs = (docs: TreeDocument[]) =>
 			[...docs].sort((a, b) => (b.title ?? "").localeCompare(a.title ?? ""));
 		const { container } = render(TreeNode, {
-			props: { node: root, depth: 0, sortDocs },
+			// Force-expand so the docs/* leaves are in the DOM.
+			props: { node: root, depth: 0, sortDocs, expanded: true },
 		});
 		const links = container.querySelectorAll<HTMLAnchorElement>("a.tree-leaf");
 		const order = Array.from(links).map((a) => a.textContent?.trim());

@@ -281,9 +281,11 @@
 	.tree-toggle {
 		display: flex;
 		align-items: center;
-		gap: 5px;
+		gap: 6px;
 		width: 100%;
-		padding: 10px 15px;
+		/* Left padding matches `.source-tree-body` + `.tree-folder`(depth 0)
+		   so the source chevron aligns with first-level folder chevrons. */
+		padding: 10px 15px 10px 8px;
 		background: none;
 		border: none;
 		color: var(--text);

@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { untrack } from "svelte";
 	import type { FolderNode } from "$lib/tree";
 	import type { TreeDocument } from "$lib/api";
 	import { displayTitle } from "$lib/titles";
@@ -30,9 +29,10 @@
 	const visibleDocs = $derived(node.docs.filter((d) => typeFilters.isVisible(d.type)));
 	const sortedDocs = $derived(sortDocs ? sortDocs(visibleDocs) : visibleDocs);
 
-	// Auto-expand top two levels at mount; deeper levels start collapsed.
-	// untrack avoids re-running on prop changes — depth is stable per instance.
-	let localOpen = $state(untrack(() => depth < 2));
+	// Start every folder collapsed by default. The parent can override via the
+	// `expanded` prop (Sidebar's expand-all / collapse-all controls), and the
+	// user can toggle individual folders by clicking them.
+	let localOpen = $state(false);
 
 	// When the parent forces expanded/collapsed (e.g. via expand-all),
 	// sync to it. After that, the user can resume per-folder control via click.
