@@ -3,8 +3,9 @@
 	import type { FolderNode } from "$lib/tree";
 	import type { TreeDocument } from "$lib/api";
 	import { displayTitle } from "$lib/titles";
-	import { currentDocId } from "$lib/stores.svelte";
+	import { currentDocId, typeFilters } from "$lib/stores.svelte";
 	import TreeNode from "./TreeNode.svelte";
+	import TypeBadge from "./TypeBadge.svelte";
 
 	type Props = {
 		node: FolderNode;
@@ -22,7 +23,12 @@
 		onNavigate = () => {},
 	}: Props = $props();
 
-	const sortedDocs = $derived(sortDocs ? sortDocs(node.docs) : node.docs);
+	// Apply the type filter as the outermost transform — sortDocs runs over
+	// the visible set so its ordering doesn't reference docs the user is
+	// hiding. Docs with no type (server hasn't classified them yet) are
+	// always shown (see typeFilters.isVisible).
+	const visibleDocs = $derived(node.docs.filter((d) => typeFilters.isVisible(d.type)));
+	const sortedDocs = $derived(sortDocs ? sortDocs(visibleDocs) : visibleDocs);
 
 	// Auto-expand top two levels at mount; deeper levels start collapsed.
 	// untrack avoids re-running on prop changes — depth is stable per instance.
@@ -68,7 +74,7 @@
 				<path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
 			</svg>
 			<span class="folder-name">{node.name}</span>
-			<span class="count">{node.docs.length + node.children.length}</span>
+			<span class="count">{visibleDocs.length + node.children.length}</span>
 		</button>
 	{/if}
 
@@ -97,7 +103,7 @@
 						<polyline points="14 2 14 8 20 8" />
 					</svg>
 					<span class="leaf-title">{displayTitle(doc)}</span>
-					<!-- Stage 2 placeholder: type badge will render here -->
+					<TypeBadge type={doc.type} />
 				</a>
 			{/each}
 		</div>

@@ -23,8 +23,10 @@ documentation.
   GOV.UK green for success-with-changes, GOV.UK red for errors) and a × dismiss button; it auto-clears 6 s after
   completion. Pages that display scan-affected data (homepage, `/status`) subscribe to a `scanTick` store and re-fetch
   when it ticks.
-  The service navigation bar below the header contains page-level navigation links: Projects, Root Docs, Dev
-  Journal, Learning Journal, and Engineering Team. The sidebar (file picker) and search panel have mutual exclusion — opening one closes
+  The service navigation bar below the header contains page-level navigation links: Projects and Bookmarks. The
+  per-bucket Root Docs / Dev Journal / Learning Journal / Engineering Team views that previously lived here were
+  retired in Stage 2 once per-document type filters made the tree view + filter chips a better surface than
+  filename-substring buckets. The sidebar (file picker) and search panel have mutual exclusion — opening one closes
   the other. Keyboard shortcuts toggle the side panels: `Cmd/Ctrl+B` (Files), `Cmd/Ctrl+K` (Search), `Cmd/Ctrl+J` (Chat),
   `Cmd/Ctrl+.` (table of contents), and `?` opens a modal listing all shortcuts (suppressed when focus is in an
   input/textarea/contenteditable so search and chat keep accepting `?` as text). Shortcuts ignore Shift/Alt modifiers to
@@ -35,9 +37,10 @@ documentation.
   auto-expand; deeper levels collapse by default. Expand-all / collapse-all controls operate via a one-shot
   `forceExpanded` prop that each `TreeNode` honours once and then releases back to local control. Source-tree data
   comes from `GET /api/sources/tree` (bulk) on first render; the client-side `buildFolderTree` helper
-  (`src/lib/tree.ts`) turns the flat `{file_path}` list into the nested `FolderNode` tree. A type-based filter
-  panel replaces the previous nine-category filter (added in a follow-up stage; until then, no filter panel is
-  shown).
+  (`src/lib/tree.ts`) turns the flat `{file_path}` list into the nested `FolderNode` tree. Above the source list
+  sits a row of type-filter chips (documentation / journal / prompt / not-docs) backed by the `typeFilters`
+  store; `TreeNode` hides leaves whose `type` is unchecked (docs with no type — e.g. predating Stage 2 — stay
+  visible by default). Chip state persists to localStorage under `doc-type-filters`.
 - **Mobile Responsiveness**: Full-screen modal sidebar and chat panels on mobile (100% width in both portrait and
   landscape) with slide-in/out animations for both panels, swipe gestures (edge-swipe to open/close panels), 44px minimum
   touch targets, safe-area-inset handling for notched devices (top bar, content, sidebar, and chat input all respect
@@ -68,8 +71,11 @@ documentation.
   the input, truncates from the edit point on submit). On desktop, the panel is resizable via a drag handle on its left
   edge (300–900px range, persisted to localStorage). Default width is 432px.
 - **Search**: Dedicated search panel (separate from sidebar) with debounced search combining semantic (ChromaDB) and
-  keyword (title/file_path) matching. Always-visible source and document type filters above a collapsible section for
-  date range filters (created/modified). Results show source tags, file paths, and date metadata. The panel has mutual
+  keyword (title/file_path) matching. Always-visible source and document-type filters (the type dropdown lists the
+  Stage 2 vocabulary: documentation, journal, prompt, not-docs) above a collapsible date-range section, plus an
+  **Exclude non-documentation files** checkbox bound to the `excludeNotDocs` store (persists to `exclude-not-docs`).
+  When enabled, the search request adds `exclude_type=not-docs` so the backend filters at SQL/Chroma level. Results
+  show source tags, type badges, file paths, and date metadata. The panel has mutual
   exclusion with the file picker sidebar — opening one closes the other, but search state (query, filters, results) is
   preserved when the panel is toggled closed and reopened. On desktop, the panel is resizable via a drag handle on its
   right edge (250–800px range, persisted to localStorage as `search-width`). Default width is 320px (384px on large
@@ -80,17 +86,9 @@ documentation.
   each row shows its per-source status badge plus a relative time-ago label beside the last-updated date. Health data
   is fetched in parallel with the tree and degrades gracefully if `/api/health` fails.
 - **Source Pages**: Per-source view at `/source/<name>` showing the full folder tree (expanded by default) rendered via
-  `TreeNode.svelte`. A Recent / A-Z sort toggle reorders the leaves at every folder depth — the comparator is passed
-  down as a `sortDocs` prop on `TreeNode`. Data comes from `GET /api/sources/{name}/tree` (404 if the source is not
-  configured). The legacy `/source/[name]/[category]/` route still exists but is now orphaned from the source-page
-  rewrite — to be retired alongside the rest of the category system in a follow-up stage.
-- **Journal Timeline**: Cross-project chronological view of all journal entries at `/journal`, with source filter buttons
-- **Learning Journal**: Cross-project chronological view of learning entries at `/learning-journal`, with source filters.
-  Backend identifies these as markdown files in `learning/` directories.
-- **Root Docs**: Cross-project view of root-level files at `/root-docs`, grouped by source, with source filters and
-  Edited/Created/A-Z sort toggle. Each row shows edit and creation dates.
-- **Engineering Team**: Cross-project view of evaluation reports at `/engineering-team`, grouped by source, with source
-  filters and Edited/Created/A-Z sort toggle. Each row shows edit and creation dates.
+  `TreeNode.svelte`. A row of type-filter chips (documentation / journal / prompt / not-docs) sits in the controls row
+  alongside the existing Recent / A-Z sort toggle, sharing state with the sidebar via the `typeFilters` store. Data comes
+  from `GET /api/sources/{name}/tree` (404 if the source is not configured).
 - **Server Status**: Admin page at `/status` showing backend health with per-source monitoring. Each source row shows:
   status (Healthy/Warning/Error/Unknown), file count, chunk count, last updated time, and last scanned time. Per-source
   status is computed from consecutive scan failures (1 = warning, 2+ = error) and staleness of last-checked relative to

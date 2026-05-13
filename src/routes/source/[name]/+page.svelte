@@ -4,7 +4,7 @@
 	import { buildFolderTree, collectAllDocs, type FolderNode } from "$lib/tree";
 	import Breadcrumbs from "$lib/components/Breadcrumbs.svelte";
 	import TreeNode from "$lib/components/TreeNode.svelte";
-	import { currentDocId, currentPageContext } from "$lib/stores.svelte";
+	import { currentDocId, currentPageContext, DOC_TYPES, typeFilters } from "$lib/stores.svelte";
 	import { displayTitle, displaySource } from "$lib/titles";
 
 	let source = $state<SourceTree | null>(null);
@@ -80,6 +80,19 @@
 			<div class="stats">
 				<span class="stat-tag">{totalDocs} docs</span>
 			</div>
+			<div class="type-filters" role="group" aria-label="Filter by type">
+				{#each DOC_TYPES as t (t.key)}
+					<button
+						type="button"
+						class="type-filter-chip type-filter-chip--{t.key}"
+						class:active={typeFilters.value[t.key]}
+						aria-pressed={typeFilters.value[t.key]}
+						onclick={() => typeFilters.toggle(t.key)}
+					>
+						{t.label}
+					</button>
+				{/each}
+			</div>
 			<div class="sort-toggle">
 				<button class:active={sortMode === "date"} onclick={() => (sortMode = "date")}
 					>Recent</button
@@ -137,6 +150,61 @@
 		text-transform: uppercase;
 		background: var(--stat-tag-bg, rgba(128, 128, 128, 0.15));
 		color: var(--text-secondary);
+	}
+
+	.type-filters {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 4px;
+		flex: 1;
+		justify-content: center;
+	}
+
+	.type-filter-chip {
+		display: inline-flex;
+		align-items: center;
+		padding: 2px 10px;
+		border-radius: 999px;
+		border: 1px solid color-mix(in srgb, var(--text-secondary) 25%, transparent);
+		background: transparent;
+		color: var(--text-secondary);
+		font-size: 12px;
+		font-weight: 500;
+		cursor: pointer;
+		opacity: 0.55;
+		transition: opacity 0.1s, background 0.1s, color 0.1s, border-color 0.1s;
+	}
+
+	.type-filter-chip:hover {
+		opacity: 0.85;
+	}
+
+	.type-filter-chip.active {
+		opacity: 1;
+	}
+
+	.type-filter-chip--documentation.active {
+		color: var(--accent);
+		border-color: color-mix(in srgb, var(--accent) 40%, transparent);
+		background: color-mix(in srgb, var(--accent) 12%, transparent);
+	}
+
+	.type-filter-chip--journal.active {
+		color: #6ea2ff;
+		border-color: color-mix(in srgb, #5b8def 40%, transparent);
+		background: color-mix(in srgb, #5b8def 14%, transparent);
+	}
+
+	.type-filter-chip--prompt.active {
+		color: #e2b743;
+		border-color: color-mix(in srgb, #d4a017 40%, transparent);
+		background: color-mix(in srgb, #d4a017 14%, transparent);
+	}
+
+	.type-filter-chip--not-docs.active {
+		color: var(--text);
+		border-color: color-mix(in srgb, var(--text-secondary) 50%, transparent);
+		background: color-mix(in srgb, var(--text-secondary) 14%, transparent);
 	}
 
 	.sort-toggle {

@@ -1,5 +1,5 @@
 <script lang="ts">
- import { listBookmarks, categorizeFilePath, type BookmarkEntry } from "$lib/api";
+ import { listBookmarks, type BookmarkEntry, type DocType } from "$lib/api";
  import BookmarkButton from "$lib/components/BookmarkButton.svelte";
  import { currentDocId } from "$lib/stores.svelte";
  import { displayTitle, displaySource } from "$lib/titles";
@@ -29,9 +29,11 @@
   }
  }
 
- // Group bookmarks by source, then by category
+ // Group bookmarks by source, then by document type. Bookmarks predating
+ // Stage 2 may not carry a `type` yet — fall back to "documentation" so they
+ // group under a known heading rather than a sentinel.
  interface GroupedCategory {
-  category: string;
+  category: DocType;
   label: string;
   entries: BookmarkEntry[];
  }
@@ -41,24 +43,19 @@
   categories: GroupedCategory[];
  }
 
- const categoryLabels: Record<string, string> = {
-  root_docs: "Root Docs",
-  docs: "Documentation",
+ const typeLabels: Record<DocType, string> = {
+  documentation: "Documentation",
   journal: "Journal",
-  learning_journal: "Learning Journal",
-  engineering_team: "Engineering Team",
-  research: "Research",
-  skills: "Skills",
-  runbooks: "Runbooks",
-  pdf: "PDF",
+  prompt: "Prompt",
+  "not-docs": "Not docs",
  };
 
  let grouped = $derived.by(() => {
-  const bySource = new SvelteMap<string, SvelteMap<string, BookmarkEntry[]>>();
+  const bySource = new SvelteMap<string, SvelteMap<DocType, BookmarkEntry[]>>();
 
   for (const bm of visibleBookmarks) {
    const source = bm.source || "unknown";
-   const cat = bm.file_path ? categorizeFilePath(bm.file_path) : "docs";
+   const cat: DocType = bm.type ?? "documentation";
 
    if (!bySource.has(source)) bySource.set(source, new SvelteMap());
    const cats = bySource.get(source)!;
@@ -72,11 +69,11 @@
   )) {
    const categories: GroupedCategory[] = [];
    for (const [cat, entries] of [...cats.entries()].sort((a, b) =>
-    (categoryLabels[a[0]] || a[0]).localeCompare(categoryLabels[b[0]] || b[0]),
+    typeLabels[a[0]].localeCompare(typeLabels[b[0]]),
    )) {
     categories.push({
      category: cat,
-     label: categoryLabels[cat] || cat,
+     label: typeLabels[cat],
      entries: entries.sort((a, b) =>
       (a.title || "").localeCompare(b.title || ""),
      ),

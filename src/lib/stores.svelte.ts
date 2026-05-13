@@ -45,55 +45,88 @@ function createTocOpen() {
 
 export const tocOpen = createTocOpen();
 
-/** Document category definitions — the single source of truth for category keys and labels. */
-export const CATEGORIES = [
- { key: "root_docs", label: "Root Docs" },
- { key: "docs", label: "Documentation Directory" },
+/** Stage 2 document type definitions — single source of truth for the type
+ * vocabulary the UI knows about. Server may ship additional types in future
+ * (the doc_types.yaml vocabulary block is open-ended); unknown values fall
+ * through to "show by default" via {@link typeFilters.isVisible}. */
+export const DOC_TYPES = [
+ { key: "documentation", label: "Documentation" },
  { key: "journal", label: "Journal" },
- { key: "learning_journal", label: "Learning Journal" },
- { key: "engineering_team", label: "Engineering Team" },
- { key: "research", label: "Research" },
- { key: "skills", label: "Skills" },
- { key: "runbooks", label: "Runbooks" },
- { key: "pdf", label: "PDF" },
+ { key: "prompt", label: "Prompt" },
+ { key: "not-docs", label: "Not docs" },
 ] as const;
 
-export type CategoryKey = (typeof CATEGORIES)[number]["key"];
+export type DocTypeKey = (typeof DOC_TYPES)[number]["key"];
 
-const FILTER_STORAGE_KEY = "doc-category-filters";
+const TYPE_FILTER_STORAGE_KEY = "doc-type-filters";
 
-function loadFilters(): Record<CategoryKey, boolean> {
+function loadTypeFilters(): Record<DocTypeKey, boolean> {
  const defaults: Record<string, boolean> = {};
- for (const c of CATEGORIES) defaults[c.key] = true;
- if (typeof localStorage === "undefined") return defaults as Record<CategoryKey, boolean>;
+ for (const t of DOC_TYPES) defaults[t.key] = true;
+ if (typeof localStorage === "undefined") return defaults as Record<DocTypeKey, boolean>;
  try {
-  const stored = JSON.parse(localStorage.getItem(FILTER_STORAGE_KEY) || "{}");
-  for (const c of CATEGORIES) {
-   if (typeof stored[c.key] === "boolean") defaults[c.key] = stored[c.key];
+  const stored = JSON.parse(localStorage.getItem(TYPE_FILTER_STORAGE_KEY) || "{}");
+  for (const t of DOC_TYPES) {
+   if (typeof stored[t.key] === "boolean") defaults[t.key] = stored[t.key];
   }
  } catch {
   /* use defaults */
  }
- return defaults as Record<CategoryKey, boolean>;
+ return defaults as Record<DocTypeKey, boolean>;
 }
 
-function createCategoryFilters() {
- let filters = $state<Record<CategoryKey, boolean>>(loadFilters());
+function createTypeFilters() {
+ let filters = $state<Record<DocTypeKey, boolean>>(loadTypeFilters());
 
  return {
   get value() {
    return filters;
   },
-  toggle(key: CategoryKey) {
+  toggle(key: DocTypeKey) {
    filters = { ...filters, [key]: !filters[key] };
    if (typeof localStorage !== "undefined") {
-    localStorage.setItem(FILTER_STORAGE_KEY, JSON.stringify(filters));
+    localStorage.setItem(TYPE_FILTER_STORAGE_KEY, JSON.stringify(filters));
    }
   },
-  isVisible(key: CategoryKey): boolean {
-   return filters[key] ?? true;
+  /** Returns true for any value not in the known vocabulary so docs that
+   * predate Stage 2 (or that the server hasn't classified yet) stay visible
+   * rather than disappearing silently. */
+  isVisible(type: string | null | undefined): boolean {
+   if (!type) return true;
+   if (!(type in filters)) return true;
+   return filters[type as DocTypeKey];
   },
  };
 }
 
-export const categoryFilters = createCategoryFilters();
+export const typeFilters = createTypeFilters();
+
+const EXCLUDE_NOT_DOCS_STORAGE_KEY = "exclude-not-docs";
+
+function loadExcludeNotDocs(): boolean {
+ if (typeof localStorage === "undefined") return false;
+ return localStorage.getItem(EXCLUDE_NOT_DOCS_STORAGE_KEY) === "true";
+}
+
+function createExcludeNotDocs() {
+ let value = $state<boolean>(loadExcludeNotDocs());
+ return {
+  get value() {
+   return value;
+  },
+  set(next: boolean) {
+   value = next;
+   if (typeof localStorage !== "undefined") {
+    localStorage.setItem(EXCLUDE_NOT_DOCS_STORAGE_KEY, String(next));
+   }
+  },
+  toggle() {
+   this.set(!value);
+  },
+ };
+}
+
+/** Stage 2 W2.8 shared state for the "exclude non-documentation files"
+ * toggle. Used by SearchPanel today; Stage 3 W3.6 will hook the chat view to
+ * the same store so the two views stay in sync. */
+export const excludeNotDocs = createExcludeNotDocs();

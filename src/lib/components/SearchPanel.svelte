@@ -1,7 +1,14 @@
 <script lang="ts">
- import { searchDocuments, fetchSources, type SearchResult, type SearchFilters } from "$lib/api";
+ import {
+  searchDocuments,
+  fetchSources,
+  type DocType,
+  type SearchResult,
+  type SearchFilters,
+ } from "$lib/api";
  import { displaySource, displayTitle } from "$lib/titles";
- import { currentDocId } from "$lib/stores.svelte";
+ import { currentDocId, DOC_TYPES, excludeNotDocs } from "$lib/stores.svelte";
+ import TypeBadge from "./TypeBadge.svelte";
 
  let { onNavigate = () => {} }: { onNavigate?: () => void } = $props();
 
@@ -18,8 +25,8 @@
  let selectedSource = $state("");
  let sourcesLoading = $state(true);
 
- // Doc type filter
- let selectedDocType = $state("");
+ // Doc type filter — Stage 2 types only. Empty string = no type filter.
+ let selectedDocType: DocType | "" = $state("");
 
  // Date filters
  let createdAfterDay = $state("");
@@ -58,9 +65,15 @@
  }
 
  function buildFilters(): SearchFilters {
+  // The toggle is a server-side filter (`exclude_types`); the docType select
+  // is a client-side narrow. Layering them this way lets the user say "no
+  // not-docs anywhere" and also "show me only the journal entries that
+  // matched".
+  const excludeTypes: DocType[] | undefined = excludeNotDocs.value ? ["not-docs"] : undefined;
   return {
    source: selectedSource || undefined,
    docType: selectedDocType || undefined,
+   excludeTypes,
    createdAfter: buildDateString(createdAfterDay, createdAfterMonth, createdAfterYear),
    createdBefore: buildDateString(createdBeforeDay, createdBeforeMonth, createdBeforeYear),
    modifiedAfter: buildDateString(modifiedAfterDay, modifiedAfterMonth, modifiedAfterYear),
@@ -208,13 +221,22 @@
      }}
     >
      <option value="">All types</option>
-     <option value="root_docs">Root Docs</option>
-     <option value="docs">Docs</option>
-     <option value="journal">Journal</option>
-     <option value="engineering_team">Engineering Team</option>
-     <option value="pdf">PDF</option>
+     {#each DOC_TYPES as t (t.key)}
+      <option value={t.key}>{t.label}</option>
+     {/each}
     </select>
    </div>
+   <label class="exclude-toggle">
+    <input
+     type="checkbox"
+     checked={excludeNotDocs.value}
+     onchange={(e) => {
+      excludeNotDocs.set((e.currentTarget as HTMLInputElement).checked);
+      if (searchQuery.trim()) handleSearch();
+     }}
+    />
+    Exclude non-documentation files from results
+   </label>
   </fieldset>
  </div>
 
@@ -466,6 +488,7 @@
      <span class="result-title">{displayTitle(result)}</span>
      <div class="result-meta">
       <span class="source-tag">{displaySource(result.source)}</span>
+      <TypeBadge type={result.type} />
       {#if result.created_at}
        <span class="result-date">Created {formatDate(result.created_at)}</span>
       {/if}
@@ -565,6 +588,20 @@
   display: flex;
   flex-direction: column;
   gap: 12px;
+ }
+
+ .exclude-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 6px;
+  font-size: 13px;
+  color: var(--text-secondary);
+  cursor: pointer;
+ }
+
+ .exclude-toggle input {
+  accent-color: var(--accent);
  }
 
  /* Filter section */

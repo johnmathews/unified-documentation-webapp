@@ -1,18 +1,10 @@
 // All API requests go through SvelteKit server routes (same origin),
 // which proxy to the backend. No CORS issues, no build-time config needed.
 
-export interface TreeSource {
- source: string;
- root_docs: TreeDocument[];
- docs: TreeDocument[];
- journal: TreeDocument[];
- learning_journal?: TreeDocument[];
- engineering_team?: TreeDocument[];
- research?: TreeDocument[];
- pdf?: TreeDocument[];
- skills?: TreeDocument[];
- runbooks?: TreeDocument[];
-}
+// Stage 2 doc types. The string union mirrors the four types the backend
+// classifier ships; `undefined` is treated as "unknown / pre-classification"
+// and rendered without a badge.
+export type DocType = "documentation" | "journal" | "prompt" | "not-docs";
 
 export interface TreeDocument {
  doc_id: string;
@@ -22,6 +14,7 @@ export interface TreeDocument {
  created_at: string | null;
  modified_at: string | null;
  size_bytes: number | null;
+ type?: DocType;
 }
 
 /** Per-source file list returned by GET /api/sources/{name}/tree. */
@@ -44,6 +37,7 @@ export interface FullDocument {
  created_at: string | null;
  modified_at: string | null;
  size_bytes: number | null;
+ type?: DocType;
 }
 
 export interface SearchResult {
@@ -55,6 +49,7 @@ export interface SearchResult {
  modified_at: string | null;
  score: number;
  snippet: string;
+ type?: DocType;
 }
 
 export interface ChatMessage {
@@ -234,10 +229,6 @@ export function summariseScan(
  return out;
 }
 
-export async function fetchTree(): Promise<TreeSource[]> {
- return apiFetch<TreeSource[]>("/api/tree");
-}
-
 export async function fetchSourceTree(name: string): Promise<SourceTree> {
  return apiFetch<SourceTree>(`/api/sources/${encodeURIComponent(name)}/tree`);
 }
@@ -252,7 +243,8 @@ export async function fetchDocument(docId: string): Promise<FullDocument> {
 
 export interface SearchFilters {
  source?: string;
- docType?: string;
+ docType?: DocType;
+ excludeTypes?: DocType[];
  createdAfter?: string;
  createdBefore?: string;
  modifiedAfter?: string;
@@ -262,29 +254,17 @@ export interface SearchFilters {
 export async function searchDocuments(query: string, filters?: SearchFilters): Promise<SearchResult[]> {
  const params = new URLSearchParams({ q: query });
  if (filters?.source) params.set("source", filters.source);
+ if (filters?.excludeTypes) {
+  for (const t of filters.excludeTypes) params.append("exclude_type", t);
+ }
  const results = await apiFetch<SearchResult[]>(`/api/search?${params}`);
  return filterResults(results, filters);
-}
-
-export function categorizeFilePath(filePath: string): string {
- if (filePath.toLowerCase().endsWith(".pdf")) return "pdf";
- if (filePath.includes("learning/") || filePath.includes("learning\\")) return "learning_journal";
- if (filePath.includes("journal/") || filePath.includes("journal\\")) return "journal";
- if (filePath.includes(".engineering-team/") || filePath.includes(".engineering-team\\")) return "engineering_team";
- if (filePath.includes("research/") || filePath.includes("research\\")) return "research";
- if (filePath.includes("skills/") || filePath.includes("skills\\")) return "skills";
- if (filePath.includes("runbooks/") || filePath.includes("runbooks\\")) return "runbooks";
- if (filePath.includes("/") || filePath.includes("\\")) return "docs";
- return "root_docs";
 }
 
 function filterResults(results: SearchResult[], filters?: SearchFilters): SearchResult[] {
  if (!filters) return results;
  return results.filter((r) => {
-  if (filters.docType) {
-   const category = categorizeFilePath(r.file_path || "");
-   if (category !== filters.docType) return false;
-  }
+  if (filters.docType && r.type && r.type !== filters.docType) return false;
   if (filters.createdAfter && r.created_at && r.created_at < filters.createdAfter) return false;
   if (filters.createdBefore && r.created_at && r.created_at > filters.createdBefore) return false;
   if (filters.modifiedAfter && r.modified_at && r.modified_at < filters.modifiedAfter) return false;
@@ -468,6 +448,7 @@ export interface BookmarkEntry {
  created_at: string | null;
  modified_at: string | null;
  size_bytes: number | null;
+ type?: DocType;
 }
 
 export async function listBookmarks(): Promise<BookmarkEntry[]> {

@@ -415,26 +415,6 @@
       {#if currentPath === "/"}<strong>Projects</strong>{:else}Projects{/if}
      </a>
     </li>
-    <li class="govuk-service-nav__item" class:govuk-service-nav__item--active={currentPath === "/root-docs"}>
-     <a href="/root-docs" class="govuk-service-nav__link">
-      {#if currentPath === "/root-docs"}<strong>Root Docs</strong>{:else}Root Docs{/if}
-     </a>
-    </li>
-    <li class="govuk-service-nav__item" class:govuk-service-nav__item--active={currentPath === "/journal"}>
-     <a href="/journal" class="govuk-service-nav__link">
-      {#if currentPath === "/journal"}<strong>Dev Journal</strong>{:else}Dev Journal{/if}
-     </a>
-    </li>
-    <li class="govuk-service-nav__item" class:govuk-service-nav__item--active={currentPath === "/learning-journal"}>
-     <a href="/learning-journal" class="govuk-service-nav__link">
-      {#if currentPath === "/learning-journal"}<strong>Learning Journal</strong>{:else}Learning Journal{/if}
-     </a>
-    </li>
-    <li class="govuk-service-nav__item" class:govuk-service-nav__item--active={currentPath === "/engineering-team"}>
-     <a href="/engineering-team" class="govuk-service-nav__link">
-      {#if currentPath === "/engineering-team"}<strong>Engineering Team</strong>{:else}Engineering Team{/if}
-     </a>
-    </li>
     <li class="govuk-service-nav__item" class:govuk-service-nav__item--active={currentPath === "/bookmarks"}>
      <a href="/bookmarks" class="govuk-service-nav__link">
       {#if currentPath === "/bookmarks"}<strong>Bookmarks</strong>{:else}Bookmarks{/if}

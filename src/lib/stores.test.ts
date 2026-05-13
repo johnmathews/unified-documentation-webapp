@@ -1,78 +1,79 @@
-import { describe, it, expect } from "vitest";
-import { CATEGORIES, type CategoryKey } from "$lib/stores.svelte";
+import { describe, it, expect, beforeEach } from "vitest";
+import { DOC_TYPES, typeFilters, excludeNotDocs } from "$lib/stores.svelte";
 
-describe("CATEGORIES constant", () => {
- it("contains exactly 9 categories", () => {
-  expect(CATEGORIES).toHaveLength(9);
- });
+const TYPE_KEY = "doc-type-filters";
+const EXCLUDE_KEY = "exclude-not-docs";
 
- it("has root_docs as the first category", () => {
-  expect(CATEGORIES[0].key).toBe("root_docs");
- });
+describe("DOC_TYPES", () => {
+	it("lists the four Stage 2 document types in vocabulary order", () => {
+		expect(DOC_TYPES.map((t) => t.key)).toEqual([
+			"documentation",
+			"journal",
+			"prompt",
+			"not-docs",
+		]);
+	});
 
- it("has docs category", () => {
-  expect(CATEGORIES.find((c) => c.key === "docs")).toBeDefined();
- });
-
- it("has journal category", () => {
-  expect(CATEGORIES.find((c) => c.key === "journal")).toBeDefined();
- });
-
- it("has engineering_team category", () => {
-  expect(CATEGORIES.find((c) => c.key === "engineering_team")).toBeDefined();
- });
-
- it("has research category", () => {
-  expect(CATEGORIES.find((c) => c.key === "research")).toBeDefined();
- });
-
- it("all categories have unique keys", () => {
-  const keys = CATEGORIES.map((c) => c.key);
-  expect(new Set(keys).size).toBe(keys.length);
- });
-
- it("all categories have non-empty labels", () => {
-  for (const cat of CATEGORIES) {
-   expect(cat.label.length).toBeGreaterThan(0);
-  }
- });
-
- it("CategoryKey type matches the defined keys", () => {
-  // This is a compile-time check, but we can verify at runtime too
-  const validKeys: CategoryKey[] = ["root_docs", "docs", "journal", "learning_journal", "engineering_team", "research", "skills", "runbooks", "pdf"];
-  const actualKeys = CATEGORIES.map((c) => c.key);
-  expect(actualKeys).toEqual(validKeys);
- });
+	it("has a human label for every key", () => {
+		for (const t of DOC_TYPES) {
+			expect(t.label.length).toBeGreaterThan(0);
+		}
+	});
 });
 
-describe("CATEGORIES ordering", () => {
- it("root_docs comes before docs", () => {
-  const rootIdx = CATEGORIES.findIndex((c) => c.key === "root_docs");
-  const docsIdx = CATEGORIES.findIndex((c) => c.key === "docs");
-  expect(rootIdx).toBeLessThan(docsIdx);
- });
+describe("typeFilters", () => {
+	beforeEach(() => {
+		localStorage.clear();
+	});
 
- it("docs comes before journal", () => {
-  const docsIdx = CATEGORIES.findIndex((c) => c.key === "docs");
-  const journalIdx = CATEGORIES.findIndex((c) => c.key === "journal");
-  expect(docsIdx).toBeLessThan(journalIdx);
- });
+	it("defaults every type to visible", () => {
+		for (const t of DOC_TYPES) {
+			expect(typeFilters.isVisible(t.key)).toBe(true);
+		}
+	});
 
- it("journal comes before engineering_team", () => {
-  const journalIdx = CATEGORIES.findIndex((c) => c.key === "journal");
-  const engIdx = CATEGORIES.findIndex((c) => c.key === "engineering_team");
-  expect(journalIdx).toBeLessThan(engIdx);
- });
+	it("treats undefined / null type as always visible (server hasn't classified yet)", () => {
+		expect(typeFilters.isVisible(undefined)).toBe(true);
+		expect(typeFilters.isVisible(null)).toBe(true);
+		expect(typeFilters.isVisible("")).toBe(true);
+	});
 
- it("engineering_team comes before research", () => {
-  const engIdx = CATEGORIES.findIndex((c) => c.key === "engineering_team");
-  const researchIdx = CATEGORIES.findIndex((c) => c.key === "research");
-  expect(engIdx).toBeLessThan(researchIdx);
- });
+	it("treats unknown types as visible (forward compatibility with future vocabulary)", () => {
+		expect(typeFilters.isVisible("future-type")).toBe(true);
+	});
 
- it("research comes before pdf", () => {
-  const researchIdx = CATEGORIES.findIndex((c) => c.key === "research");
-  const pdfIdx = CATEGORIES.findIndex((c) => c.key === "pdf");
-  expect(researchIdx).toBeLessThan(pdfIdx);
- });
+	it("hides a type after toggling and re-shows after toggling again", () => {
+		typeFilters.toggle("journal");
+		expect(typeFilters.isVisible("journal")).toBe(false);
+		typeFilters.toggle("journal");
+		expect(typeFilters.isVisible("journal")).toBe(true);
+	});
+
+	it("persists changes to localStorage under the documented key", () => {
+		typeFilters.toggle("prompt");
+		const stored = JSON.parse(localStorage.getItem(TYPE_KEY) || "{}");
+		expect(stored.prompt).toBe(false);
+		typeFilters.toggle("prompt");
+	});
+});
+
+describe("excludeNotDocs", () => {
+	beforeEach(() => {
+		localStorage.clear();
+	});
+
+	it("persists to localStorage", () => {
+		excludeNotDocs.set(true);
+		expect(localStorage.getItem(EXCLUDE_KEY)).toBe("true");
+		excludeNotDocs.set(false);
+		expect(localStorage.getItem(EXCLUDE_KEY)).toBe("false");
+	});
+
+	it("toggle flips the value", () => {
+		excludeNotDocs.set(false);
+		excludeNotDocs.toggle();
+		expect(excludeNotDocs.value).toBe(true);
+		excludeNotDocs.toggle();
+		expect(excludeNotDocs.value).toBe(false);
+	});
 });
