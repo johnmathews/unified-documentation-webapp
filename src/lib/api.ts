@@ -24,6 +24,17 @@ export interface TreeDocument {
  size_bytes: number | null;
 }
 
+/** Per-source file list returned by GET /api/sources/{name}/tree. */
+export interface SourceTree {
+ source: string;
+ files: TreeDocument[];
+}
+
+/** Bulk response from GET /api/sources/tree. */
+export interface AllSourcesTree {
+ sources: SourceTree[];
+}
+
 export interface FullDocument {
  doc_id: string;
  source: string;
@@ -225,6 +236,14 @@ export function summariseScan(
 
 export async function fetchTree(): Promise<TreeSource[]> {
  return apiFetch<TreeSource[]>("/api/tree");
+}
+
+export async function fetchSourceTree(name: string): Promise<SourceTree> {
+ return apiFetch<SourceTree>(`/api/sources/${encodeURIComponent(name)}/tree`);
+}
+
+export async function fetchAllSourcesTree(): Promise<AllSourcesTree> {
+ return apiFetch<AllSourcesTree>("/api/sources/tree");
 }
 
 export async function fetchDocument(docId: string): Promise<FullDocument> {

@@ -111,13 +111,7 @@
   <article class="document">
    <Breadcrumbs
     source={doc.source}
-    category={doc.file_path.toLowerCase().endsWith(".pdf")
-     ? "pdf"
-     : doc.file_path.includes("journal/")
-       ? "journal"
-       : doc.file_path.includes(".engineering-team/")
-         ? "engineering_team"
-         : "docs"}
+    filePath={doc.file_path}
     title={doc.title ? stripSourcePrefix(doc.title, doc.source) : doc.file_path.split("/").pop() || doc.file_path}
    />
    <header class="doc-header">

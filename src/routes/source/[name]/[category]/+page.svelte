@@ -126,7 +126,7 @@
  </div>
 {:else}
  <div class="category-page">
-  <Breadcrumbs source={sourceName} {category} />
+  <Breadcrumbs source={sourceName} title={categoryLabel} />
   <h1>{categoryLabel}</h1>
   <div class="controls-row">
    <p class="subtitle">

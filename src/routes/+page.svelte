@@ -1,9 +1,9 @@
 <script lang="ts">
- import { fetchTree, fetchHealth, type TreeSource, type TreeDocument, type HealthStatus, type HealthSource } from "$lib/api";
+ import { fetchAllSourcesTree, fetchHealth, type SourceTree, type HealthStatus, type HealthSource } from "$lib/api";
  import { currentDocId, scanTick } from "$lib/stores.svelte";
  import { displaySource } from "$lib/titles";
 
- let tree: TreeSource[] = $state([]);
+ let tree: SourceTree[] = $state([]);
  let health: HealthStatus | null = $state(null);
  let loading = $state(true);
  let error = $state("");
@@ -59,10 +59,10 @@
  async function loadData() {
   try {
    const [treeResult, healthResult] = await Promise.all([
-    fetchTree(),
+    fetchAllSourcesTree(),
     fetchHealth().catch(() => null),
    ]);
-   tree = treeResult;
+   tree = treeResult.sources;
    health = healthResult;
   } catch (e) {
    error = e instanceof Error ? e.message : "Failed to load";
@@ -71,27 +71,13 @@
   }
  }
 
- function allDocs(source: TreeSource): TreeDocument[] {
-  return [
-   ...source.root_docs,
-   ...source.docs,
-   ...source.journal,
-   ...(source.learning_journal ?? []),
-   ...(source.engineering_team ?? []),
-   ...(source.research ?? []),
-   ...(source.skills ?? []),
-   ...(source.runbooks ?? []),
-   ...(source.pdf ?? []),
-  ];
+ function docCount(source: SourceTree): number {
+  return source.files.length;
  }
 
- function docCount(source: TreeSource): number {
-  return allDocs(source).length;
- }
-
- function lastUpdated(source: TreeSource): string | null {
+ function lastUpdated(source: SourceTree): string | null {
   let latest: string | null = null;
-  for (const doc of allDocs(source)) {
+  for (const doc of source.files) {
    const date = doc.modified_at ?? doc.created_at;
    if (date && (!latest || date > latest)) latest = date;
   }

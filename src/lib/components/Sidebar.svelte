@@ -1,818 +1,290 @@
 <script lang="ts">
- import { fetchTree, type TreeSource } from "$lib/api";
- import { currentDocId, categoryFilters, CATEGORIES } from "$lib/stores.svelte";
- import { displaySource } from "$lib/titles";
+	import { fetchAllSourcesTree, type SourceTree } from "$lib/api";
+	import { buildFolderTree, collectAllDocs, type FolderNode } from "$lib/tree";
+	import { displaySource } from "$lib/titles";
+	import TreeNode from "./TreeNode.svelte";
 
- let showFilters = $state(false);
+	let { onNavigate = () => {} }: { onNavigate?: () => void } = $props();
 
- let { onNavigate = () => {} }: { onNavigate?: () => void } = $props();
+	let sources: SourceTree[] = $state([]);
+	let loading = $state(true);
+	let error = $state("");
+	let expandedSources: Record<string, boolean> = $state({});
 
- let tree: TreeSource[] = $state([]);
- let loading = $state(true);
- let error = $state("");
- let expandedSources: Record<string, boolean> = $state({});
- let expandedCategories: Record<string, boolean> = $state({});
+	// One-shot expand/collapse override. null = each TreeNode self-manages.
+	let forceExpanded: boolean | null = $state(null);
 
- $effect(() => {
-  loadTree();
- });
+	// Resets `forceExpanded` back to null so individual TreeNodes resume
+	// per-folder control once the override has propagated.
+	$effect(() => {
+		if (forceExpanded !== null) {
+			const pending = forceExpanded;
+			queueMicrotask(() => {
+				if (forceExpanded === pending) forceExpanded = null;
+			});
+		}
+	});
 
- async function loadTree() {
-  try {
-   tree = await fetchTree();
-  } catch (e) {
-   error = e instanceof Error ? e.message : "Failed to load";
-  } finally {
-   loading = false;
-  }
- }
+	$effect(() => {
+		loadTree();
+	});
 
- function toggleSource(source: string) {
-  expandedSources[source] = !expandedSources[source];
- }
+	async function loadTree() {
+		try {
+			const payload = await fetchAllSourcesTree();
+			sources = payload.sources;
+			// Expand the first source by default; collapse the rest. With many
+			// sources, an all-expanded sidebar is overwhelming.
+			for (const s of sources) {
+				if (!(s.source in expandedSources)) {
+					expandedSources[s.source] = sources.length === 1 || sources.indexOf(s) === 0;
+				}
+			}
+		} catch (e) {
+			error = e instanceof Error ? e.message : "Failed to load";
+		} finally {
+			loading = false;
+		}
+	}
 
- function toggleCategory(key: string) {
-  expandedCategories[key] = !expandedCategories[key];
- }
+	function toggleSource(source: string) {
+		expandedSources[source] = !expandedSources[source];
+	}
 
- function expandAll() {
-  for (const s of tree) {
-   expandedSources[s.source] = true;
-   expandedCategories[`${s.source}:root_docs`] = true;
-   expandedCategories[`${s.source}:docs`] = true;
-   expandedCategories[`${s.source}:journal`] = true;
-   expandedCategories[`${s.source}:learning_journal`] = true;
-   expandedCategories[`${s.source}:engineering_team`] = true;
-   expandedCategories[`${s.source}:research`] = true;
-   expandedCategories[`${s.source}:skills`] = true;
-   expandedCategories[`${s.source}:runbooks`] = true;
-   expandedCategories[`${s.source}:pdf`] = true;
-  }
- }
+	function expandAll() {
+		for (const s of sources) expandedSources[s.source] = true;
+		forceExpanded = true;
+	}
 
- function collapseAll() {
-  for (const s of tree) {
-   expandedSources[s.source] = false;
-   expandedCategories[`${s.source}:root_docs`] = false;
-   expandedCategories[`${s.source}:docs`] = false;
-   expandedCategories[`${s.source}:journal`] = false;
-   expandedCategories[`${s.source}:learning_journal`] = false;
-   expandedCategories[`${s.source}:engineering_team`] = false;
-   expandedCategories[`${s.source}:research`] = false;
-   expandedCategories[`${s.source}:skills`] = false;
-   expandedCategories[`${s.source}:runbooks`] = false;
-   expandedCategories[`${s.source}:pdf`] = false;
-  }
- }
+	function collapseAll() {
+		for (const s of sources) expandedSources[s.source] = false;
+		forceExpanded = false;
+	}
 
- let allExpanded = $derived(tree.length > 0 && tree.every((s) => expandedSources[s.source]));
- let allCollapsed = $derived(tree.length > 0 && tree.every((s) => !expandedSources[s.source]));
+	const allExpanded = $derived(
+		sources.length > 0 && sources.every((s) => expandedSources[s.source]),
+	);
+	const allCollapsed = $derived(
+		sources.length > 0 && sources.every((s) => !expandedSources[s.source]),
+	);
 
- function docUrl(docId: string): string {
-  return `/doc/${encodeURIComponent(docId)}`;
- }
+	const trees: Record<string, FolderNode> = $derived.by(() => {
+		const out: Record<string, FolderNode> = {};
+		for (const s of sources) out[s.source] = buildFolderTree(s.files);
+		return out;
+	});
 
- function isActive(docId: string): boolean {
-  return currentDocId.value === docId;
- }
-
- import { displayTitle } from "$lib/titles";
-
- function totalDocs(source: TreeSource): number {
-  let count = 0;
-  if (categoryFilters.isVisible("root_docs")) count += source.root_docs.length;
-  if (categoryFilters.isVisible("docs")) count += source.docs.length;
-  if (categoryFilters.isVisible("journal")) count += source.journal.length;
-  if (categoryFilters.isVisible("learning_journal")) count += source.learning_journal?.length ?? 0;
-  if (categoryFilters.isVisible("engineering_team")) count += source.engineering_team?.length ?? 0;
-  if (categoryFilters.isVisible("research")) count += source.research?.length ?? 0;
-  if (categoryFilters.isVisible("skills")) count += source.skills?.length ?? 0;
-  if (categoryFilters.isVisible("runbooks")) count += source.runbooks?.length ?? 0;
-  if (categoryFilters.isVisible("pdf")) count += source.pdf?.length ?? 0;
-  return count;
- }
-
- let activeFilterCount = $derived(CATEGORIES.filter((c) => !categoryFilters.isVisible(c.key)).length);
+	function totalDocs(name: string): number {
+		const root = trees[name];
+		return root ? collectAllDocs(root).length : 0;
+	}
 </script>
 
 <div class="sidebar-inner">
- <div class="filter-section">
-  <button class="filter-toggle" onclick={() => (showFilters = !showFilters)}>
-   <span class="filter-toggle-label">Filter categories</span>
-   {#if activeFilterCount > 0}
-    <span class="filter-badge">{activeFilterCount} hidden</span>
-   {/if}
-   <svg
-    class="chevron"
-    class:expanded={showFilters}
-    width="12"
-    height="12"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    stroke-width="2"
-   >
-    <polyline points="9 18 15 12 9 6" />
-   </svg>
-  </button>
+	{#if loading}
+		<div class="loading-msg">Loading sources...</div>
+	{:else if error}
+		<div class="error-msg">{error}</div>
+	{:else}
+		<nav class="tree">
+			<div class="tree-header">
+				<span class="tree-header-label"></span>
+				<div class="expand-collapse">
+					{#if !allExpanded}
+						<button class="tree-text-btn" onclick={expandAll}>expand all</button>
+					{/if}
+					{#if !allExpanded && !allCollapsed}
+						<span class="tree-text-sep">|</span>
+					{/if}
+					{#if !allCollapsed}
+						<button class="tree-text-btn" onclick={collapseAll}>collapse all</button>
+					{/if}
+				</div>
+			</div>
 
-  {#if showFilters}
-   <fieldset class="filter-checkboxes">
-    {#each CATEGORIES as cat (cat.key)}
-     <div class="filter-checkbox-item">
-      <input
-       class="filter-checkbox-input"
-       type="checkbox"
-       id="filter-{cat.key}"
-       checked={categoryFilters.isVisible(cat.key)}
-       onchange={() => categoryFilters.toggle(cat.key)}
-      />
-      <label class="filter-checkbox-label" for="filter-{cat.key}">{cat.label}</label>
-     </div>
-    {/each}
-   </fieldset>
-  {/if}
- </div>
+			{#each sources as source (source.source)}
+				<div class="tree-source">
+					<button class="tree-toggle" onclick={() => toggleSource(source.source)}>
+						<svg
+							class="chevron"
+							class:expanded={expandedSources[source.source]}
+							width="14"
+							height="14"
+							viewBox="0 0 24 24"
+							fill="none"
+							stroke="currentColor"
+							stroke-width="2"
+						>
+							<polyline points="9 18 15 12 9 6" />
+						</svg>
+						<span class="source-tag">{displaySource(source.source)}</span>
+						<span class="count">{totalDocs(source.source)}</span>
+					</button>
 
- {#if loading}
-  <div class="loading-msg">Loading sources...</div>
- {:else if error}
-  <div class="error-msg">{error}</div>
- {:else}
-  <nav class="tree">
-   <div class="tree-header">
-    <span class="tree-header-label"></span>
-    <div class="expand-collapse">
-     {#if !allExpanded}
-      <button class="tree-text-btn" onclick={expandAll}>expand all</button>
-     {/if}
-     {#if !allExpanded && !allCollapsed}
-      <span class="tree-text-sep">|</span>
-     {/if}
-     {#if !allCollapsed}
-      <button class="tree-text-btn" onclick={collapseAll}>collapse all</button>
-     {/if}
-    </div>
-   </div>
-   {#each tree as source (source.source)}
-    <div class="tree-source">
-     <button class="tree-toggle" onclick={() => toggleSource(source.source)}>
-      <svg
-       class="chevron"
-       class:expanded={expandedSources[source.source]}
-       width="14"
-       height="14"
-       viewBox="0 0 24 24"
-       fill="none"
-       stroke="currentColor"
-       stroke-width="2"
-      >
-       <polyline points="9 18 15 12 9 6" />
-      </svg>
-      <span class="source-tag">{displaySource(source.source)}</span>
-      <span class="count">{totalDocs(source)}</span>
-     </button>
-
-     {#if expandedSources[source.source]}
-      {#if categoryFilters.isVisible("root_docs") && source.root_docs.length > 0}
-       <div class="tree-category">
-        <button class="tree-toggle category-toggle" onclick={() => toggleCategory(`${source.source}:root_docs`)}>
-         <svg
-          class="chevron"
-          class:expanded={expandedCategories[`${source.source}:root_docs`]}
-          width="12"
-          height="12"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2"
-         >
-          <polyline points="9 18 15 12 9 6" />
-         </svg>
-         <span>Root Docs</span>
-         <span class="count">{source.root_docs.length}</span>
-        </button>
-
-        {#if expandedCategories[`${source.source}:root_docs`]}
-         <div class="tree-items">
-          {#each source.root_docs as doc (doc.doc_id)}
-           <a href={docUrl(doc.doc_id)} class="tree-item" class:active={isActive(doc.doc_id)} onclick={onNavigate}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-             <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-             <polyline points="14 2 14 8 20 8" />
-            </svg>
-            <span class="item-title">{displayTitle(doc)}</span>
-           </a>
-          {/each}
-         </div>
-        {/if}
-       </div>
-      {/if}
-
-      {#if categoryFilters.isVisible("docs") && source.docs.length > 0}
-       <div class="tree-category">
-        <button class="tree-toggle category-toggle" onclick={() => toggleCategory(`${source.source}:docs`)}>
-         <svg
-          class="chevron"
-          class:expanded={expandedCategories[`${source.source}:docs`]}
-          width="12"
-          height="12"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2"
-         >
-          <polyline points="9 18 15 12 9 6" />
-         </svg>
-         <span>Documentation Directory</span>
-         <span class="count">{source.docs.length}</span>
-        </button>
-
-        {#if expandedCategories[`${source.source}:docs`]}
-         <div class="tree-items">
-          {#each source.docs as doc (doc.doc_id)}
-           <a href={docUrl(doc.doc_id)} class="tree-item" class:active={isActive(doc.doc_id)} onclick={onNavigate}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-             <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-             <polyline points="14 2 14 8 20 8" />
-            </svg>
-            <span class="item-title">{displayTitle(doc)}</span>
-           </a>
-          {/each}
-         </div>
-        {/if}
-       </div>
-      {/if}
-
-      {#if categoryFilters.isVisible("journal") && source.journal.length > 0}
-       <div class="tree-category">
-        <button class="tree-toggle category-toggle" onclick={() => toggleCategory(`${source.source}:journal`)}>
-         <svg
-          class="chevron"
-          class:expanded={expandedCategories[`${source.source}:journal`]}
-          width="12"
-          height="12"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2"
-         >
-          <polyline points="9 18 15 12 9 6" />
-         </svg>
-         <span>Development Journal</span>
-         <span class="count">{source.journal.length}</span>
-        </button>
-
-        {#if expandedCategories[`${source.source}:journal`]}
-         <div class="tree-items">
-          {#each source.journal as doc (doc.doc_id)}
-           <a href={docUrl(doc.doc_id)} class="tree-item" class:active={isActive(doc.doc_id)} onclick={onNavigate}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-             <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
-             <line x1="16" y1="2" x2="16" y2="6" />
-             <line x1="8" y1="2" x2="8" y2="6" />
-             <line x1="3" y1="10" x2="21" y2="10" />
-            </svg>
-            <span class="item-title">{displayTitle(doc)}</span>
-           </a>
-          {/each}
-         </div>
-        {/if}
-       </div>
-      {/if}
-
-      {#if categoryFilters.isVisible("learning_journal") && (source.learning_journal?.length ?? 0) > 0}
-       <div class="tree-category">
-        <button class="tree-toggle category-toggle" onclick={() => toggleCategory(`${source.source}:learning_journal`)}>
-         <svg
-          class="chevron"
-          class:expanded={expandedCategories[`${source.source}:learning_journal`]}
-          width="12"
-          height="12"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2"
-         >
-          <polyline points="9 18 15 12 9 6" />
-         </svg>
-         <span>Learning Journal</span>
-         <span class="count">{source.learning_journal?.length ?? 0}</span>
-        </button>
-
-        {#if expandedCategories[`${source.source}:learning_journal`]}
-         <div class="tree-items">
-          {#each source.learning_journal ?? [] as doc (doc.doc_id)}
-           <a href={docUrl(doc.doc_id)} class="tree-item" class:active={isActive(doc.doc_id)} onclick={onNavigate}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-             <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" />
-             <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" />
-            </svg>
-            <span class="item-title">{displayTitle(doc)}</span>
-           </a>
-          {/each}
-         </div>
-        {/if}
-       </div>
-      {/if}
-
-      {#if categoryFilters.isVisible("engineering_team") && (source.engineering_team?.length ?? 0) > 0}
-       <div class="tree-category">
-        <button class="tree-toggle category-toggle" onclick={() => toggleCategory(`${source.source}:engineering_team`)}>
-         <svg
-          class="chevron"
-          class:expanded={expandedCategories[`${source.source}:engineering_team`]}
-          width="12"
-          height="12"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2"
-         >
-          <polyline points="9 18 15 12 9 6" />
-         </svg>
-         <span>Engineering Team</span>
-         <span class="count">{source.engineering_team?.length ?? 0}</span>
-        </button>
-
-        {#if expandedCategories[`${source.source}:engineering_team`]}
-         <div class="tree-items">
-          {#each source.engineering_team ?? [] as doc (doc.doc_id)}
-           <a href={docUrl(doc.doc_id)} class="tree-item" class:active={isActive(doc.doc_id)} onclick={onNavigate}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-             <circle cx="12" cy="12" r="3" />
-             <path
-              d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"
-             />
-            </svg>
-            <span class="item-title">{displayTitle(doc)}</span>
-           </a>
-          {/each}
-         </div>
-        {/if}
-       </div>
-      {/if}
-
-      {#if categoryFilters.isVisible("research") && (source.research?.length ?? 0) > 0}
-       <div class="tree-category">
-        <button class="tree-toggle category-toggle" onclick={() => toggleCategory(`${source.source}:research`)}>
-         <svg
-          class="chevron"
-          class:expanded={expandedCategories[`${source.source}:research`]}
-          width="12"
-          height="12"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2"
-         >
-          <polyline points="9 18 15 12 9 6" />
-         </svg>
-         <span>Research</span>
-         <span class="count">{source.research?.length ?? 0}</span>
-        </button>
-
-        {#if expandedCategories[`${source.source}:research`]}
-         <div class="tree-items">
-          {#each source.research ?? [] as doc (doc.doc_id)}
-           <a href={docUrl(doc.doc_id)} class="tree-item" class:active={isActive(doc.doc_id)} onclick={onNavigate}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-             <circle cx="11" cy="11" r="8" />
-             <line x1="21" y1="21" x2="16.65" y2="16.65" />
-            </svg>
-            <span class="item-title">{displayTitle(doc)}</span>
-           </a>
-          {/each}
-         </div>
-        {/if}
-       </div>
-      {/if}
-
-      {#if categoryFilters.isVisible("skills") && (source.skills?.length ?? 0) > 0}
-       <div class="tree-category">
-        <button class="tree-toggle category-toggle" onclick={() => toggleCategory(`${source.source}:skills`)}>
-         <svg
-          class="chevron"
-          class:expanded={expandedCategories[`${source.source}:skills`]}
-          width="12"
-          height="12"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2"
-         >
-          <polyline points="9 18 15 12 9 6" />
-         </svg>
-         <span>Skills</span>
-         <span class="count">{source.skills?.length ?? 0}</span>
-        </button>
-
-        {#if expandedCategories[`${source.source}:skills`]}
-         <div class="tree-items">
-          {#each source.skills ?? [] as doc (doc.doc_id)}
-           <a href={docUrl(doc.doc_id)} class="tree-item" class:active={isActive(doc.doc_id)} onclick={onNavigate}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-             <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
-            </svg>
-            <span class="item-title">{displayTitle(doc)}</span>
-           </a>
-          {/each}
-         </div>
-        {/if}
-       </div>
-      {/if}
-
-      {#if categoryFilters.isVisible("runbooks") && (source.runbooks?.length ?? 0) > 0}
-       <div class="tree-category">
-        <button class="tree-toggle category-toggle" onclick={() => toggleCategory(`${source.source}:runbooks`)}>
-         <svg
-          class="chevron"
-          class:expanded={expandedCategories[`${source.source}:runbooks`]}
-          width="12"
-          height="12"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2"
-         >
-          <polyline points="9 18 15 12 9 6" />
-         </svg>
-         <span>Runbooks</span>
-         <span class="count">{source.runbooks?.length ?? 0}</span>
-        </button>
-
-        {#if expandedCategories[`${source.source}:runbooks`]}
-         <div class="tree-items">
-          {#each source.runbooks ?? [] as doc (doc.doc_id)}
-           <a href={docUrl(doc.doc_id)} class="tree-item" class:active={isActive(doc.doc_id)} onclick={onNavigate}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-             <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
-             <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
-            </svg>
-            <span class="item-title">{displayTitle(doc)}</span>
-           </a>
-          {/each}
-         </div>
-        {/if}
-       </div>
-      {/if}
-
-      {#if categoryFilters.isVisible("pdf") && (source.pdf?.length ?? 0) > 0}
-       <div class="tree-category">
-        <button class="tree-toggle category-toggle" onclick={() => toggleCategory(`${source.source}:pdf`)}>
-         <svg
-          class="chevron"
-          class:expanded={expandedCategories[`${source.source}:pdf`]}
-          width="12"
-          height="12"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2"
-         >
-          <polyline points="9 18 15 12 9 6" />
-         </svg>
-         <span>PDF</span>
-         <span class="count">{source.pdf?.length ?? 0}</span>
-        </button>
-
-        {#if expandedCategories[`${source.source}:pdf`]}
-         <div class="tree-items">
-          {#each source.pdf ?? [] as doc (doc.doc_id)}
-           <a href={docUrl(doc.doc_id)} class="tree-item" class:active={isActive(doc.doc_id)} onclick={onNavigate}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-             <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-             <polyline points="14 2 14 8 20 8" />
-             <line x1="9" y1="15" x2="15" y2="15" />
-            </svg>
-            <span class="item-title">{displayTitle(doc)}</span>
-           </a>
-          {/each}
-         </div>
-        {/if}
-       </div>
-      {/if}
-     {/if}
-    </div>
-   {/each}
-  </nav>
- {/if}
+					{#if expandedSources[source.source] && trees[source.source]}
+						<div class="source-tree-body">
+							<TreeNode
+								node={trees[source.source]}
+								depth={0}
+								expanded={forceExpanded}
+								{onNavigate}
+							/>
+						</div>
+					{/if}
+				</div>
+			{/each}
+		</nav>
+	{/if}
 </div>
 
 <style>
- .sidebar-inner {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  background: var(--bg-surface);
- }
+	.sidebar-inner {
+		display: flex;
+		flex-direction: column;
+		height: 100%;
+		background: var(--bg-surface);
+	}
 
- /* Category filter section */
- .filter-section {
-  border-bottom: 1px solid var(--border);
- }
+	.tree-header {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		padding: 10px 15px;
+	}
 
- .filter-toggle {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  width: 100%;
-  padding: 10px 15px;
-  background: none;
-  border: none;
-  color: var(--text-secondary);
-  font-size: 14px;
-  text-align: left;
-  cursor: pointer;
-  transition: background 0.1s;
- }
+	.tree-header-label {
+		font-size: 16px;
+		font-weight: 700;
+		text-transform: uppercase;
+		letter-spacing: 0.05em;
+		color: var(--text-secondary);
+	}
 
- .filter-toggle:hover {
-  background: var(--bg-hover);
- }
+	.expand-collapse {
+		display: flex;
+		align-items: center;
+		gap: 5px;
+	}
 
- .filter-toggle-label {
-  flex: 1;
- }
+	.tree-text-btn {
+		background: none;
+		border: none;
+		padding: 5px;
+		font-size: 14px;
+		color: var(--text-muted);
+		cursor: pointer;
+		transition: color 0.15s;
+		text-transform: lowercase;
+	}
 
- .filter-badge {
-  font-size: 12px;
-  padding: 1px 6px;
-  background: var(--accent-dim);
-  color: var(--accent);
-  font-weight: 700;
- }
+	.tree-text-btn:hover {
+		color: var(--text);
+	}
 
- .filter-checkboxes {
-  border: none;
-  padding: 0 15px 12px;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
- }
+	.tree-text-sep {
+		font-size: 14px;
+		color: var(--text-muted);
+		user-select: none;
+	}
 
- /* GOV.UK small checkbox pattern */
- .filter-checkbox-item {
-  display: flex;
-  align-items: center;
-  min-height: 28px;
-  position: relative;
- }
+	.loading-msg,
+	.error-msg {
+		padding: 20px;
+		color: var(--text-secondary);
+		font-size: 16px;
+		text-align: center;
+	}
 
- .filter-checkbox-input {
-  position: absolute;
-  width: 20px;
-  height: 20px;
-  opacity: 0;
-  cursor: pointer;
- }
+	.error-msg {
+		color: var(--error);
+	}
 
- .filter-checkbox-label {
-  display: flex;
-  align-items: center;
-  padding: 3px 0 3px 30px;
-  cursor: pointer;
-  font-size: 14px;
-  color: var(--text);
-  line-height: 1.3;
-  user-select: none;
- }
+	.tree {
+		flex: 1;
+		overflow-y: auto;
+		padding: 5px 0 10px;
+	}
 
- .filter-checkbox-label::before {
-  content: "";
-  position: absolute;
-  left: 0;
-  width: 20px;
-  height: 20px;
-  border: 2px solid var(--border-strong);
-  background: var(--bg-body);
- }
+	.tree-source {
+		margin-bottom: 5px;
+	}
 
- .filter-checkbox-input:checked + .filter-checkbox-label::before {
-  background: var(--border-strong);
- }
+	.tree-toggle {
+		display: flex;
+		align-items: center;
+		gap: 5px;
+		width: 100%;
+		padding: 10px 15px;
+		background: none;
+		border: none;
+		color: var(--text);
+		font-size: 16px;
+		font-weight: 700;
+		text-align: left;
+		cursor: pointer;
+		border-radius: 0;
+		transition: background 0.1s;
+	}
 
- .filter-checkbox-input:checked + .filter-checkbox-label::after {
-  content: "";
-  position: absolute;
-  left: 4px;
-  top: 7px;
-  width: 12px;
-  height: 6px;
-  border-left: 3px solid var(--bg-body);
-  border-bottom: 3px solid var(--bg-body);
-  transform: rotate(-45deg);
- }
+	.tree-toggle:hover {
+		background: var(--bg-hover);
+	}
 
- .filter-checkbox-input:focus-visible + .filter-checkbox-label::before {
-  outline: 3px solid var(--focus);
-  outline-offset: 1px;
- }
+	.chevron {
+		flex-shrink: 0;
+		transition: transform 0.15s;
+	}
 
- .tree-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 10px 15px;
- }
+	.chevron.expanded {
+		transform: rotate(90deg);
+	}
 
- .tree-header-label {
-  font-size: 16px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--text-secondary);
- }
+	.source-tag {
+		font-size: 16px;
+		font-weight: bold;
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
+	}
 
- .expand-collapse {
-  display: flex;
-  align-items: center;
-  gap: 5px;
- }
+	.count {
+		font-size: 14px;
+		color: var(--text-secondary);
+		background: var(--bg-body);
+		padding: 2px 8px;
+		border-radius: 0;
+		flex-shrink: 0;
+	}
 
- .tree-text-btn {
-  background: none;
-  border: none;
-  padding: 5px;
-  font-size: 14px;
-  color: var(--text-muted);
-  cursor: pointer;
-  transition: color 0.15s;
-  text-transform: lowercase;
- }
+	.source-tree-body {
+		padding-left: 8px;
+	}
 
- .tree-text-btn:hover {
-  color: var(--text);
- }
-
- .tree-text-sep {
-  font-size: 14px;
-  color: var(--text-muted);
-  user-select: none;
- }
-
- .loading-msg,
- .error-msg {
-  padding: 20px;
-  color: var(--text-secondary);
-  font-size: 16px;
-  text-align: center;
- }
-
- .error-msg {
-  color: var(--error);
- }
-
- .tree {
-  flex: 1;
-  overflow-y: auto;
-  padding: 5px 0 10px;
- }
-
- .tree-source {
-  margin-bottom: 5px;
- }
-
- .tree-toggle {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  width: 100%;
-  padding: 10px 15px;
-  background: none;
-  border: none;
-  color: var(--text);
-  font-size: 16px;
-  font-weight: 700;
-  text-align: left;
-  cursor: pointer;
-  border-radius: 0;
-  transition: background 0.1s;
- }
-
- .tree-toggle:hover {
-  background: var(--bg-hover);
- }
-
- .category-toggle {
-  font-weight: 700;
-  color: var(--text-secondary);
-  padding-left: 30px;
-  font-size: 16px;
- }
-
- .chevron {
-  flex-shrink: 0;
-  transition: transform 0.15s;
- }
-
- .chevron.expanded {
-  transform: rotate(90deg);
- }
-
- .source-tag {
-  font-size: 16px;
-  font-weight: bold;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
- }
-
- .count {
-  font-size: 14px;
-  color: var(--text-secondary);
-  background: var(--bg-body);
-  padding: 2px 8px;
-  border-radius: 0;
-  flex-shrink: 0;
- }
-
- .tree-items {
-  padding: 0;
- }
-
- .tree-item {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 10px 15px 10px 50px;
-  color: var(--text);
-  font-size: 16px;
-  text-decoration: none;
-  transition: all 0.1s;
-  border-left: 4px solid transparent;
- }
-
- .tree-item:hover {
-  background: var(--bg-hover);
-  color: var(--text);
- }
-
- .tree-item.active {
-  margin-left: -14px;
-  padding-left: calc(50px + 10px);
-  border-left: 4px solid var(--brand);
-  background: var(--bg-body);
-  color: var(--text);
-  font-weight: bold;
- }
-
- .item-title {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
- }
-
- @media (max-width: 768px) {
-  .filter-toggle {
-   min-height: 44px;
-   padding: 10px 15px;
-   font-size: 14px;
-  }
-  .filter-checkbox-item {
-   min-height: 36px;
-  }
-  .filter-checkbox-label {
-   font-size: 14px;
-   min-height: 36px;
-  }
-  .tree-toggle {
-   padding: 15px;
-   min-height: 44px;
-   font-size: 16px;
-  }
-  .category-toggle {
-   padding-left: 30px;
-   min-height: 44px;
-   font-size: 16px;
-  }
-  .tree-item {
-   padding: 15px 15px 15px 50px;
-   min-height: 44px;
-   font-size: 16px;
-  }
-  .tree-text-btn {
-   font-size: 14px;
-   min-height: 44px;
-   display: inline-flex;
-   align-items: center;
-  }
-  .tree-text-sep {
-   font-size: 14px;
-  }
-  .source-tag {
-   font-size: 16px;
-  }
-  .count {
-   font-size: 14px;
-   padding: 2px 10px;
-  }
-  .tree-header-label {
-   font-size: 16px;
-  }
-  .loading-msg,
-  .error-msg {
-   font-size: 16px;
-  }
- }
+	@media (max-width: 768px) {
+		.tree-toggle {
+			padding: 15px;
+			min-height: 44px;
+			font-size: 16px;
+		}
+		.tree-text-btn {
+			font-size: 14px;
+			min-height: 44px;
+			display: inline-flex;
+			align-items: center;
+		}
+		.source-tag {
+			font-size: 16px;
+		}
+		.count {
+			font-size: 14px;
+			padding: 2px 10px;
+		}
+		.tree-header-label {
+			font-size: 16px;
+		}
+		.loading-msg,
+		.error-msg {
+			font-size: 16px;
+		}
+	}
 </style>
