@@ -45,10 +45,10 @@ function createTocOpen() {
 
 export const tocOpen = createTocOpen();
 
-/** Stage 2 document type definitions — single source of truth for the type
- * vocabulary the UI knows about. Server may ship additional types in future
- * (the doc_types.yaml vocabulary block is open-ended); unknown values fall
- * through to "show by default" via {@link typeFilters.isVisible}. */
+/** Document type vocabulary. Kept as a frontend mirror of the backend's
+ * `doc_type` field, used by the search panel's type-select dropdown. The
+ * per-type pill filter UI and the inline type badges were removed; the
+ * vocabulary itself stays because the search filter still references it. */
 export const DOC_TYPES = [
  { key: "documentation", label: "Documentation" },
  { key: "journal", label: "Journal" },
@@ -57,49 +57,6 @@ export const DOC_TYPES = [
 ] as const;
 
 export type DocTypeKey = (typeof DOC_TYPES)[number]["key"];
-
-const TYPE_FILTER_STORAGE_KEY = "doc-type-filters";
-
-function loadTypeFilters(): Record<DocTypeKey, boolean> {
- const defaults: Record<string, boolean> = {};
- for (const t of DOC_TYPES) defaults[t.key] = true;
- if (typeof localStorage === "undefined") return defaults as Record<DocTypeKey, boolean>;
- try {
-  const stored = JSON.parse(localStorage.getItem(TYPE_FILTER_STORAGE_KEY) || "{}");
-  for (const t of DOC_TYPES) {
-   if (typeof stored[t.key] === "boolean") defaults[t.key] = stored[t.key];
-  }
- } catch {
-  /* use defaults */
- }
- return defaults as Record<DocTypeKey, boolean>;
-}
-
-function createTypeFilters() {
- let filters = $state<Record<DocTypeKey, boolean>>(loadTypeFilters());
-
- return {
-  get value() {
-   return filters;
-  },
-  toggle(key: DocTypeKey) {
-   filters = { ...filters, [key]: !filters[key] };
-   if (typeof localStorage !== "undefined") {
-    localStorage.setItem(TYPE_FILTER_STORAGE_KEY, JSON.stringify(filters));
-   }
-  },
-  /** Returns true for any value not in the known vocabulary so docs that
-   * predate Stage 2 (or that the server hasn't classified yet) stay visible
-   * rather than disappearing silently. */
-  isVisible(type: string | null | undefined): boolean {
-   if (!type) return true;
-   if (!(type in filters)) return true;
-   return filters[type as DocTypeKey];
-  },
- };
-}
-
-export const typeFilters = createTypeFilters();
 
 const EXCLUDE_NOT_DOCS_STORAGE_KEY = "exclude-not-docs";
 
@@ -126,85 +83,9 @@ function createExcludeNotDocs() {
  };
 }
 
-/** Stage 2 W2.8 shared state for the "exclude non-documentation files"
- * toggle. Used by SearchPanel today; Stage 3 W3.6 will hook the chat view to
- * the same store so the two views stay in sync. */
+/** Shared state for the SearchPanel's "exclude non-documentation files"
+ * toggle — sends `exclude_types=not-docs` to the backend search endpoint. */
 export const excludeNotDocs = createExcludeNotDocs();
-
-/** Location-based category vocabulary. Distinct from `DOC_TYPES`: these are
- * client-side path classifications, not server-side doc types. The pill row
- * is purely additive — the underlying `TreeDocument.type` is unaffected. */
-export const CATEGORY_FILTERS = [
-	{ key: "bookmarks", label: "Bookmarks" },
-	{ key: "engineering-team", label: "Engineering team" },
-	{ key: "learning-journal", label: "Learning journal" },
-	{ key: "dev-journal", label: "Dev journal" },
-	{ key: "root-docs", label: "Root docs" },
-] as const;
-
-export type CategoryKey = (typeof CATEGORY_FILTERS)[number]["key"];
-
-/** Path → category classifier. Returns the first matching category from path
- * structure, or null if none match. `bookmarks` is never returned here —
- * bookmark membership is determined by `doc_id`, not path, and is handled
- * by the sidebar at render time. */
-export function categoryOf(file_path: string): Exclude<CategoryKey, "bookmarks"> | null {
-	if (file_path.startsWith(".engineering-team/")) return "engineering-team";
-	if (file_path.startsWith("journal/")) return "dev-journal";
-	if (file_path.startsWith("learning/")) return "learning-journal";
-	if (!file_path.includes("/")) return "root-docs";
-	return null;
-}
-
-const CATEGORY_FILTER_STORAGE_KEY = "category-filters";
-
-function loadCategoryFilters(): Record<CategoryKey, boolean> {
-	const defaults: Record<string, boolean> = {};
-	for (const c of CATEGORY_FILTERS) defaults[c.key] = false;
-	if (typeof localStorage === "undefined") return defaults as Record<CategoryKey, boolean>;
-	try {
-		const stored = JSON.parse(localStorage.getItem(CATEGORY_FILTER_STORAGE_KEY) || "{}");
-		for (const c of CATEGORY_FILTERS) {
-			if (typeof stored[c.key] === "boolean") defaults[c.key] = stored[c.key];
-		}
-	} catch {
-		/* use defaults */
-	}
-	return defaults as Record<CategoryKey, boolean>;
-}
-
-function createCategoryFilters() {
-	let filters = $state<Record<CategoryKey, boolean>>(loadCategoryFilters());
-
-	return {
-		get value() {
-			return filters;
-		},
-		toggle(key: CategoryKey) {
-			filters = { ...filters, [key]: !filters[key] };
-			if (typeof localStorage !== "undefined") {
-				localStorage.setItem(CATEGORY_FILTER_STORAGE_KEY, JSON.stringify(filters));
-			}
-		},
-		/** True if any category is currently active. When false, the filter is
-		 * "off" and every file passes through. */
-		get anyActive(): boolean {
-			return Object.values(filters).some((v) => v);
-		},
-		/** Path-based visibility. `bookmarks` is intentionally ignored here —
-		 * the sidebar layers bookmark visibility on top after computing this. */
-		isVisible(file_path: string): boolean {
-			if (!this.anyActive) return true;
-			const cat = categoryOf(file_path);
-			if (cat && filters[cat]) return true;
-			return false;
-		},
-	};
-}
-
-/** Second filter row in the sidebar. Defaults all off (the filter is opt-in);
- * when nothing is active, every file passes through. */
-export const categoryFilters = createCategoryFilters();
 
 const SIDEBAR_EXPANDED_STORAGE_KEY = "sidebar-expanded-sources";
 

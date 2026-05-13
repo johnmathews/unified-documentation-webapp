@@ -6,7 +6,7 @@
   - `api.ts` - Client-side API functions (types + fetch wrappers)
   - `links.ts` - Document link resolution (rewrites relative markdown links to app URLs)
   - `tree.ts` - Pure helpers that build a nested `FolderNode` tree from a flat list of `TreeDocument`
-  - `stores.svelte.ts` - Shared reactive state: current doc ID, sidebar/chat state, **`DOC_TYPES` + `typeFilters`** (Stage 2 per-document type filter, persists to `doc-type-filters` localStorage key), and **`excludeNotDocs`** (Stage 2 W2.8 search toggle, persists to `exclude-not-docs`).
+  - `stores.svelte.ts` - Shared reactive state: current doc ID, sidebar expansion state, `DOC_TYPES` (vocabulary used by SearchPanel's type-select dropdown), and `excludeNotDocs` (SearchPanel "exclude non-documentation files" toggle, persists to `exclude-not-docs` localStorage key).
   - `server/api.ts` - Server-side proxy utilities
   - `components/` - Svelte components (Sidebar, TreeNode, SearchPanel, ChatPanel, …)
 - `src/routes/` - SvelteKit pages and API proxy routes
@@ -28,7 +28,7 @@
 - **Dark theme** with CSS custom properties
 - **Responsive** — Desktop (3 panels), tablet (overlay drawers), phone (85%-width sidebar with backdrop, swipe gestures, 44px touch targets, safe-area-insets)
 - **Folder tree per source** — Sidebar and per-source pages render the actual filesystem structure of each source repo via `TreeNode.svelte` (a recursive collapsible component) and `buildFolderTree` (pure helper in `src/lib/tree.ts`). Source-tree data comes from `GET /api/sources/tree` (bulk) and `GET /api/sources/:name/tree` (single).
-- **Per-document types** — Stage 2 replaces the legacy nine-category classifier with backend-driven `type` fields (`documentation`, `journal`, `prompt`, `not-docs`). `TypeBadge.svelte` renders the badge; `typeFilters` (in `stores.svelte.ts`) drives the sidebar/source-page filter UI; the `excludeNotDocs` toggle in SearchPanel sends `exclude_types=not-docs` to the backend. The orphan routes (`/root-docs`, `/journal`, `/learning-journal`, `/engineering-team`, `/source/[name]/[category]/`) were deleted in Stage 2 alongside `CATEGORIES`, `categoryFilters`, `categorizeFilePath`, and the legacy `TreeSource` / `fetchTree` shape.
+- **Per-document types** — The backend classifies each doc into one of `documentation`, `journal`, `prompt`, or `not-docs` and ships the value as `type` on every API payload. The frontend uses this vocabulary only in SearchPanel (a type-select dropdown and an "exclude non-documentation files" checkbox that maps to `exclude_types=not-docs`). The earlier per-document filter pills, location-category pills, and inline type badges in the tree were removed — they added visual noise without enough value to justify the complexity.
 - **Document link resolution** — Relative markdown links (e.g. `[text](other.md)`) are rewritten at render time by `src/lib/links.ts`. Links to `.md` files resolve to `/doc/{docId}`, other files to `/api/files/{docId}`. The original markdown is unchanged, so links still work on GitHub and locally
 
 ## Backend Dependency

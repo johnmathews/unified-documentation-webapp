@@ -2,9 +2,8 @@
 	import type { FolderNode } from "$lib/tree";
 	import type { TreeDocument } from "$lib/api";
 	import { displayTitle } from "$lib/titles";
-	import { currentDocId, typeFilters } from "$lib/stores.svelte";
+	import { currentDocId } from "$lib/stores.svelte";
 	import TreeNode from "./TreeNode.svelte";
-	import TypeBadge from "./TypeBadge.svelte";
 
 	type Props = {
 		node: FolderNode;
@@ -12,10 +11,6 @@
 		expanded?: boolean | null;
 		sortDocs?: (docs: TreeDocument[]) => TreeDocument[];
 		onNavigate?: () => void;
-		// Optional custom visibility predicate. When omitted, only the
-		// doc-type filter applies. Sidebar passes a composed predicate that
-		// also folds in the location-category row and inline bookmarks.
-		filterDoc?: (doc: TreeDocument) => boolean;
 	};
 
 	let {
@@ -24,13 +19,9 @@
 		expanded = null,
 		sortDocs,
 		onNavigate = () => {},
-		filterDoc,
 	}: Props = $props();
 
-	const visibleDocs = $derived(
-		node.docs.filter((d) => (filterDoc ? filterDoc(d) : typeFilters.isVisible(d.type))),
-	);
-	const sortedDocs = $derived(sortDocs ? sortDocs(visibleDocs) : visibleDocs);
+	const sortedDocs = $derived(sortDocs ? sortDocs(node.docs) : node.docs);
 
 	// Start every folder collapsed by default. The parent can override via the
 	// `expanded` prop (Sidebar's expand-all / collapse-all controls), and the
@@ -77,7 +68,7 @@
 				<path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
 			</svg>
 			<span class="folder-name">{node.name}</span>
-			<span class="count">{visibleDocs.length + node.children.length}</span>
+			<span class="count">{node.docs.length + node.children.length}</span>
 		</button>
 	{/if}
 
@@ -90,7 +81,6 @@
 					{expanded}
 					{sortDocs}
 					{onNavigate}
-					{filterDoc}
 				/>
 			{/each}
 
@@ -107,7 +97,6 @@
 						<polyline points="14 2 14 8 20 8" />
 					</svg>
 					<span class="leaf-title">{displayTitle(doc)}</span>
-					<TypeBadge type={doc.type} />
 				</a>
 			{/each}
 		</div>

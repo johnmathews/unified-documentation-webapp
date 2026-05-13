@@ -4,7 +4,7 @@
 	import { buildFolderTree, collectAllDocs, type FolderNode } from "$lib/tree";
 	import Breadcrumbs from "$lib/components/Breadcrumbs.svelte";
 	import TreeNode from "$lib/components/TreeNode.svelte";
-	import { currentDocId, currentPageContext, DOC_TYPES, typeFilters } from "$lib/stores.svelte";
+	import { currentDocId, currentPageContext } from "$lib/stores.svelte";
 	import { displayTitle, displaySource } from "$lib/titles";
 
 	let source = $state<SourceTree | null>(null);
@@ -101,19 +101,6 @@
 			<div class="stats">
 				<span class="stat-tag">{totalDocs} docs</span>
 			</div>
-			<div class="type-filters" role="group" aria-label="Filter by type">
-				{#each DOC_TYPES as t (t.key)}
-					<button
-						type="button"
-						class="type-filter-chip type-filter-chip--{t.key}"
-						class:active={typeFilters.value[t.key]}
-						aria-pressed={typeFilters.value[t.key]}
-						onclick={() => typeFilters.toggle(t.key)}
-					>
-						{t.label}
-					</button>
-				{/each}
-			</div>
 			<div class="expand-collapse">
 				<button class="tree-text-btn" onclick={expandAll}>expand all</button>
 				<span class="tree-text-sep">|</span>
@@ -178,59 +165,6 @@
 		color: var(--text-secondary);
 	}
 
-	.type-filters {
-		display: flex;
-		flex-wrap: wrap;
-		gap: 6px;
-		flex: 1;
-		justify-content: center;
-	}
-
-	.type-filter-chip {
-		display: inline-flex;
-		align-items: center;
-		min-height: 24px;
-		padding: 4px 12px;
-		border-radius: 999px;
-		border: 1px solid color-mix(in srgb, var(--text-secondary) 35%, transparent);
-		background: color-mix(in srgb, var(--text-secondary) 10%, transparent);
-		color: var(--text);
-		font-size: 14px;
-		font-weight: 500;
-		cursor: pointer;
-		transition: background 0.1s, color 0.1s, border-color 0.1s;
-	}
-
-	.type-filter-chip:hover {
-		background: color-mix(in srgb, var(--text-secondary) 18%, transparent);
-	}
-
-	/* Active states keep text at `var(--text)` for crisp contrast in both
-	   themes; the tinted background is the visual indicator. */
-	.type-filter-chip--documentation.active {
-		color: var(--text);
-		border-color: color-mix(in srgb, var(--accent) 60%, transparent);
-		background: color-mix(in srgb, var(--accent) 22%, transparent);
-	}
-
-	.type-filter-chip--journal.active {
-		color: var(--text);
-		border-color: color-mix(in srgb, #5b8def 60%, transparent);
-		background: color-mix(in srgb, #5b8def 24%, transparent);
-	}
-
-	.type-filter-chip--prompt.active {
-		color: var(--text);
-		border-color: color-mix(in srgb, #d4a017 60%, transparent);
-		background: color-mix(in srgb, #d4a017 24%, transparent);
-	}
-
-	.type-filter-chip--not-docs.active {
-		color: var(--text);
-		border-color: color-mix(in srgb, var(--text-secondary) 70%, transparent);
-		background: color-mix(in srgb, var(--text-secondary) 28%, transparent);
-	}
-
 	.sort-toggle {
 		display: flex;
 		border: 1px solid var(--border);
@@ -293,9 +227,9 @@
 		padding: 0;
 	}
 
-	/* The tree components (TreeNode, TypeBadge) use compact sizes tuned for
-	   the sidebar. On the wide /source/[name] page they read as too small,
-	   so bump them via scoped :global overrides — sidebar is unaffected. */
+	/* TreeNode uses compact sizes tuned for the sidebar. On the wide
+	   /source/[name] page they read as too small, so bump them via scoped
+	   :global overrides — sidebar is unaffected. */
 	.tree-container :global(.leaf-title) {
 		font-size: 16px;
 	}
@@ -314,11 +248,6 @@
 
 	.tree-container :global(.count) {
 		font-size: 13px;
-	}
-
-	.tree-container :global(.type-badge) {
-		font-size: 12px;
-		padding: 2px 8px;
 	}
 
 	@media (max-width: 640px) {

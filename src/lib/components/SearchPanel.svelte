@@ -8,7 +8,6 @@
  } from "$lib/api";
  import { displaySource, displayTitle } from "$lib/titles";
  import { currentDocId, DOC_TYPES, excludeNotDocs } from "$lib/stores.svelte";
- import TypeBadge from "./TypeBadge.svelte";
 
  let { onNavigate = () => {} }: { onNavigate?: () => void } = $props();
 
@@ -488,7 +487,6 @@
      <span class="result-title">{displayTitle(result)}</span>
      <div class="result-meta">
       <span class="source-tag">{displaySource(result.source)}</span>
-      <TypeBadge type={result.type} />
       {#if result.created_at}
        <span class="result-date">Created {formatDate(result.created_at)}</span>
       {/if}

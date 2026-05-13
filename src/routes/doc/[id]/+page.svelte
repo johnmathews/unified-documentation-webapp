@@ -4,7 +4,6 @@
  import { currentDocId, currentDocToc, tocOpen } from "$lib/stores.svelte";
  import Breadcrumbs from "$lib/components/Breadcrumbs.svelte";
  import BookmarkButton from "$lib/components/BookmarkButton.svelte";
- import TypeBadge from "$lib/components/TypeBadge.svelte";
  import FloatingDocControls from "$lib/components/FloatingDocControls.svelte";
  import DocToc from "$lib/components/DocToc.svelte";
  import HighlightPopover from "$lib/components/HighlightPopover.svelte";
@@ -119,7 +118,6 @@
     <div class="doc-meta-row">
      <BookmarkButton docId={doc.doc_id} bind:bookmarked={isBookmarked} />
      <a href="/source/{encodeURIComponent(doc.source)}" class="source-badge">{displaySource(doc.source)}</a>
-     <TypeBadge type={doc.type} />
      <span class="file-path">{doc.file_path}</span>
     </div>
     {#if doc.created_at || doc.modified_at || stats}
