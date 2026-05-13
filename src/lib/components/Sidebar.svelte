@@ -1,8 +1,14 @@
 <script lang="ts">
-	import { fetchAllSourcesTree, type SourceTree } from "$lib/api";
+	import { fetchAllSourcesTree, listBookmarks, type SourceTree, type TreeDocument } from "$lib/api";
 	import { buildFolderTree, collectAllDocs, type FolderNode } from "$lib/tree";
 	import { displaySource } from "$lib/titles";
-	import { DOC_TYPES, typeFilters } from "$lib/stores.svelte";
+	import {
+		CATEGORY_FILTERS,
+		categoryFilters,
+		DOC_TYPES,
+		sidebarCollapse,
+		typeFilters,
+	} from "$lib/stores.svelte";
 	import TreeNode from "./TreeNode.svelte";
 
 	let { onNavigate = () => {} }: { onNavigate?: () => void } = $props();
@@ -10,7 +16,32 @@
 	let sources: SourceTree[] = $state([]);
 	let loading = $state(true);
 	let error = $state("");
-	let expandedSources: Record<string, boolean> = $state({});
+	let bookmarkedDocIds: Set<string> = $state(new Set());
+	let bookmarksFetched = $state(false);
+
+	const bookmarksActive = $derived(categoryFilters.value.bookmarks === true);
+
+	// Fetch bookmark IDs lazily — only when the bookmarks pill flips on.
+	// Cached across toggles for the lifetime of the component.
+	$effect(() => {
+		if (!bookmarksActive || bookmarksFetched) return;
+		bookmarksFetched = true;
+		listBookmarks()
+			.then((entries) => {
+				bookmarkedDocIds = new Set(entries.map((b) => b.doc_id));
+			})
+			.catch(() => {
+				/* leave the set empty — the pill simply hides everything,
+				   which is a visible-but-recoverable failure mode. */
+			});
+	});
+
+	function filterDoc(doc: TreeDocument): boolean {
+		if (!typeFilters.isVisible(doc.type)) return false;
+		if (!categoryFilters.anyActive) return true;
+		if (bookmarksActive && bookmarkedDocIds.has(doc.doc_id)) return true;
+		return categoryFilters.isVisible(doc.file_path);
+	}
 
 	// One-shot expand/collapse override. null = each TreeNode self-manages.
 	let forceExpanded: boolean | null = $state(null);
@@ -34,13 +65,6 @@
 		try {
 			const payload = await fetchAllSourcesTree();
 			sources = payload.sources;
-			// Expand the first source by default; collapse the rest. With many
-			// sources, an all-expanded sidebar is overwhelming.
-			for (const s of sources) {
-				if (!(s.source in expandedSources)) {
-					expandedSources[s.source] = sources.length === 1 || sources.indexOf(s) === 0;
-				}
-			}
 		} catch (e) {
 			error = e instanceof Error ? e.message : "Failed to load";
 		} finally {
@@ -49,24 +73,28 @@
 	}
 
 	function toggleSource(source: string) {
-		expandedSources[source] = !expandedSources[source];
+		sidebarCollapse.toggle(source);
 	}
 
 	function expandAll() {
-		for (const s of sources) expandedSources[s.source] = true;
+		const updates: Record<string, boolean> = {};
+		for (const s of sources) updates[s.source] = true;
+		sidebarCollapse.setMany(updates);
 		forceExpanded = true;
 	}
 
 	function collapseAll() {
-		for (const s of sources) expandedSources[s.source] = false;
+		const updates: Record<string, boolean> = {};
+		for (const s of sources) updates[s.source] = false;
+		sidebarCollapse.setMany(updates);
 		forceExpanded = false;
 	}
 
 	const allExpanded = $derived(
-		sources.length > 0 && sources.every((s) => expandedSources[s.source]),
+		sources.length > 0 && sources.every((s) => sidebarCollapse.isExpanded(s.source)),
 	);
 	const allCollapsed = $derived(
-		sources.length > 0 && sources.every((s) => !expandedSources[s.source]),
+		sources.length > 0 && sources.every((s) => !sidebarCollapse.isExpanded(s.source)),
 	);
 
 	const trees: Record<string, FolderNode> = $derived.by(() => {
@@ -117,12 +145,26 @@
 				{/each}
 			</div>
 
+			<div class="type-filters category-filters" role="group" aria-label="Filter by category">
+				{#each CATEGORY_FILTERS as c (c.key)}
+					<button
+						type="button"
+						class="type-filter-chip category-filter-chip"
+						class:active={categoryFilters.value[c.key]}
+						aria-pressed={categoryFilters.value[c.key]}
+						onclick={() => categoryFilters.toggle(c.key)}
+					>
+						{c.label}
+					</button>
+				{/each}
+			</div>
+
 			{#each sources as source (source.source)}
 				<div class="tree-source">
 					<button class="tree-toggle" onclick={() => toggleSource(source.source)}>
 						<svg
 							class="chevron"
-							class:expanded={expandedSources[source.source]}
+							class:expanded={sidebarCollapse.isExpanded(source.source)}
 							width="14"
 							height="14"
 							viewBox="0 0 24 24"
@@ -136,13 +178,14 @@
 						<span class="count">{totalDocs(source.source)}</span>
 					</button>
 
-					{#if expandedSources[source.source] && trees[source.source]}
+					{#if sidebarCollapse.isExpanded(source.source) && trees[source.source]}
 						<div class="source-tree-body">
 							<TreeNode
 								node={trees[source.source]}
 								depth={0}
 								expanded={forceExpanded}
 								{onNavigate}
+								{filterDoc}
 							/>
 						</div>
 					{/if}
@@ -223,55 +266,66 @@
 	.type-filters {
 		display: flex;
 		flex-wrap: wrap;
-		gap: 4px;
-		padding: 4px 12px 8px;
+		gap: 6px;
+		padding: 6px 12px 8px;
 	}
 
 	.type-filter-chip {
 		display: inline-flex;
 		align-items: center;
-		padding: 2px 8px;
+		min-height: 24px;
+		padding: 4px 12px;
 		border-radius: 999px;
-		border: 1px solid color-mix(in srgb, var(--text-secondary) 25%, transparent);
-		background: transparent;
-		color: var(--text-secondary);
-		font-size: 11px;
+		border: 1px solid color-mix(in srgb, var(--text-secondary) 35%, transparent);
+		background: color-mix(in srgb, var(--text-secondary) 10%, transparent);
+		color: var(--text);
+		font-size: 14px;
 		font-weight: 500;
 		cursor: pointer;
-		opacity: 0.55;
-		transition: opacity 0.1s, background 0.1s, color 0.1s, border-color 0.1s;
+		transition: background 0.1s, color 0.1s, border-color 0.1s;
 	}
 
 	.type-filter-chip:hover {
-		opacity: 0.85;
+		background: color-mix(in srgb, var(--text-secondary) 18%, transparent);
 	}
 
-	.type-filter-chip.active {
-		opacity: 1;
-	}
-
+	/* Active states keep text at `var(--text)` for crisp contrast in both
+	   themes; the tinted background is the visual indicator. */
 	.type-filter-chip--documentation.active {
-		color: var(--accent);
-		border-color: color-mix(in srgb, var(--accent) 40%, transparent);
-		background: color-mix(in srgb, var(--accent) 12%, transparent);
+		color: var(--text);
+		border-color: color-mix(in srgb, var(--accent) 60%, transparent);
+		background: color-mix(in srgb, var(--accent) 22%, transparent);
 	}
 
 	.type-filter-chip--journal.active {
-		color: #6ea2ff;
-		border-color: color-mix(in srgb, #5b8def 40%, transparent);
-		background: color-mix(in srgb, #5b8def 14%, transparent);
+		color: var(--text);
+		border-color: color-mix(in srgb, #5b8def 60%, transparent);
+		background: color-mix(in srgb, #5b8def 24%, transparent);
 	}
 
 	.type-filter-chip--prompt.active {
-		color: #e2b743;
-		border-color: color-mix(in srgb, #d4a017 40%, transparent);
-		background: color-mix(in srgb, #d4a017 14%, transparent);
+		color: var(--text);
+		border-color: color-mix(in srgb, #d4a017 60%, transparent);
+		background: color-mix(in srgb, #d4a017 24%, transparent);
 	}
 
 	.type-filter-chip--not-docs.active {
 		color: var(--text);
-		border-color: color-mix(in srgb, var(--text-secondary) 50%, transparent);
-		background: color-mix(in srgb, var(--text-secondary) 14%, transparent);
+		border-color: color-mix(in srgb, var(--text-secondary) 70%, transparent);
+		background: color-mix(in srgb, var(--text-secondary) 28%, transparent);
+	}
+
+	/* Second row: location categories share the chip shape but use a single
+	   accent (brand blue) for the active state, so the row reads as a unified
+	   secondary filter rather than competing with the doc-type colors above. */
+	.category-filters {
+		padding-top: 0;
+	}
+
+	.category-filter-chip.active {
+		color: var(--text);
+		border-color: color-mix(in srgb, var(--brand) 60%, transparent);
+		background: color-mix(in srgb, var(--brand) 22%, transparent);
 	}
 
 	.tree-source {

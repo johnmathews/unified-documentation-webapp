@@ -155,7 +155,7 @@
 	.type-filters {
 		display: flex;
 		flex-wrap: wrap;
-		gap: 4px;
+		gap: 6px;
 		flex: 1;
 		justify-content: center;
 	}
@@ -163,48 +163,46 @@
 	.type-filter-chip {
 		display: inline-flex;
 		align-items: center;
-		padding: 2px 10px;
+		min-height: 24px;
+		padding: 4px 12px;
 		border-radius: 999px;
-		border: 1px solid color-mix(in srgb, var(--text-secondary) 25%, transparent);
-		background: transparent;
-		color: var(--text-secondary);
-		font-size: 12px;
+		border: 1px solid color-mix(in srgb, var(--text-secondary) 35%, transparent);
+		background: color-mix(in srgb, var(--text-secondary) 10%, transparent);
+		color: var(--text);
+		font-size: 14px;
 		font-weight: 500;
 		cursor: pointer;
-		opacity: 0.55;
-		transition: opacity 0.1s, background 0.1s, color 0.1s, border-color 0.1s;
+		transition: background 0.1s, color 0.1s, border-color 0.1s;
 	}
 
 	.type-filter-chip:hover {
-		opacity: 0.85;
+		background: color-mix(in srgb, var(--text-secondary) 18%, transparent);
 	}
 
-	.type-filter-chip.active {
-		opacity: 1;
-	}
-
+	/* Active states keep text at `var(--text)` for crisp contrast in both
+	   themes; the tinted background is the visual indicator. */
 	.type-filter-chip--documentation.active {
-		color: var(--accent);
-		border-color: color-mix(in srgb, var(--accent) 40%, transparent);
-		background: color-mix(in srgb, var(--accent) 12%, transparent);
+		color: var(--text);
+		border-color: color-mix(in srgb, var(--accent) 60%, transparent);
+		background: color-mix(in srgb, var(--accent) 22%, transparent);
 	}
 
 	.type-filter-chip--journal.active {
-		color: #6ea2ff;
-		border-color: color-mix(in srgb, #5b8def 40%, transparent);
-		background: color-mix(in srgb, #5b8def 14%, transparent);
+		color: var(--text);
+		border-color: color-mix(in srgb, #5b8def 60%, transparent);
+		background: color-mix(in srgb, #5b8def 24%, transparent);
 	}
 
 	.type-filter-chip--prompt.active {
-		color: #e2b743;
-		border-color: color-mix(in srgb, #d4a017 40%, transparent);
-		background: color-mix(in srgb, #d4a017 14%, transparent);
+		color: var(--text);
+		border-color: color-mix(in srgb, #d4a017 60%, transparent);
+		background: color-mix(in srgb, #d4a017 24%, transparent);
 	}
 
 	.type-filter-chip--not-docs.active {
 		color: var(--text);
-		border-color: color-mix(in srgb, var(--text-secondary) 50%, transparent);
-		background: color-mix(in srgb, var(--text-secondary) 14%, transparent);
+		border-color: color-mix(in srgb, var(--text-secondary) 70%, transparent);
+		background: color-mix(in srgb, var(--text-secondary) 28%, transparent);
 	}
 
 	.sort-toggle {

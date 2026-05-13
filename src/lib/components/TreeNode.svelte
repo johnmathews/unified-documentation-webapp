@@ -12,6 +12,10 @@
 		expanded?: boolean | null;
 		sortDocs?: (docs: TreeDocument[]) => TreeDocument[];
 		onNavigate?: () => void;
+		// Optional custom visibility predicate. When omitted, only the
+		// doc-type filter applies. Sidebar passes a composed predicate that
+		// also folds in the location-category row and inline bookmarks.
+		filterDoc?: (doc: TreeDocument) => boolean;
 	};
 
 	let {
@@ -20,13 +24,12 @@
 		expanded = null,
 		sortDocs,
 		onNavigate = () => {},
+		filterDoc,
 	}: Props = $props();
 
-	// Apply the type filter as the outermost transform — sortDocs runs over
-	// the visible set so its ordering doesn't reference docs the user is
-	// hiding. Docs with no type (server hasn't classified them yet) are
-	// always shown (see typeFilters.isVisible).
-	const visibleDocs = $derived(node.docs.filter((d) => typeFilters.isVisible(d.type)));
+	const visibleDocs = $derived(
+		node.docs.filter((d) => (filterDoc ? filterDoc(d) : typeFilters.isVisible(d.type))),
+	);
 	const sortedDocs = $derived(sortDocs ? sortDocs(visibleDocs) : visibleDocs);
 
 	// Start every folder collapsed by default. The parent can override via the
@@ -87,6 +90,7 @@
 					{expanded}
 					{sortDocs}
 					{onNavigate}
+					{filterDoc}
 				/>
 			{/each}
 
