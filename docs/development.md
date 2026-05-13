@@ -70,13 +70,16 @@ src/
   lib/
     api.ts                # Client-side API types, fetch wrappers, SSE streaming
     sse.test.ts           # Tests for SSE parser and streaming chat
-    stores.svelte.ts      # Shared reactive state (doc ID, category filters, TOC entries, sidebar tab)
+    tree.ts               # Pure helpers that build a nested FolderNode from a flat doc list
+    tree.test.ts          # Unit tests for buildFolderTree / collectAllDocs
+    stores.svelte.ts      # Shared reactive state (doc ID, sidebar/chat state, legacy category filters)
     colors.ts             # Deterministic source tag colors
     titles.ts             # Display formatting for sources and titles
     server/
       api.ts              # Server-side proxy utilities (proxyGet/proxyPost)
     components/
-      Sidebar.svelte      # File tree navigation + Files/Contents tab strip + category filters
+      Sidebar.svelte      # Source-rooted folder tree navigation (uses TreeNode)
+      TreeNode.svelte     # Recursive collapsible folder/leaf renderer
       TocPanel.svelte     # Table of contents for the current document (active heading tracking)
       FloatingDocControls.svelte  # Bottom-right pill: scroll progress + bookmark toggle
       SearchPanel.svelte   # Search with source and date filters

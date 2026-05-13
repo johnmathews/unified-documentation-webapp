@@ -29,12 +29,15 @@ documentation.
   `Cmd/Ctrl+.` (table of contents), and `?` opens a modal listing all shortcuts (suppressed when focus is in an
   input/textarea/contenteditable so search and chat keep accepting `?` as text). Shortcuts ignore Shift/Alt modifiers to
   avoid colliding with browser/devtools combos.
-- **Sidebar**: Single-purpose Files panel — tree navigation organized by Source > Category (Root Docs/Documentation
-  Directory/Development Journal/Learning Journal/Engineering Team/Research/Skills/Runbooks/PDF) > Document, with
-  expand/collapse controls inside the tree section. Each source has a deterministic color tag for visual distinction. All
-  nine categories are collapsible sections with document counts. A collapsible "Filter categories" section with GOV.UK-style
-  small checkboxes allows globally toggling category visibility (persisted to localStorage). The `CATEGORIES` constant in
-  `stores.svelte.ts` is the single source of truth for category definitions.
+- **Sidebar**: Single-purpose Files panel — tree navigation organized by Source > Folder > Document, mirroring the
+  actual on-disk repo structure. Sources collapse independently; the per-source body renders via `TreeNode.svelte`, a
+  recursive component that splits each document's `file_path` into nested folder nodes. The top two folder levels
+  auto-expand; deeper levels collapse by default. Expand-all / collapse-all controls operate via a one-shot
+  `forceExpanded` prop that each `TreeNode` honours once and then releases back to local control. Source-tree data
+  comes from `GET /api/sources/tree` (bulk) on first render; the client-side `buildFolderTree` helper
+  (`src/lib/tree.ts`) turns the flat `{file_path}` list into the nested `FolderNode` tree. A type-based filter
+  panel replaces the previous nine-category filter (added in a follow-up stage; until then, no filter panel is
+  shown).
 - **Mobile Responsiveness**: Full-screen modal sidebar and chat panels on mobile (100% width in both portrait and
   landscape) with slide-in/out animations for both panels, swipe gestures (edge-swipe to open/close panels), 44px minimum
   touch targets, safe-area-inset handling for notched devices (top bar, content, sidebar, and chat input all respect
@@ -76,9 +79,11 @@ documentation.
   system status badge (Healthy/Degraded/Error, links to `/status`) is shown between the masthead and the table, and
   each row shows its per-source status badge plus a relative time-ago label beside the last-updated date. Health data
   is fetched in parallel with the tree and degrades gracefully if `/api/health` fails.
-- **Source Pages**: Per-source view at `/source/<name>` showing documents grouped by category with a Recent/A-Z sort
-  toggle. Each document shows both edited and created dates (inline, no labels). Categories shown: Root Docs,
-  Documentation, Development Journal, Learning Journal, Engineering Team, Research, PDF.
+- **Source Pages**: Per-source view at `/source/<name>` showing the full folder tree (expanded by default) rendered via
+  `TreeNode.svelte`. A Recent / A-Z sort toggle reorders the leaves at every folder depth — the comparator is passed
+  down as a `sortDocs` prop on `TreeNode`. Data comes from `GET /api/sources/{name}/tree` (404 if the source is not
+  configured). The legacy `/source/[name]/[category]/` route still exists but is now orphaned from the source-page
+  rewrite — to be retired alongside the rest of the category system in a follow-up stage.
 - **Journal Timeline**: Cross-project chronological view of all journal entries at `/journal`, with source filter buttons
 - **Learning Journal**: Cross-project chronological view of learning entries at `/learning-journal`, with source filters.
   Backend identifies these as markdown files in `learning/` directories.
@@ -136,7 +141,9 @@ errors it produced.
 
 The MCP server provides REST API endpoints alongside its existing MCP tools:
 
-- `GET /api/tree` — Document tree organized by source and category
+- `GET /api/tree` — Legacy category-grouped document tree (retained for backwards compatibility)
+- `GET /api/sources/tree` — Bulk per-source file listings used by the sidebar and home page
+- `GET /api/sources/:name/tree` — Single-source file listing used by per-source pages
 - `GET /api/documents/:doc_id` — Full document content
 - `GET /api/search?q=&source=&limit=` — Combined semantic search (ChromaDB) and keyword search on title/file_path (SQLite
   LIKE)
