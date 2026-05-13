@@ -14,6 +14,27 @@
 	type SortMode = "date" | "alpha";
 	let sortMode: SortMode = $state("date");
 
+	// One-shot expand/collapse override for the tree. null = each TreeNode
+	// self-manages (collapsed by default). Mirrors Sidebar.svelte's pattern.
+	let forceExpanded: boolean | null = $state(null);
+
+	$effect(() => {
+		if (forceExpanded !== null) {
+			const pending = forceExpanded;
+			queueMicrotask(() => {
+				if (forceExpanded === pending) forceExpanded = null;
+			});
+		}
+	});
+
+	function expandAll() {
+		forceExpanded = true;
+	}
+
+	function collapseAll() {
+		forceExpanded = false;
+	}
+
 	let sourceName = $derived(decodeURIComponent(page.params.name ?? ""));
 
 	$effect(() => {
@@ -93,6 +114,11 @@
 					</button>
 				{/each}
 			</div>
+			<div class="expand-collapse">
+				<button class="tree-text-btn" onclick={expandAll}>expand all</button>
+				<span class="tree-text-sep">|</span>
+				<button class="tree-text-btn" onclick={collapseAll}>collapse all</button>
+			</div>
 			<div class="sort-toggle">
 				<button class:active={sortMode === "date"} onclick={() => (sortMode = "date")}
 					>Recent</button
@@ -104,7 +130,7 @@
 		</div>
 
 		<div class="tree-container">
-			<TreeNode node={rootNode} depth={0} expanded={true} {sortDocs} />
+			<TreeNode node={rootNode} depth={0} expanded={forceExpanded} {sortDocs} />
 		</div>
 	</div>
 {/if}
@@ -235,8 +261,64 @@
 		background: var(--stat-tag-bg, rgba(128, 128, 128, 0.15));
 	}
 
+	.expand-collapse {
+		display: flex;
+		align-items: center;
+		gap: 5px;
+		flex-shrink: 0;
+	}
+
+	.tree-text-btn {
+		background: none;
+		border: none;
+		padding: 5px;
+		font-size: 14px;
+		color: var(--text-muted);
+		cursor: pointer;
+		transition: color 0.15s;
+		text-transform: lowercase;
+	}
+
+	.tree-text-btn:hover {
+		color: var(--text);
+	}
+
+	.tree-text-sep {
+		font-size: 14px;
+		color: var(--text-muted);
+		user-select: none;
+	}
+
 	.tree-container {
 		padding: 0;
+	}
+
+	/* The tree components (TreeNode, TypeBadge) use compact sizes tuned for
+	   the sidebar. On the wide /source/[name] page they read as too small,
+	   so bump them via scoped :global overrides — sidebar is unaffected. */
+	.tree-container :global(.leaf-title) {
+		font-size: 16px;
+	}
+
+	.tree-container :global(.tree-leaf) {
+		font-size: 16px;
+		padding-top: 5px;
+		padding-bottom: 5px;
+	}
+
+	.tree-container :global(.folder-toggle) {
+		font-size: 16px;
+		padding-top: 6px;
+		padding-bottom: 6px;
+	}
+
+	.tree-container :global(.count) {
+		font-size: 13px;
+	}
+
+	.tree-container :global(.type-badge) {
+		font-size: 12px;
+		padding: 2px 8px;
 	}
 
 	@media (max-width: 640px) {
