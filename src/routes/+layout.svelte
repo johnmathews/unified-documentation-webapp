@@ -588,6 +588,8 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+  flex-wrap: wrap;
+  row-gap: 6px;
   max-width: 1100px;
   margin: 0 auto;
   padding: 10px 15px;
@@ -994,6 +996,19 @@
 
   .govuk-service-nav__item {
    margin-right: 15px;
+  }
+ }
+
+ /* Narrow phones (≤480px): wrap the action cluster onto a second row so the
+    7 icons (each 44×44 for touch-target compliance) don't overlap the
+    "Library" wordmark. Below ~420px the on-row content (~416px) exceeds the
+    viewport; using 480px as the gate gives a safety margin across phone
+    sizes from 360 (Galaxy S20) up to 430 (iPhone 14 Pro Max). */
+ @media (max-width: 480px) {
+  .govuk-header__actions {
+   flex-basis: 100%;
+   min-width: 100%;
+   justify-content: flex-end;
   }
  }
 

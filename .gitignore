@@ -31,5 +31,8 @@ vite.config.ts.timestamp-*
 # Claude Code local config
 .claude/
 
+# Engineering-team skill session-local scratch (eval reports, plans, screenshots)
+.engineering-team/
+
 # Coverage reports
 coverage/
