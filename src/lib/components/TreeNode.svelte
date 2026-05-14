@@ -127,7 +127,12 @@
 	}
 
 	.folder-name {
-		flex: 1;
+		/* Shrink to content; don't grow. Without this the name absorbs all
+		   spare row width and pushes the count to the far right edge —
+		   fine in the 320px sidebar, but a wide gap that reads as
+		   disconnected on the /source/[name] page. min-width: 0 keeps
+		   ellipsis working on overly long names. */
+		min-width: 0;
 		overflow: hidden;
 		text-overflow: ellipsis;
 		white-space: nowrap;
@@ -146,6 +151,7 @@
 		font-size: 11px;
 		color: var(--text-secondary);
 		margin-left: 4px;
+		flex-shrink: 0;
 	}
 
 	.tree-leaf {

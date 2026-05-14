@@ -124,7 +124,10 @@
 
 <style>
 	.source-page {
-		max-width: 960px;
+		/* GOV.UK two-thirds (~680px) with a small allowance for the
+		   controls-row's three groups. Wider than this and the doc-count
+		   column on tree rows reads as disconnected from the folder name. */
+		max-width: 720px;
 		margin: 0 auto;
 	}
 	.status {

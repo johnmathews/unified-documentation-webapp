@@ -1,5 +1,29 @@
 # Documentation UI
 
+## Design principles
+
+The webapp UI follows the **GOV.UK Design System** as its north star. When in
+doubt — typography scale, spacing, colour, layout width, link styling,
+component patterns — copy GOV.UK. Deviate only with a stated reason.
+
+- [`docs/govuk-design-research.md`](docs/govuk-design-research.md) — the
+  authoritative reference. Default to it.
+- [`docs/brutalist-ui-implementation-plan.md`](docs/brutalist-ui-implementation-plan.md)
+  — companion document explaining how the GOV.UK system was applied to this
+  app (CSS variables, breakpoints, source-tag colours, dark mode).
+
+Practical defaults that follow from this:
+
+- Max page content width ≈ 1020px; main-content column ≈ two-thirds (≈680px).
+  Do not let content stretch to fill the viewport.
+- Body text 17–19px, headings on the GOV.UK scale (48 / 36 / 24 / 19 desktop;
+  32 / 27 / 21 / 19 mobile), line heights in multiples of 5px.
+- Links underlined and blue (`var(--link)`), with `var(--link-visited)` and
+  the GOV.UK yellow focus state.
+- No decorative shadows, gradients, or rounded corners. Every visual element
+  must solve a specific problem.
+- Mobile-first. Every view must be usable on a 375px phone screen.
+
 ## Project Structure
 
 - `src/lib/` - Shared library code
