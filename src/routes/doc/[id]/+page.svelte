@@ -198,7 +198,7 @@
  }
 
  .doc-layout {
-  max-width: 960px;
+  max-width: 720px;
   margin: 0 auto;
  }
 
@@ -206,12 +206,12 @@
   min-width: 0;
  }
 
- @media (min-width: 1200px) {
+ @media (min-width: 1024px) {
   .doc-layout.has-toc {
    display: grid;
-   grid-template-columns: minmax(0, 960px) 240px;
+   grid-template-columns: minmax(0, 720px) 240px;
    gap: 40px;
-   max-width: 1240px;
+   max-width: 1000px;
   }
 
   /* On desktop, pin the doc-header (bookmark, source, file path, dates,
