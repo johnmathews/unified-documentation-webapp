@@ -537,9 +537,10 @@
   border-radius: 0;
   color: var(--text);
   font-size: 16px;
+  line-height: 20px;
   font-family: inherit;
   outline: none;
-  min-height: 40px;
+  min-height: 44px;
  }
 
  .search-input:focus {
@@ -557,8 +558,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 40px;
-  min-height: 40px;
+  width: 44px;
+  min-height: 44px;
   background: var(--brand);
   border: 2px solid var(--brand);
   color: #fff;
@@ -591,9 +592,11 @@
  .exclude-toggle {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 10px;
   margin-top: 6px;
-  font-size: 13px;
+  min-height: 44px;
+  font-size: 16px;
+  line-height: 20px;
   color: var(--text-secondary);
   cursor: pointer;
  }
@@ -612,11 +615,13 @@
   align-items: center;
   gap: 8px;
   width: 100%;
+  min-height: 44px;
   padding: 10px 15px;
   background: none;
   border: none;
   color: var(--text-secondary);
   font-size: 16px;
+  line-height: 20px;
   font-weight: 700;
   text-align: left;
   cursor: pointer;
@@ -669,6 +674,7 @@
 
  .filter-group-legend {
   font-size: 16px;
+  line-height: 20px;
   font-weight: 700;
   color: var(--text);
   margin-bottom: 8px;
@@ -677,6 +683,7 @@
 
  .filter-hint {
   font-size: 14px;
+  line-height: 20px;
   color: var(--text-muted);
   margin: 0;
  }
@@ -688,8 +695,10 @@
 
  .filter-select {
   width: 100%;
+  min-height: 44px;
   padding: 8px 30px 8px 10px;
   font-size: 16px;
+  line-height: 20px;
   font-family: inherit;
   color: var(--text);
   background: var(--bg-body);
@@ -722,11 +731,12 @@
  }
 
  .date-row-label {
-  font-size: 14px;
+  font-size: 16px;
+  line-height: 20px;
   color: var(--text-secondary);
-  width: 45px;
+  width: 50px;
   flex-shrink: 0;
-  padding-bottom: 8px;
+  padding-bottom: 12px;
  }
 
  .date-inputs {
@@ -741,14 +751,17 @@
  }
 
  .date-input-label {
-  font-size: 12px;
+  font-size: 14px;
+  line-height: 20px;
   font-weight: 700;
   color: var(--text-secondary);
  }
 
  .date-input {
+  min-height: 44px;
   padding: 6px 8px;
   font-size: 16px;
+  line-height: 20px;
   font-family: inherit;
   color: var(--text);
   background: var(--bg-body);
@@ -773,12 +786,15 @@
  }
 
  .clear-filters-btn {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
   padding: 8px 15px;
   background: none;
   border: none;
   color: var(--link);
-  font-size: 14px;
+  font-size: 16px;
+  line-height: 20px;
   font-family: inherit;
   cursor: pointer;
   text-decoration: underline;
@@ -808,12 +824,14 @@
   padding: 20px 15px;
   color: var(--text-secondary);
   font-size: 16px;
+  line-height: 20px;
   text-align: center;
  }
 
  .results-count {
   padding: 10px 15px;
   font-size: 14px;
+  line-height: 20px;
   font-weight: 700;
   color: var(--text-secondary);
   border-bottom: 1px solid var(--border);
@@ -842,7 +860,8 @@
  }
 
  .result-title {
-  font-size: 16px;
+  font-size: 19px;
+  line-height: 25px;
   color: var(--link);
   text-decoration: underline;
   text-decoration-thickness: max(1px, 0.0625rem);
@@ -862,61 +881,37 @@
 
  .source-tag {
   font-size: 14px;
+  line-height: 20px;
   font-weight: bold;
   white-space: nowrap;
  }
 
  .result-date {
-  font-size: 12px;
+  font-size: 14px;
+  line-height: 20px;
   color: var(--text-muted);
  }
 
  .result-snippet {
-  font-size: 14px;
+  font-size: 16px;
+  line-height: 20px;
   color: var(--text-muted);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
   overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
   width: 100%;
  }
 
  @media (max-width: 768px) {
   .search-label {
    font-size: 16px;
-  }
-
-  .search-input {
-   min-height: 44px;
-   font-size: 16px;
-  }
-
-  .search-button {
-   width: 44px;
-   min-height: 44px;
-  }
-
-  .filter-toggle {
-   min-height: 44px;
-  }
-
-  .filter-select {
-   min-height: 44px;
-  }
-
-  .date-input {
-   min-height: 44px;
-   font-size: 16px;
+   line-height: 20px;
   }
 
   .result-item {
    padding: 15px;
-   min-height: 44px;
-  }
-
-  .clear-filters-btn {
-   min-height: 44px;
-   display: inline-flex;
-   align-items: center;
   }
  }
 </style>
