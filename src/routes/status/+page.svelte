@@ -151,8 +151,9 @@
    </button>
   </div>
 
-  <table class="source-table">
-   <thead>
+  <div class="source-table-wrap">
+   <table class="source-table">
+    <thead>
     <tr>
      <th><button class="sort-btn" onclick={() => toggleSort("source")}>Source{sortIndicator("source")}</button></th>
      <th
@@ -231,7 +232,8 @@
      <td class="num"><strong>{health.total_chunks}</strong></td>
     </tr>
    </tfoot>
-  </table>
+   </table>
+  </div>
  </div>
 {/if}
 
@@ -316,6 +318,7 @@
   align-items: center;
   gap: 5px;
   font-size: 16px;
+  line-height: 20px;
   flex-wrap: wrap;
   margin-bottom: 30px;
  }
@@ -346,6 +349,7 @@
 
  .status-badge {
   font-size: 16px;
+  line-height: 20px;
   font-weight: 700;
   padding: 4px 12px;
  }
@@ -373,7 +377,10 @@
 
  .refresh-btn {
   font-size: 16px;
-  padding: 8px 16px;
+  line-height: 20px;
+  padding: 12px 16px;
+  min-height: 44px;
+  min-width: 44px;
   background: var(--bg-surface);
   border: 2px solid var(--border-strong);
   color: var(--text);
@@ -391,9 +398,14 @@
   cursor: default;
  }
 
+ .source-table-wrap {
+  overflow-x: auto;
+ }
+
  .source-table {
   border-collapse: collapse;
   font-size: 16px;
+  line-height: 20px;
   width: max-content;
  }
 
@@ -413,10 +425,12 @@
   background: none;
   border: none;
   font: inherit;
+  line-height: 20px;
   font-weight: 700;
   color: var(--text);
   cursor: pointer;
-  padding: 0;
+  padding: 12px 0;
+  min-height: 44px;
   white-space: nowrap;
  }
 
@@ -450,6 +464,9 @@
  }
 
  .source-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
   text-decoration: none;
   color: inherit;
  }
@@ -460,17 +477,20 @@
 
  .source-tag {
   font-size: 16px;
+  line-height: 20px;
   font-weight: bold;
   white-space: nowrap;
  }
 
  .timestamp {
   font-size: 16px;
+  line-height: 20px;
   white-space: nowrap;
  }
 
  .time-ago {
   font-size: 14px;
+  line-height: 20px;
   color: var(--text-muted);
   margin-left: 8px;
   white-space: nowrap;
@@ -478,6 +498,7 @@
 
  .src-status {
   font-size: 14px;
+  line-height: 20px;
   font-weight: 700;
   padding: 2px 8px;
   white-space: nowrap;
@@ -502,18 +523,10 @@
  .failure-count {
   font-weight: 400;
   font-size: 12px;
+  line-height: 20px;
  }
 
  @media (max-width: 640px) {
-  .source-table {
-   font-size: 14px;
-  }
-  .source-tag {
-   font-size: 14px;
-  }
-  .timestamp {
-   font-size: 14px;
-  }
   .time-ago {
    display: none;
   }
