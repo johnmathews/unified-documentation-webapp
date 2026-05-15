@@ -147,14 +147,10 @@
         {#each cat.entries as entry (entry.doc_id)}
          <li>
           <BookmarkButton docId={entry.doc_id} bookmarked={true} size="small" onToggle={(val) => handleRemove(entry.doc_id, val)} />
-          <a href={docUrl(entry.doc_id)}>{displayTitle({ title: entry.title, file_path: entry.file_path || "", source: entry.source || undefined })}</a>
-          <span class="meta">
-           {#if entry.bookmarked_at}
-            <span class="date" title="Bookmarked on {formatDate(entry.bookmarked_at)}">
-             {formatDate(entry.bookmarked_at)}
-            </span>
-           {/if}
-          </span>
+          {#if entry.bookmarked_at}
+           <span class="date">{formatDate(entry.bookmarked_at)}</span>
+          {/if}
+          <a class="entry-title" href={docUrl(entry.doc_id)}>{displayTitle({ title: entry.title, file_path: entry.file_path || "", source: entry.source || undefined })}</a>
          </li>
         {/each}
        </ul>
@@ -227,7 +223,7 @@
  }
 
  .bookmarks-page {
-  max-width: 960px;
+  max-width: 720px;
   margin: 0 auto;
   padding-top: 30px;
  }
@@ -286,11 +282,12 @@
 
  .source-header {
   font-size: 24px;
+  line-height: 30px;
   font-weight: 700;
   color: var(--text);
   padding-bottom: 10px;
-  border-bottom: 2px solid var(--brand);
-  margin-bottom: 15px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 10px;
  }
 
  .category-group {
@@ -299,11 +296,10 @@
 
  .category-header {
   font-size: 16px;
+  line-height: 20px;
   font-weight: 600;
   color: var(--text-secondary);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  margin-bottom: 8px;
+  margin-bottom: 5px;
  }
 
  .doc-list {
@@ -313,50 +309,42 @@
  .doc-list li {
   display: flex;
   align-items: baseline;
-  padding: 6px 0;
+  flex-wrap: wrap;
+  min-height: 44px;
+  padding: 8px 0;
   border-bottom: 1px solid var(--border);
-  gap: 6px;
+  gap: 15px;
  }
 
- .doc-list a {
+ .entry-title {
   color: var(--link);
-  font-size: 16px;
- }
-
- .doc-list a:hover {
-  color: var(--link-hover);
- }
-
- .meta {
-  margin-left: auto;
-  padding-left: 15px;
-  flex-shrink: 0;
+  font-size: 19px;
+  line-height: 25px;
+  min-width: 0;
+  flex: 1;
  }
 
  .date {
-  font-size: 14px;
+  font-size: 16px;
+  line-height: 20px;
   color: var(--text-secondary);
   white-space: nowrap;
+  flex-shrink: 0;
  }
 
  @media (max-width: 640px) {
   .source-header {
    font-size: 21px;
+   line-height: 25px;
   }
   .doc-list li {
-   flex-direction: column;
-   align-items: flex-start;
-   gap: 5px;
+   gap: 10px;
    padding: 10px 0;
   }
-  .doc-list a {
-   min-height: 44px;
-   display: inline-flex;
-   align-items: center;
-  }
-  .meta {
-   margin-left: 0;
-   padding-left: 0;
+  .entry-title {
+   font-size: 16px;
+   line-height: 20px;
+   flex-basis: 100%;
   }
  }
 </style>
