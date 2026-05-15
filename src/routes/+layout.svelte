@@ -415,6 +415,11 @@
       {#if currentPath === "/"}<strong>Projects</strong>{:else}Projects{/if}
      </a>
     </li>
+    <li class="govuk-service-nav__item" class:govuk-service-nav__item--active={currentPath === "/journal"}>
+     <a href="/journal" class="govuk-service-nav__link">
+      {#if currentPath === "/journal"}<strong>Journal</strong>{:else}Journal{/if}
+     </a>
+    </li>
     <li class="govuk-service-nav__item" class:govuk-service-nav__item--active={currentPath === "/bookmarks"}>
      <a href="/bookmarks" class="govuk-service-nav__link">
       {#if currentPath === "/bookmarks"}<strong>Bookmarks</strong>{:else}Bookmarks{/if}
