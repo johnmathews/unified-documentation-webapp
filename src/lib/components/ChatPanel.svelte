@@ -438,6 +438,7 @@
 
  .chat-header h3 {
   font-size: 19px;
+  line-height: 25px;
   font-weight: 700;
   margin: 0;
   color: var(--text);
@@ -448,6 +449,7 @@
   align-items: center;
   gap: 5px;
   font-size: 14px;
+  line-height: 20px;
   color: var(--success);
   background: var(--bg-body);
   padding: 2px 8px;
@@ -463,7 +465,9 @@
  }
 
  .header-btn {
-  padding: 5px;
+  min-height: 44px;
+  min-width: 44px;
+  padding: 10px;
   background: none;
   border: none;
   color: var(--text-secondary);
@@ -487,6 +491,7 @@
 
  .confirm-label {
   font-size: 14px;
+  line-height: 20px;
   color: var(--text-muted);
   margin-right: 5px;
  }
@@ -522,10 +527,12 @@
 
  .empty-state p {
   font-size: 16px;
+  line-height: 20px;
  }
 
  .context-hint {
   font-size: 14px;
+  line-height: 20px;
   color: var(--text-muted);
  }
 
@@ -541,11 +548,13 @@
   color: var(--text-muted);
   padding: 40px 20px;
   font-size: 16px;
+  line-height: 20px;
  }
 
  .history-item {
   display: block;
   width: 100%;
+  min-height: 44px;
   text-align: left;
   padding: 12px 15px;
   background: none;
@@ -567,23 +576,26 @@
  }
 
  .history-title {
-  font-size: 15px;
+  font-size: 16px;
+  line-height: 20px;
   font-weight: 600;
   color: var(--link);
-  line-height: 1.3;
  }
 
  .history-delete {
+  min-height: 44px;
+  min-width: 44px;
+  padding: 10px;
   background: none;
   border: none;
   color: var(--text-muted);
-  padding: 2px;
   cursor: pointer;
   flex-shrink: 0;
   opacity: 0;
  }
 
- .history-item:hover .history-delete {
+ .history-item:hover .history-delete,
+ .history-item:focus-within .history-delete {
   opacity: 1;
  }
 
@@ -595,18 +607,21 @@
   display: flex;
   gap: 10px;
   font-size: 13px;
+  line-height: 20px;
   color: var(--text-muted);
   margin-top: 3px;
  }
 
  .history-preview {
   font-size: 14px;
+  line-height: 20px;
   color: var(--text-secondary);
   margin: 4px 0 0;
-  line-height: 1.3;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
   overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
  }
 
  .message {
@@ -618,29 +633,37 @@
   align-items: flex-end;
  }
 
+ /* Bubbles use GOV.UK body (19/25) for both roles. Assistant bubble
+    also carries .markdown-content so its inner h1/h2/h3/pre/code
+    inherit the global doc-viewer scale. */
  .message-bubble {
-  max-width: 85%;
   padding: 15px;
   border-radius: 0;
-  font-size: 16px;
-  line-height: 1.3157894737;
+  font-size: 19px;
+  line-height: 25px;
   word-break: break-word;
  }
 
  .user .message-bubble {
+  max-width: 85%;
   background: var(--brand);
   color: white;
  }
 
+ /* Assistant bubbles cap at the 720 px reading column when the panel
+    is wide enough (expanded mode on wide displays, or drag-resized
+    past ~850 px). 85% is the cap on narrower panels. */
  .assistant .message-bubble {
+  max-width: min(85%, 720px);
   background: var(--bg-body);
   color: var(--text);
   border: none;
   border-left: 5px solid var(--border);
-  padding: 15px;
  }
 
- /* Compact markdown overrides for chat bubbles */
+ /* Compact margins for chat bubbles — same scale as the doc viewer,
+    but tighter inter-paragraph spacing so the transcript stays
+    scannable. */
  .message-bubble :global(p:first-child) {
   margin-top: 0;
  }
@@ -653,8 +676,6 @@
  .message-bubble :global(h1),
  .message-bubble :global(h2),
  .message-bubble :global(h3) {
-  font-size: 16px;
-  font-weight: 700;
   margin: 15px 0 5px;
  }
  .message-bubble :global(ul),
@@ -667,10 +688,7 @@
  }
  .message-bubble :global(pre) {
   margin: 10px 0;
-  padding: 10px 15px;
-  font-size: 0.8em;
   overflow-x: auto;
-  background: var(--bg-code);
  }
  .message-bubble :global(blockquote) {
   margin: 10px 0;
@@ -688,6 +706,7 @@
   gap: 6px;
   margin-bottom: 8px;
   font-size: 13px;
+  line-height: 20px;
  }
 
  .tool-step {
@@ -765,17 +784,19 @@
 
  .chat-input textarea {
   flex: 1;
+  min-height: 44px;
   padding: 10px 15px;
   background: var(--bg-body);
   border: 2px solid var(--border-strong);
   border-radius: 0;
   color: var(--text);
+  /* Explicit 16px keeps iOS Safari from auto-zooming on focus. */
   font-size: 16px;
+  line-height: 20px;
   font-family: inherit;
   outline: none;
   resize: none;
   overflow-y: hidden;
-  line-height: 1.4;
  }
 
  .chat-input textarea:focus {
@@ -789,6 +810,8 @@
  }
 
  .send-btn {
+  min-height: 44px;
+  min-width: 44px;
   padding: 8px 15px 5px;
   background: var(--success);
   border: 2px solid transparent;
@@ -807,8 +830,10 @@
   cursor: not-allowed;
  }
 
+ /* Theme-aware hover: 90 % brightness of var(--success). Works on
+    both light and dark without hard-coding either palette. */
  .send-btn:not(:disabled):hover {
-  background: #0b5c3e;
+  filter: brightness(0.9);
  }
 
  .send-btn:not(:disabled):active {
@@ -825,14 +850,20 @@
  }
 
  .edit-btn {
+  min-height: 44px;
+  min-width: 44px;
   background: none;
   border: none;
   color: var(--text-muted);
-  padding: 4px;
+  padding: 10px;
   cursor: pointer;
   opacity: 0;
   transition: opacity 0.15s;
   margin-top: 2px;
+ }
+
+ .message.user:focus-within .edit-btn {
+  opacity: 1;
  }
 
  .edit-btn:hover {
@@ -860,6 +891,7 @@
   background: var(--accent-dim);
   border-top: 1px solid var(--border);
   font-size: 14px;
+  line-height: 20px;
   color: var(--text-secondary);
  }
 
@@ -868,10 +900,13 @@
  }
 
  .edit-cancel-btn {
+  min-height: 44px;
+  padding: 0 10px;
   background: none;
   border: none;
   color: var(--text-secondary);
   font-size: 14px;
+  line-height: 20px;
   cursor: pointer;
   text-decoration: underline;
  }
@@ -881,42 +916,23 @@
  }
 
  @media (max-width: 768px) {
-  .chat-header h3 {
-   font-size: 19px;
-  }
-  .context-badge {
-   font-size: 14px;
-  }
-  .header-btn {
-   min-height: 44px;
-   min-width: 44px;
-   padding: 10px;
-  }
+  /* Expand toggle is desktop-only — the panel is full-width on
+     mobile, so there's nothing to expand into. */
   .header-btn.expand-btn {
    display: none;
   }
-  .confirm-label {
-   font-size: 14px;
-  }
-  .send-btn {
-   min-height: 44px;
-   min-width: 44px;
-  }
-  .message-bubble {
-   font-size: 16px;
-  }
-  .chat-input textarea {
-   min-height: 44px;
-   font-size: 16px; /* Explicit 16px prevents iOS Safari auto-zoom on focus */
-  }
-  .empty-state p {
-   font-size: 16px;
-  }
-  .context-hint {
-   font-size: 14px;
-  }
+  /* Respect the iPhone notch / home-indicator safe area. */
   .chat-input {
    padding-bottom: calc(15px + env(safe-area-inset-bottom, 0));
+  }
+ }
+
+ /* Match the global .markdown-content @640 rule: bubble body
+    drops from 19/25 to 16/20 on phone-sized panels. */
+ @media (max-width: 640px) {
+  .message-bubble {
+   font-size: 16px;
+   line-height: 20px;
   }
  }
 </style>
