@@ -467,12 +467,6 @@
   display: inline-flex;
   align-items: center;
   min-height: 44px;
-  text-decoration: none;
-  color: inherit;
- }
-
- .source-link:hover .source-tag {
-  text-decoration: underline;
  }
 
  .source-tag {

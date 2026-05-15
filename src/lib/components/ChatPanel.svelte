@@ -579,7 +579,6 @@
   font-size: 16px;
   line-height: 20px;
   font-weight: 600;
-  color: var(--link);
  }
 
  .history-delete {

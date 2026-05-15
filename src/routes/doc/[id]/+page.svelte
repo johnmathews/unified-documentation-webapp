@@ -242,12 +242,6 @@
   font-size: 16px;
   font-weight: bold;
   white-space: nowrap;
-  text-decoration: none;
-  transition: opacity 0.15s;
- }
-
- .source-badge:hover {
-  opacity: 0.8;
  }
 
  .file-path {
