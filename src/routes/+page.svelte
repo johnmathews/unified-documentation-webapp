@@ -29,6 +29,16 @@
   }
  }
 
+ function ariaSort(col: SortCol): "ascending" | "descending" | "none" {
+  if (sortCol !== col) return "none";
+  return sortAsc ? "ascending" : "descending";
+ }
+
+ function sortIcon(col: SortCol): string {
+  if (sortCol !== col) return "↕";
+  return sortAsc ? "▲" : "▼";
+ }
+
  let sortedTree = $derived.by(() => {
   const copy = [...tree];
   const dir = sortAsc ? 1 : -1;
@@ -169,17 +179,25 @@
   <table class="source-table">
    <thead>
     <tr>
-     <th class="sortable" onclick={() => toggleSort("project")}>
-      Project <span class="sort-arrow">{sortCol === "project" ? (sortAsc ? "\u25B2" : "\u25BC") : ""}</span>
+     <th aria-sort={ariaSort("project")}>
+      <button type="button" class="sort-btn" onclick={() => toggleSort("project")}>
+       Project <span class="sort-arrow">{sortIcon("project")}</span>
+      </button>
      </th>
-     <th class="col-status sortable" onclick={() => toggleSort("status")}>
-      Status <span class="sort-arrow">{sortCol === "status" ? (sortAsc ? "\u25B2" : "\u25BC") : ""}</span>
+     <th class="col-status" aria-sort={ariaSort("status")}>
+      <button type="button" class="sort-btn" onclick={() => toggleSort("status")}>
+       Status <span class="sort-arrow">{sortIcon("status")}</span>
+      </button>
      </th>
-     <th class="col-date sortable" onclick={() => toggleSort("date")}>
-      Last updated <span class="sort-arrow">{sortCol === "date" ? (sortAsc ? "\u25B2" : "\u25BC") : ""}</span>
+     <th class="col-date" aria-sort={ariaSort("date")}>
+      <button type="button" class="sort-btn" onclick={() => toggleSort("date")}>
+       Last updated <span class="sort-arrow">{sortIcon("date")}</span>
+      </button>
      </th>
-     <th class="col-count sortable" onclick={() => toggleSort("count")}>
-      Documents <span class="sort-arrow">{sortCol === "count" ? (sortAsc ? "\u25B2" : "\u25BC") : ""}</span>
+     <th class="col-count" aria-sort={ariaSort("count")}>
+      <button type="button" class="sort-btn sort-btn--right" onclick={() => toggleSort("count")}>
+       Documents <span class="sort-arrow">{sortIcon("count")}</span>
+      </button>
      </th>
     </tr>
    </thead>
@@ -207,6 +225,9 @@
           <span class="failure-count">({h.consecutive_failures})</span>
          {/if}
         </span>
+       {:else}
+        <span class="src-status src-unknown" title="Unknown: This source has not been scanned yet."
+         >Unknown</span>
        {/if}
       </td>
       <td class="col-date">
@@ -250,7 +271,7 @@
   font-size: 2rem;
   line-height: 1.09375;
   font-weight: 700;
-  margin-bottom: 20px;
+  margin-bottom: 15px;
  }
 
  @media (min-width: 641px) {
@@ -276,7 +297,7 @@
  }
 
  .home {
-  max-width: 880px;
+  max-width: 960px;
   margin: 0 auto;
   padding-top: 40px;
  }
@@ -313,18 +334,39 @@
   color: var(--text);
  }
 
- .sortable {
+ .sort-btn {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 4px;
+  background: none;
+  border: 0;
+  padding: 0;
+  font: inherit;
+  font-weight: 700;
+  color: inherit;
   cursor: pointer;
   user-select: none;
  }
 
- .sortable:hover {
+ .sort-btn--right {
+  /* The .col-count th is text-align: right, so the button must align right too */
+  width: 100%;
+  justify-content: flex-end;
+ }
+
+ .sort-btn:hover {
   text-decoration: underline;
+ }
+
+ .sort-btn:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 0;
+  background: var(--focus);
+  color: var(--focus-text);
  }
 
  .sort-arrow {
   font-size: 0.7rem;
-  margin-left: 2px;
   opacity: 0.7;
  }
 
@@ -449,17 +491,12 @@
  @media (max-width: 640px) {
   .masthead {
    margin: -20px -15px 0;
-   padding-left: 15px;
-   padding-right: 15px;
+   padding: 20px 15px;
   }
 
   .source-table th,
   .source-table td {
    padding-right: 10px;
-  }
-
-  .source-link {
-   font-size: 1rem;
   }
 
   .col-date {
