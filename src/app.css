@@ -186,10 +186,13 @@ button {
  background: var(--text-muted);
 }
 
-/* Markdown content styles — GOV.UK typography */
+/* Markdown content styles — GOV.UK typography.
+   Body is 19px / 25px line-height, the GOV.UK body scale. Line-height
+   value is 25/19 so the computed line-height lands on a 5px multiple
+   (matches GOV.UK's vertical-rhythm rule). */
 .markdown-content {
- font-size: 17px;
- line-height: 1.35;
+ font-size: 19px;
+ line-height: 1.3157894737;
  /* Long URLs and identifiers should wrap rather than push the column wider
     than its container — otherwise they create a page-level horizontal scroll
     on narrow viewports. */
@@ -227,8 +230,8 @@ button {
 }
 
 .markdown-content h3 {
- font-size: 1.0625rem;
- line-height: 1.35;
+ font-size: 1.1875rem;
+ line-height: 1.3157894737;
  font-weight: 700;
  margin: 30px 0 10px;
  color: var(--text);
@@ -288,8 +291,8 @@ button {
  padding: 15px;
  margin: 20px 0;
  color: var(--text);
- font-size: 17px;
- line-height: 1.35;
+ font-size: 19px;
+ line-height: 1.3157894737;
 }
 
 /* Tables that are wider than the column scroll horizontally inside their own
@@ -494,6 +497,7 @@ button {
  }
  .markdown-content {
   font-size: 16px;
+  line-height: 1.25;
  }
  .markdown-content h1 {
   font-size: 1.85rem;
