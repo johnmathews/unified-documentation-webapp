@@ -291,7 +291,7 @@
   </div>
  </div>
 
- <div class="messages" bind:this={messagesEl}>
+ <div class="messages" bind:this={messagesEl} aria-live="polite" aria-relevant="additions" aria-atomic="false">
   {#if showHistory}
    <div class="history-list">
     {#if loadingHistory}
