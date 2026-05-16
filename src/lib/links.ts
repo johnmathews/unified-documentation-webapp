@@ -1,4 +1,5 @@
 import { Marked, type Tokens } from "marked";
+import { sanitiseHtml } from "$lib/sanitise";
 
 /**
  * Resolve a relative markdown link href into an app URL.
@@ -172,7 +173,7 @@ export function renderMarkdownWithLinks(
    },
   },
  });
- return instance.parse(content, { async: false }) as string;
+ return sanitiseHtml(instance.parse(content, { async: false }) as string);
 }
 
 /** Escape a string for use in an HTML attribute value. */
