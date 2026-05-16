@@ -115,25 +115,24 @@
     title={doc.title ? stripSourcePrefix(doc.title, doc.source) : doc.file_path.split("/").pop() || doc.file_path}
    />
    <header class="doc-header">
-    <div class="doc-meta-row">
+    <div class="doc-meta">
      <BookmarkButton docId={doc.doc_id} bind:bookmarked={isBookmarked} />
      <a href="/source/{encodeURIComponent(doc.source)}" class="source-badge">{displaySource(doc.source)}</a>
+     <span class="meta-sep" aria-hidden="true">/</span>
      <span class="file-path">{doc.file_path}</span>
+     {#if doc.type}
+      <span class="meta-sep" aria-hidden="true">·</span>
+      <span class="doc-type">{doc.type}</span>
+     {/if}
+     {#if doc.modified_at}
+      <span class="meta-sep" aria-hidden="true">·</span>
+      <span>Modified {formatDate(doc.modified_at)}</span>
+     {/if}
+     {#if stats}
+      <span class="meta-sep" aria-hidden="true">·</span>
+      <span>{stats.words.toLocaleString()} words</span>
+     {/if}
     </div>
-    {#if doc.created_at || doc.modified_at || stats}
-     <div class="doc-dates-row">
-      {#if doc.created_at}
-       <span>Created: {formatDate(doc.created_at)}</span>
-      {/if}
-      {#if doc.modified_at}
-       <span>Modified: {formatDate(doc.modified_at)}</span>
-      {/if}
-      {#if stats}
-       <span>Words: {stats.words.toLocaleString()}</span>
-       <span>Lines: {stats.lines.toLocaleString()}</span>
-      {/if}
-     </div>
-    {/if}
    </header>
 
    {#if isPdf(doc)}
@@ -251,23 +250,23 @@
   word-break: break-all;
  }
 
- .doc-meta-row {
+ .doc-meta {
   display: flex;
   flex-wrap: wrap;
   align-items: baseline;
-  gap: 10px;
-  margin-top: 10px;
-  font-size: 16px;
+  gap: 0 10px;
+  font-size: 15px;
   color: var(--text-secondary);
  }
 
- .doc-dates-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 20px;
-  margin-top: 6px;
-  font-size: 16px;
-  color: var(--text-secondary);
+ .meta-sep {
+  color: var(--border-strong);
+ }
+
+ .doc-type {
+  font-weight: 700;
+  color: var(--text);
+  text-transform: capitalize;
  }
 
  .no-content {
@@ -320,10 +319,6 @@
    align-items: center;
   }
   .file-path {
-   font-size: 14px;
-  }
-  .doc-dates-row {
-   gap: 10px;
    font-size: 14px;
   }
  }

@@ -20,6 +20,22 @@
   return map;
  });
 
+ let homeSummary = $derived.by(() => {
+  if (!health) return null;
+  const totalFiles = health.sources.reduce((n, s) => n + s.file_count, 0);
+  const lastScan = health.sources
+   .map((s) => s.last_indexed)
+   .filter((t): t is string => Boolean(t))
+   .sort()
+   .at(-1) ?? null;
+  return {
+   status: health.status,
+   projectCount: tree.length,
+   totalFiles,
+   lastScan,
+  };
+ });
+
  function toggleSort(col: SortCol) {
   if (sortCol === col) {
    sortAsc = !sortAsc;
@@ -159,22 +175,28 @@
    <p>Check that the MCP server is running and has sources configured.</p>
   </div>
  {:else}
-  {#if health}
-   <div class="home-status-row">
-    <a
-     class="status-badge"
-     class:ok={health.status === "healthy"}
-     class:warn={health.status === "degraded"}
-     class:err={health.status === "error"}
-     href="/status"
-     title={health.status === "healthy"
-      ? "Healthy: All sources are scanning successfully."
-      : health.status === "degraded"
-       ? "Degraded: One or more sources have scan failures or are stale."
-       : "Error: All sources are failing or unreachable."}>
-     {health.status === "healthy" ? "Healthy" : health.status === "degraded" ? "Degraded" : "Error"}
-    </a>
-   </div>
+  {#if homeSummary}
+   <a class="home-summary" href="/status"
+    title={homeSummary.status === "healthy"
+     ? "Healthy: All sources are scanning successfully."
+     : homeSummary.status === "degraded"
+      ? "Degraded: One or more sources have scan failures or are stale."
+      : "Error: All sources are failing or unreachable."}>
+    <span class="status-badge"
+     class:ok={homeSummary.status === "healthy"}
+     class:warn={homeSummary.status === "degraded"}
+     class:err={homeSummary.status === "error"}>
+     {homeSummary.status === "healthy" ? "Healthy" : homeSummary.status === "degraded" ? "Degraded" : "Error"}
+    </span>
+    <span class="summary-sep" aria-hidden="true">·</span>
+    <span class="summary-fact"><strong>{homeSummary.projectCount}</strong> projects</span>
+    <span class="summary-sep" aria-hidden="true">·</span>
+    <span class="summary-fact"><strong>{homeSummary.totalFiles.toLocaleString()}</strong> documents</span>
+    {#if homeSummary.lastScan}
+     <span class="summary-sep" aria-hidden="true">·</span>
+     <span class="summary-fact summary-fact--muted">last scan {timeAgo(homeSummary.lastScan)}</span>
+    {/if}
+   </a>
   {/if}
   <table class="source-table">
    <thead>
@@ -330,7 +352,7 @@
   text-align: left;
   font-weight: 700;
   font-size: 1rem;
-  padding: 10px 28px 10px 0;
+  padding: 10px 16px 10px 0;
   color: var(--text);
  }
 
@@ -376,8 +398,12 @@
   border-bottom: 1px solid var(--border);
  }
 
+ .source-table tbody tr:nth-child(odd) td {
+  background: var(--bg-zebra);
+ }
+
  .source-table td {
-  padding: 15px 28px 15px 0;
+  padding: 10px 16px 10px 0;
   vertical-align: top;
  }
 
@@ -406,12 +432,35 @@
   padding-right: 0;
  }
 
- .home-status-row {
+ .home-summary {
   display: flex;
-  align-items: center;
-  gap: 15px;
-  margin-bottom: 20px;
   flex-wrap: wrap;
+  align-items: center;
+  gap: 0 10px;
+  margin-bottom: 20px;
+  padding: 8px 0;
+  font-size: 16px;
+  line-height: 22px;
+  color: var(--text);
+  text-decoration: none;
+  border-bottom: 1px solid var(--border);
+ }
+
+ .home-summary:hover {
+  background: var(--bg-hover);
+ }
+
+ .summary-sep {
+  color: var(--text-muted);
+ }
+
+ .summary-fact {
+  white-space: nowrap;
+ }
+
+ .summary-fact--muted {
+  color: var(--text-secondary);
+  font-size: 14px;
  }
 
  .status-badge {
@@ -441,10 +490,6 @@
  :global([data-theme="dark"]) .status-badge.warn,
  :global([data-theme="dark"]) .status-badge.err {
   color: #1a1a1a;
- }
-
- .status-badge:hover {
-  opacity: 0.9;
  }
 
  .src-status {
