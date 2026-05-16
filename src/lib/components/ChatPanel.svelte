@@ -801,6 +801,8 @@
   overflow-y: hidden;
  }
 
+ /* Refines canonical :focus-visible (app.css) — adds inset border so the
+    outline doesn't visually collide with the textarea's border. */
  .chat-input textarea:focus {
   outline: 3px solid var(--focus);
   outline-offset: 0;
@@ -844,6 +846,8 @@
   position: relative;
  }
 
+ /* Refines canonical :focus-visible (app.css) — GOV.UK yellow-fill on a
+    coloured button, maintaining the pressed-shadow with focus-text colour. */
  .send-btn:focus:not(:active) {
   border-color: var(--focus);
   color: var(--focus-text);

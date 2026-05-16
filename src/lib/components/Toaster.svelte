@@ -91,6 +91,8 @@
   background: var(--bg-hover);
  }
 
+ /* Divergent: dark toast surface — swaps to GOV.UK yellow-fill instead of
+    the standard outline, so the focus indicator is visible on the dark bg. */
  .toast__close:focus {
   color: var(--focus-text);
   background: var(--focus);
