@@ -36,3 +36,6 @@ vite.config.ts.timestamp-*
 
 # Coverage reports
 coverage/
+
+# brainstorming visual companion scratch
+.superpowers/
