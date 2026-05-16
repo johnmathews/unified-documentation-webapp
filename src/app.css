@@ -162,6 +162,23 @@ button {
  cursor: pointer;
 }
 
+/*
+ * Focus styles — two canonical patterns:
+ *
+ * 1. `a:focus` (above) — GOV.UK yellow-fill + black bottom shadow.
+ *    Applies to all inline anchor links. Overriding this on a per-component
+ *    basis is rarely correct; the GOV.UK link pattern is intentional and
+ *    consistent across the design system.
+ *
+ * 2. `:focus-visible` (below) — 3px solid `var(--focus)` outline for
+ *    buttons, inputs, divs with role="button", and anything else that
+ *    isn't an anchor.
+ *
+ * Per-component overrides should:
+ *   - Remove redundant duplicates of these two rules.
+ *   - Add a one-line comment ABOVE the rule when the override refines
+ *     (e.g. inset box-shadow on inputs) or diverges (e.g. dark surface).
+ */
 :focus-visible {
  outline: 3px solid var(--focus);
  outline-offset: 0;

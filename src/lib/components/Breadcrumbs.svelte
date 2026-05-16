@@ -114,16 +114,6 @@
 		text-decoration-thickness: max(3px, 0.1875rem, 0.12em);
 	}
 
-	.govuk-breadcrumbs__link:focus {
-		outline: 3px solid transparent;
-		color: var(--focus-text);
-		background-color: var(--focus);
-		box-shadow:
-			0 -2px var(--focus),
-			0 4px var(--focus-text);
-		text-decoration: none;
-	}
-
 	@media (max-width: 640px) {
 		.govuk-breadcrumbs__link {
 			min-height: 44px;

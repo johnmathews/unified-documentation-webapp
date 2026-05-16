@@ -358,6 +358,8 @@
   text-decoration: underline;
  }
 
+ /* Refines canonical :focus-visible (app.css) — applies GOV.UK yellow-fill
+    to the sort button (small button-styled control needs fill, not just outline). */
  .sort-btn:focus-visible {
   outline: 3px solid var(--focus);
   outline-offset: 0;
@@ -390,16 +392,6 @@
  .source-link:hover {
   filter: brightness(1.3);
   text-decoration-thickness: max(3px, 0.1875rem, 0.12em);
- }
-
- .source-link:focus {
-  outline: 3px solid transparent;
-  color: var(--focus-text);
-  background-color: var(--focus);
-  box-shadow:
-   0 -2px var(--focus),
-   0 4px var(--focus-text);
-  text-decoration: none;
  }
 
  .col-count,

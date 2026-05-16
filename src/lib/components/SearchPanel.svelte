@@ -543,6 +543,9 @@
   min-height: 44px;
  }
 
+ /* Refines canonical :focus-visible (app.css) — adds inset border so the
+    outline doesn't visually collide with the input border, plus z-index to
+    keep the outline above adjacent elements. */
  .search-input:focus {
   outline: 3px solid var(--focus);
   outline-offset: 0;
@@ -572,6 +575,8 @@
   border-color: var(--brand-dark);
  }
 
+ /* Refines canonical :focus-visible (app.css) — applies GOV.UK yellow-fill
+    pattern to the search button (coloured button needs fill, not just outline). */
  .search-button:focus {
   outline: 3px solid var(--focus);
   outline-offset: 0;
@@ -631,11 +636,6 @@
 
  .filter-toggle:hover {
   background: var(--bg-hover);
- }
-
- .filter-toggle:focus {
-  outline: 3px solid var(--focus);
-  outline-offset: 0;
  }
 
  .filter-toggle-label {
@@ -711,6 +711,8 @@
   background-position: right 10px center;
  }
 
+ /* Refines canonical :focus-visible (app.css) — adds inset border so the
+    outline doesn't visually collide with the select's 2px border. */
  .filter-select:focus {
   outline: 3px solid var(--focus);
   outline-offset: 0;
@@ -770,6 +772,8 @@
   text-align: center;
  }
 
+ /* Refines canonical :focus-visible (app.css) — adds inset border so the
+    outline doesn't visually collide with the date input's 2px border. */
  .date-input:focus {
   outline: 3px solid var(--focus);
   outline-offset: 0;
@@ -806,6 +810,8 @@
   text-decoration-thickness: max(3px, 0.1875rem, 0.12em);
  }
 
+ /* Refines canonical :focus-visible (app.css) — applies GOV.UK yellow-fill
+    pattern to this button-styled link (fill + suppress underline on focus). */
  .clear-filters-btn:focus {
   outline: 3px solid var(--focus);
   outline-offset: 0;

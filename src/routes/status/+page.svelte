@@ -116,6 +116,19 @@
   <a href="/">Back to home</a>
  </div>
 {:else if health}
+ <dl class="visually-hidden" aria-hidden="false">
+  <dt id="status-desc-healthy">Healthy</dt>
+  <dd>All sources are scanning successfully.</dd>
+  <dt id="status-desc-degraded">Degraded</dt>
+  <dd>One or more sources have scan failures or are stale.</dd>
+  <dt id="status-desc-error">Error</dt>
+  <dd>All sources are failing or unreachable, or this source has 2+ consecutive failures.</dd>
+  <dt id="status-desc-warning">Warning</dt>
+  <dd>1 consecutive scan failure or scan is overdue.</dd>
+  <dt id="status-desc-unknown">Unknown</dt>
+  <dd>This source has not been scanned yet.</dd>
+ </dl>
+
  <div class="masthead">
   <div class="masthead__inner">
    <h1 class="masthead__title">Server Status</h1>
@@ -139,6 +152,7 @@
     class:ok={health.status === "healthy"}
     class:warn={health.status === "degraded"}
     class:err={health.status === "error"}
+    aria-describedby={health.status === "healthy" ? "status-desc-healthy" : health.status === "degraded" ? "status-desc-degraded" : "status-desc-error"}
     title={health.status === "healthy"
      ? "Healthy: All sources are scanning successfully."
      : health.status === "degraded"
@@ -196,6 +210,7 @@
         class:src-warning={source.source_status === "warning"}
         class:src-error={source.source_status === "error"}
         class:src-unknown={source.source_status === "unknown"}
+        aria-describedby="status-desc-{source.source_status}"
         title={source.source_status === "healthy"
          ? "Healthy: Last scan succeeded with no errors."
          : source.source_status === "warning"
@@ -238,6 +253,18 @@
 {/if}
 
 <style>
+ .visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+ }
+
  .masthead {
   padding: 30px 0;
   border-bottom: 1px solid var(--brand-dark);

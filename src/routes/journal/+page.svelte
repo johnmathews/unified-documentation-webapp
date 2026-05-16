@@ -281,6 +281,8 @@
   border-color: var(--border);
  }
 
+ /* Refines canonical :focus-visible (app.css) — applies GOV.UK yellow-fill
+    to the filter button (coloured toggle needs fill, not just outline). */
  .filter-btn:focus-visible {
   outline: 3px solid var(--focus);
   outline-offset: 0;
@@ -373,16 +375,6 @@
  .entry-title:hover {
   color: var(--link-hover);
   text-decoration-thickness: max(3px, 0.1875rem, 0.12em);
- }
-
- .entry-title:focus {
-  outline: 3px solid transparent;
-  color: var(--focus-text);
-  background-color: var(--focus);
-  box-shadow:
-   0 -2px var(--focus),
-   0 4px var(--focus-text);
-  text-decoration: none;
  }
 
  @media (max-width: 640px) {

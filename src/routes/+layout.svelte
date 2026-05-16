@@ -625,6 +625,8 @@
   text-decoration: underline;
  }
 
+ /* Divergent: GOV.UK header sits on a coloured band — yellow-fill without
+    the standard bottom shadow (shadow clashes with the header background). */
  .govuk-header__link--homepage:focus {
   color: var(--focus-text);
   background: var(--focus);
@@ -681,6 +683,8 @@
   background: rgba(255, 255, 255, 0.2);
  }
 
+ /* Divergent: header band button — GOV.UK yellow-fill swap; outline removed
+    so it doesn't double up with the fill on the coloured header surface. */
  .govuk-header__action-btn:focus {
   color: var(--focus-text);
   background: var(--focus);
@@ -763,6 +767,8 @@
   text-decoration: underline;
  }
 
+ /* Divergent: service nav sits on a coloured band — yellow-fill without
+    the standard bottom shadow (shadow clashes with the nav background). */
  .govuk-service-nav__link:focus {
   color: var(--focus-text);
   background: var(--focus);
