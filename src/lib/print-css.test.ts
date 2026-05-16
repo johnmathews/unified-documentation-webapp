@@ -168,17 +168,17 @@ describe("print CSS: all !important flags present", () => {
  }
 });
 
-describe("print CSS: metadata 3-row layout", () => {
- it(".doc-meta-row uses flex-direction: column !important", () => {
-  expect(printBlock).toMatch(/\.doc-meta-row\s*\{[^}]*flex-direction:\s*column\s*!important/);
+describe("print CSS: metadata bar (single-row, no print override needed)", () => {
+ it("old .doc-meta-row class is not present in print block", () => {
+  expect(printBlock).not.toMatch(/\.doc-meta-row/);
  });
 
- it(".doc-meta-row uses display: flex !important", () => {
-  expect(printBlock).toMatch(/\.doc-meta-row\s*\{[^}]*display:\s*flex\s*!important/);
+ it("old .doc-dates-row class is not present in print block", () => {
+  expect(printBlock).not.toMatch(/\.doc-dates-row/);
  });
 
- it(".doc-dates-row has reduced margin-top", () => {
-  expect(printBlock).toMatch(/\.doc-dates-row\s*\{[^}]*margin-top:\s*2px\s*!important/);
+ it(".source-badge is still present in the print block", () => {
+  expect(printBlock).toMatch(/\.source-badge/);
  });
 });
 

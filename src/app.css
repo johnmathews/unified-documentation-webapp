@@ -57,6 +57,7 @@
  /* Typography */
  --font-sans: "Inter", arial, sans-serif;
  --font-mono: "JetBrains Mono", "Fira Code", Menlo, monospace;
+ --measure: 75ch;
 
  /* Radius — GOV.UK: essentially zero */
  --radius: 0px;
@@ -212,6 +213,7 @@ button {
 .markdown-content {
  font-size: 19px;
  line-height: 1.3157894737;
+ max-width: var(--measure);
  /* Long URLs and identifiers should wrap rather than push the column wider
     than its container — otherwise they create a page-level horizontal scroll
     on narrow viewports. */
@@ -403,17 +405,6 @@ button {
  /* Hide breadcrumbs in print */
  nav[aria-label="Breadcrumb"] {
   display: none;
- }
-
- /* Metadata: 3 rows — source name, file path, dates */
- .doc-meta-row {
-  display: flex !important;
-  flex-direction: column !important;
-  gap: 2px !important;
- }
-
- .doc-dates-row {
-  margin-top: 2px !important;
  }
 
  /* Strip tag badges — plain text in print */
