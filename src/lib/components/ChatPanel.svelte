@@ -11,6 +11,7 @@
  import { tick } from "svelte";
  import { marked } from "marked";
  import { renderMarkdownWithLinks } from "$lib/links";
+ import { sanitiseHtml } from "$lib/sanitise";
 
  let {
   docId = null,
@@ -220,10 +221,10 @@
    if (colonIndex !== -1) {
     const source = docId.slice(0, colonIndex);
     const filePath = docId.slice(colonIndex + 1);
-    return renderMarkdownWithLinks(content, source, filePath);
+    return sanitiseHtml(renderMarkdownWithLinks(content, source, filePath));
    }
   }
-  return marked.parse(content, { async: false }) as string;
+  return sanitiseHtml(marked.parse(content, { async: false }) as string);
  }
 </script>
 
