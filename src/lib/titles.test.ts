@@ -14,6 +14,8 @@ describe("displaySource", () => {
   expect(displaySource("documentation-ui")).toBe("Documentation UI");
   expect(displaySource("dns-proxy")).toBe("DNS Proxy");
   expect(displaySource("api-gateway")).toBe("API Gateway");
+  expect(displaySource("claude-md-global")).toBe("Claude MD Global");
+  expect(displaySource("md-formatter")).toBe("MD Formatter");
  });
 
  it("preserves already-uppercase short words", () => {
