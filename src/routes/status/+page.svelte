@@ -318,7 +318,7 @@
   padding-right: 30px;
  }
 
- @media (min-width: 641px) {
+ @media (min-width: 768px) {
   .masthead {
    padding-top: 60px;
    padding-bottom: 60px;
@@ -338,7 +338,7 @@
   margin-bottom: 15px;
  }
 
- @media (min-width: 641px) {
+ @media (min-width: 768px) {
   .masthead__title {
    font-size: 3rem;
    line-height: 1.0416666667;
@@ -352,14 +352,14 @@
   margin-bottom: 0;
  }
 
- @media (min-width: 641px) {
+ @media (min-width: 768px) {
   .masthead__description {
    font-size: 1.5rem;
    line-height: 1.25;
   }
  }
 
- @media (max-width: 640px) {
+ @media (max-width: 767px) {
   .masthead {
    margin: -20px -15px 0;
    padding-left: 15px;
@@ -482,7 +482,7 @@
  .source-table th {
   text-align: left;
   font-weight: 700;
-  padding: 12px 25px 12px 0;
+  padding: 10px 16px 10px 0;
   border-bottom: 2px solid var(--border-strong);
  }
 
@@ -515,9 +515,13 @@
  }
 
  .source-table td {
-  padding: 12px 25px 12px 0;
+  padding: 10px 16px 10px 0;
   border-bottom: 1px solid var(--border);
   vertical-align: middle;
+ }
+
+ .source-table tbody tr:nth-child(odd) td {
+  background: var(--bg-zebra);
  }
 
  .source-table tfoot td {

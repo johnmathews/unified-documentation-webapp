@@ -19,6 +19,7 @@
  --bg-hover: #f3f3f3;
  --bg-active: #e8e8e8;
  --bg-code: #f3f3f3;
+ --bg-zebra: #f8f8f8;
 
  /* Brand */
  --brand: #1d70b8;
@@ -71,6 +72,7 @@
  --bg-hover: #333333;
  --bg-active: #444444;
  --bg-code: #2a2a2a;
+ --bg-zebra: rgba(255, 255, 255, 0.03);
 
  --brand: #1a3a5c;
  --brand-dark: #122845;
