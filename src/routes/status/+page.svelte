@@ -2,25 +2,29 @@
  import { fetchHealth, type HealthStatus } from "$lib/api";
  import { currentDocId, scanTick } from "$lib/stores.svelte";
  import { displaySource } from "$lib/titles";
+ import { goto } from "$app/navigation";
+ import { page } from "$app/state";
+ import { parseSortParams, buildSortQuery, type SortState, type SortKey } from "./page-logic";
 
  let health: HealthStatus | null = $state(null);
  let loading = $state(true);
  let error = $state("");
  let refreshing = $state(false);
 
- type SortKey = "source" | "source_status" | "file_count" | "chunk_count" | "last_indexed" | "last_checked";
- let sortKey: SortKey = $state("last_indexed");
- let sortAsc = $state(false);
+ // Sort state is derived from URL search params. toggleSort writes to URL.
+ let sort = $derived<SortState>(parseSortParams(page.url.searchParams));
+ let sortKey = $derived(sort.key);
+ let sortAsc = $derived(sort.asc);
 
  const statusOrder: Record<string, number> = { error: 0, warning: 1, unknown: 2, healthy: 3 };
 
  function toggleSort(key: SortKey) {
-  if (sortKey === key) {
-   sortAsc = !sortAsc;
-  } else {
-   sortKey = key;
-   sortAsc = key === "source" || key === "source_status";
-  }
+  const next: SortState =
+   sort.key === key
+    ? { key, asc: !sort.asc }
+    : { key, asc: key === "source" || key === "source_status" };
+  const query = buildSortQuery(next);
+  void goto(`/status${query}`, { replaceState: true, noScroll: true, keepFocus: true });
  }
 
  let sortedSources = $derived.by(() => {
