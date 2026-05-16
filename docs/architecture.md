@@ -48,8 +48,11 @@ documentation.
   Safari auto-zoom, 16px base font size on mobile (up from 14px desktop default) for comfortable reading on phone
   screens, and a landscape-phone breakpoint (`max-height: 500px`) ensuring panels remain full-screen modals on rotated
   phones. The chat panel expand/collapse button is hidden on mobile since the panel is always full-width.
-- **Document Viewer**: Renders markdown documents with a two-row metadata header (row 1: source badge + file path; row 2:
-  created/modified dates). Relative links between documents (e.g. `[text](other.md)`) are automatically rewritten at
+- **Document Viewer**: Renders markdown documents with a single-line metadata bar (bookmark · source · path · type ·
+  modified · words) that wraps naturally on narrow viewports. The body prose is capped at `var(--measure)` (75ch) as
+  a defensive measure independent of the layout grid. Markdown is rendered via `marked` and passed through
+  `sanitiseHtml` (DOMPurify) before reaching `{@html}` — see "Markdown rendering & XSS hardening" below. Relative
+  links between documents (e.g. `[text](other.md)`) are automatically rewritten at
   render time so they navigate to the correct document within the app — the original markdown files are unchanged and
   still work on GitHub and locally. Links to `.md` files resolve to `/doc/{docId}` routes; links to other files (images,
   etc.) resolve to `/api/files/{docId}`. The link resolution logic lives in `src/lib/links.ts`, which also injects stable
@@ -64,8 +67,7 @@ documentation.
   file extension and displayed in an inline iframe via the `/api/files/` proxy route, with "Open in new tab" and
   "Download" action buttons above the viewer. A print button in the top bar triggers `window.print()` with `@media print`
   styles that hide all UI chrome, force light colours, use compact 10pt typography with pre-wrap for code blocks, and
-  render the metadata as three rows (source name, file path, dates) for clean output. Print styles use `!important` to
-  override Svelte-scoped styles.
+  render the metadata bar in a print-friendly layout. Print styles use `!important` to override Svelte-scoped styles.
 - **Chat Panel**: Real-time chat with Claude, aware of the currently viewed page. Supports multiline input (Shift+Enter
   for newlines, Enter to send) and message editing (pencil icon below sent user messages — clicking loads the text into
   the input, truncates from the edit point on submit). On desktop, the panel is resizable via a drag handle on its left
@@ -81,10 +83,11 @@ documentation.
   right edge (250–800px range, persisted to localStorage as `search-width`). Default width is 320px (384px on large
   screens).
 - **Homepage**: Project list table at `/` with sortable columns (Project, Status, Last updated, Documents). Default
-  sort is by last updated descending. Click column headers to sort; click again to toggle direction. The overall
-  system status badge (Healthy/Degraded/Error, links to `/status`) is shown between the masthead and the table, and
-  each row shows its per-source status badge plus a relative time-ago label beside the last-updated date. Health data
-  is fetched in parallel with the tree and degrades gracefully if `/api/health` fails.
+  sort is by last updated descending. Click column headers to sort; click again to toggle direction. Between the
+  masthead and the table sits a one-line summary bar — `<status badge> · N projects · N documents · last scan Xm ago`
+  — that links to `/status`. Each row shows its per-source status badge plus a relative time-ago label beside the
+  last-updated date. Health data is fetched in parallel with the tree and degrades gracefully if `/api/health` fails.
+  Subtle zebra striping (`var(--bg-zebra)`) anchors row rhythm.
 - **Source Pages**: Per-source view at `/source/<name>` showing the full folder tree (expanded by default) rendered via
   `TreeNode.svelte`. A row of type-filter chips (documentation / journal / prompt / not-docs) sits in the controls row
   alongside the existing Recent / A-Z sort toggle, sharing state with the sidebar via the `typeFilters` store. Data comes
@@ -93,8 +96,13 @@ documentation.
   status (Healthy/Warning/Error/Unknown), file count, chunk count, last updated time, and last scanned time. Per-source
   status is computed from consecutive scan failures (1 = warning, 2+ = error) and staleness of last-checked relative to
   the poll interval (>2x = warning, >5x = error). The overall system badge aggregates these: Healthy (all sources OK),
-  Degraded (any source warning/error), Error (all sources failing). Error messages are shown on hover. Failure counts
-  display in parentheses next to the status label. All columns are sortable. Proxied via `/api/health`.
+  Degraded (any source warning/error), Error (all sources failing). Error messages are shown on hover. Status badges
+  carry `aria-describedby` pointing at a visually-hidden `<dl>` of meanings so screen readers announce the description
+  alongside the colour-coded label. Failure counts display in parentheses next to the status label. All columns are
+  sortable; sort state persists in URL search params (`?sort=…&dir=…`) so refresh / bookmark / back-forward all work.
+  The page polls source health every 30s while the tab is visible (paused on `visibilitychange`, immediate catch-up
+  fetch on visible). Pure sort + interval helpers live in `src/routes/status/page-logic.ts` (unit-tested). Proxied
+  via `/api/health`.
 
 ### Server Routes (SvelteKit)
 
@@ -109,6 +117,18 @@ Routes:
 - `GET /api/search?q=...` → proxies to backend `/api/search?q=...`
 - `POST /api/chat` → proxies to backend `/api/chat`
 - `GET /api/health` → proxies to backend `/health`
+
+### Markdown rendering & XSS hardening
+
+The webapp renders untrusted markdown via `{@html}` in two places: ChatPanel assistant messages and `/doc/[id]`
+document bodies. Both render paths pipe their `marked`-rendered HTML through `sanitiseHtml` (in `src/lib/sanitise.ts`),
+which wraps `isomorphic-dompurify` with an allowlist covering the tags `marked` emits for standard markdown (plus
+`<mark>` for future highlight support) and denies `<script>`, `<style>`, `<iframe>`, all event-handler attributes, and
+`javascript:` / `data:` / `vbscript:` URIs. `isomorphic-dompurify` works in both SSR (jsdom shim) and the browser.
+ChatPanel's `renderMarkdown` wraps both its return paths (link-rewrite via `renderMarkdownWithLinks` and plain
+`marked.parse`); `renderMarkdownWithLinks` in `src/lib/links.ts` also sanitises internally, so the link-rewrite path
+is double-wrapped as defence-in-depth (DOMPurify is idempotent). Unit tests in `src/lib/sanitise.test.ts` cover the
+strip side, the preserve side, and idempotence.
 
 ### Logging
 

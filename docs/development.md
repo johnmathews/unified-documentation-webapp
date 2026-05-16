@@ -75,22 +75,27 @@ src/
     stores.svelte.ts      # Shared reactive state (doc ID, sidebar/chat state, legacy category filters)
     colors.ts             # Deterministic source tag colors
     titles.ts             # Display formatting for sources and titles
+    links.ts              # Relative-link rewriter; sanitises marked output before return
+    sanitise.ts           # sanitiseHtml() — DOMPurify wrapper for both {@html} surfaces
     server/
       api.ts              # Server-side proxy utilities (proxyGet/proxyPost)
     components/
       Sidebar.svelte      # Source-rooted folder tree navigation (uses TreeNode)
       TreeNode.svelte     # Recursive collapsible folder/leaf renderer
       TocPanel.svelte     # Table of contents for the current document (active heading tracking)
-      FloatingDocControls.svelte  # Bottom-right pill: scroll progress + bookmark toggle
+      FloatingDocControls.svelte  # Bottom-right pill: scroll progress + bookmark toggle (44px touch targets)
       SearchPanel.svelte   # Search with source and date filters
-      ChatPanel.svelte    # RAG chat interface
+      ChatPanel.svelte    # RAG chat interface (history rows are real <button>; .messages is aria-live)
       Breadcrumbs.svelte  # Breadcrumb navigation
-      BookmarkButton.svelte  # Bookmark toggle (header doc-meta-row)
+      BookmarkButton.svelte  # Bookmark toggle (inline in the doc-meta bar)
   routes/
     +layout.svelte        # Main layout (header, sidebar, search, chat panels)
-    +page.svelte          # Home page (project list with metadata)
+    +page.svelte          # Home page (project list with metadata + summary bar)
     doc/[id]/
-      +page.svelte        # Document viewer
+      +page.svelte        # Document viewer (single-line metadata bar, 75ch body measure)
+    status/
+      +page.svelte        # Server status (sort persisted to URL; polls health every 30s)
+      page-logic.ts       # Pure helpers: parseSortParams / buildSortQuery / POLL_INTERVAL_MS
     api/                  # Server-side proxy routes
       tree/
       search/

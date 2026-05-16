@@ -113,6 +113,21 @@ Surfaced during round-3 execution but not flagged in the spec:
    from the visible metadata bar to keep it compact. If they turn out
    to be missed, restore as a `<details>` "More info" disclosure.
 
+Surfaced by the wrap-up holistic review (not blocking; small):
+
+7. **`/status` overall-health badge missing `role`.** The
+   `<div class="status-badge">` for the page-level health carries
+   `aria-describedby` (correctly associating the visually-hidden
+   description) but no explicit `role="status"` or `role="img"`. The
+   text label and described-by together satisfy WCAG 1.4.1 today; a
+   role attribute would make the semantic intent explicit.
+
+8. **`buildSortQuery` test gap.** Missing a case for
+   `{ key: "last_indexed", asc: true }` — the default key with a
+   flipped direction. Logic is correct (returns `?sort=last_indexed&dir=asc`)
+   but a `DEFAULT_SORT` refactor could silently break the
+   default-key-flipped-direction URL without a failing test.
+
 ## Closing note
 
 The spec's ordering — E → A → D → B → C — held up well in practice.
@@ -127,3 +142,26 @@ Round 4's scope is open. The most coherent themes available: an a11y
 sweep (round 3 hit five items but didn't take a position on a full
 WCAG audit), a small-feature round (B4/B5 + restored doc metadata), or
 a cross-repo `<mark>` highlight pass with the server team.
+
+## Wrap-up (during /done)
+
+After the five batches merged, the session wrap-up landed three small
+follow-ups surfaced by a holistic code review:
+
+1. `src/lib/components/ChatPanel.svelte:218` — documented the
+   defence-in-depth rationale inline (why `renderMarkdown` wraps
+   `renderMarkdownWithLinks` in `sanitiseHtml` even though that
+   function sanitises internally).
+2. `src/lib/components/ChatPanel.svelte:298` — narrowed the
+   `aria-live` region so the conversation history list doesn't get
+   announced when opened. The live region only triggers on assistant
+   reply additions now: `aria-live={showHistory ? "off" : "polite"}`.
+3. `src/lib/sanitise.test.ts` — added two strip-URI test cases
+   (`data:` and `vbscript:`) to lock the existing
+   `ALLOWED_URI_REGEXP` allowlist. Test count 282 → 284.
+
+Documentation in `docs/architecture.md` and `docs/development.md` was
+also updated to reflect the round-3 changes (one-line doc-viewer
+metadata, home summary bar, `/status` URL state + polling,
+sanitisation surface, `--bg-zebra` / `--measure` tokens, new
+`page-logic.ts` module).
