@@ -22,6 +22,18 @@ describe("sanitiseHtml", () => {
 			expect(clean).not.toContain("javascript:");
 		});
 
+		it("strips data: URIs in href", () => {
+			const dirty = `<a href="data:text/html,<script>alert(1)</script>">click</a>`;
+			const clean = sanitiseHtml(dirty);
+			expect(clean).not.toContain("data:");
+		});
+
+		it("strips vbscript: URIs in href", () => {
+			const dirty = `<a href="vbscript:msgbox(1)">click</a>`;
+			const clean = sanitiseHtml(dirty);
+			expect(clean).not.toContain("vbscript:");
+		});
+
 		it("strips <iframe>", () => {
 			const dirty = `<p>hi</p><iframe src="https://evil.example/"></iframe>`;
 			expect(sanitiseHtml(dirty)).not.toContain("<iframe");

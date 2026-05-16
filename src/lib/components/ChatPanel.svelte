@@ -215,7 +215,10 @@
  }
 
  function renderMarkdown(content: string): string {
-  // When a document is in context, resolve relative links against it
+  // When a document is in context, resolve relative links against it.
+  // The outer sanitiseHtml() is intentional defence-in-depth — renderMarkdownWithLinks
+  // also sanitises internally, but DOMPurify is idempotent (covered by sanitise.test.ts),
+  // so a future refactor that touches one path can't accidentally open a hole.
   if (docId) {
    const colonIndex = docId.indexOf(":");
    if (colonIndex !== -1) {
@@ -292,7 +295,7 @@
   </div>
  </div>
 
- <div class="messages" bind:this={messagesEl} aria-live="polite" aria-relevant="additions" aria-atomic="false">
+ <div class="messages" bind:this={messagesEl} aria-live={showHistory ? "off" : "polite"} aria-relevant="additions" aria-atomic="false">
   {#if showHistory}
    <div class="history-list">
     {#if loadingHistory}
