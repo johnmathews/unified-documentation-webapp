@@ -13,6 +13,7 @@ const ACRONYMS = new Set([
   "http",
   "ip",
   "mcp",
+  "md",
   "ssh",
   "ssl",
   "tcp",
