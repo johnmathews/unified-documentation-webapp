@@ -4,7 +4,8 @@
  import { displaySource } from "$lib/titles";
  import { goto } from "$app/navigation";
  import { page } from "$app/state";
- import { parseSortParams, buildSortQuery, type SortState, type SortKey } from "./page-logic";
+ import { parseSortParams, buildSortQuery, POLL_INTERVAL_MS, type SortState, type SortKey } from "./page-logic";
+ import { browser } from "$app/environment";
 
  let health: HealthStatus | null = $state(null);
  let loading = $state(true);
@@ -56,6 +57,44 @@
   currentDocId.value = null;
   void scanTick.value;
   loadHealth();
+ });
+
+ // Live refresh while the tab is visible. Pauses on visibilitychange and
+ // resumes when the tab is foregrounded again. Cleans up on unmount.
+ $effect(() => {
+  if (!browser) return;
+
+  let timerId: ReturnType<typeof setInterval> | undefined;
+
+  function startPolling() {
+   if (timerId !== undefined) return;
+   timerId = setInterval(() => {
+    void loadHealth();
+   }, POLL_INTERVAL_MS);
+  }
+
+  function stopPolling() {
+   if (timerId === undefined) return;
+   clearInterval(timerId);
+   timerId = undefined;
+  }
+
+  function handleVisibilityChange() {
+   if (document.hidden) {
+    stopPolling();
+   } else {
+    void loadHealth();
+    startPolling();
+   }
+  }
+
+  if (!document.hidden) startPolling();
+  document.addEventListener("visibilitychange", handleVisibilityChange);
+
+  return () => {
+   stopPolling();
+   document.removeEventListener("visibilitychange", handleVisibilityChange);
+  };
  });
 
  async function loadHealth() {
