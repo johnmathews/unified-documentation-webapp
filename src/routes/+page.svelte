@@ -254,7 +254,7 @@
   padding-right: 30px;
  }
 
- @media (min-width: 641px) {
+ @media (min-width: 768px) {
   .masthead {
    padding-top: 60px;
    padding-bottom: 60px;
@@ -274,7 +274,7 @@
   margin-bottom: 15px;
  }
 
- @media (min-width: 641px) {
+ @media (min-width: 768px) {
   .masthead__title {
    font-size: 3rem;
    line-height: 1.0416666667;
@@ -289,7 +289,7 @@
   margin-bottom: 0;
  }
 
- @media (min-width: 641px) {
+ @media (min-width: 768px) {
   .masthead__description {
    font-size: 1.5rem;
    line-height: 1.25;
@@ -488,7 +488,7 @@
   margin-left: 8px;
  }
 
- @media (max-width: 640px) {
+ @media (max-width: 767px) {
   .masthead {
    margin: -20px -15px 0;
    padding: 20px 15px;
