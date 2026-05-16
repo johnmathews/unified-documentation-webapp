@@ -300,22 +300,22 @@
      <p class="history-empty">No previous conversations.</p>
     {:else}
      {#each conversations as conv (conv.id)}
-      <div class="history-item" onclick={() => resumeConversation(conv.id)} onkeydown={(e) => { if (e.key === 'Enter') resumeConversation(conv.id); }} role="button" tabindex="0">
-       <div class="history-item-header">
+      <div class="history-item-wrapper">
+       <button type="button" class="history-row" onclick={() => resumeConversation(conv.id)}>
         <span class="history-title">{conv.title}</span>
-        <button class="history-delete" onclick={(e) => removeConversation(e, conv.id)} title="Delete">
-         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
-         </svg>
-        </button>
-       </div>
-       <div class="history-meta">
-        <span>{conv.message_count} messages</span>
-        <span>{formatDate(conv.updated_at)}</span>
-       </div>
-       {#if conv.preview}
-        <p class="history-preview">{conv.preview}</p>
-       {/if}
+        <div class="history-meta">
+         <span>{conv.message_count} messages</span>
+         <span>{formatDate(conv.updated_at)}</span>
+        </div>
+        {#if conv.preview}
+         <p class="history-preview">{conv.preview}</p>
+        {/if}
+       </button>
+       <button type="button" class="history-delete" onclick={(e) => removeConversation(e, conv.id)} aria-label="Delete conversation: {conv.title}">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+         <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+        </svg>
+       </button>
       </div>
      {/each}
     {/if}
@@ -551,37 +551,41 @@
   line-height: 20px;
  }
 
- .history-item {
+ .history-item-wrapper {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 0;
+  border-bottom: 1px solid var(--border);
+ }
+
+ .history-row {
+  flex: 1;
+  min-width: 0;
   display: block;
-  width: 100%;
-  min-height: 44px;
   text-align: left;
   padding: 12px 15px;
   background: none;
   border: none;
-  border-bottom: 1px solid var(--border);
+  font-family: inherit;
+  font-size: inherit;
   cursor: pointer;
   color: var(--text);
  }
 
- .history-item:hover {
+ .history-row:hover {
   background: var(--bg-hover);
  }
 
- .history-item-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 8px;
- }
-
  .history-title {
+  display: block;
   font-size: 16px;
   line-height: 20px;
   font-weight: 600;
  }
 
  .history-delete {
+  flex-shrink: 0;
   min-height: 44px;
   min-width: 44px;
   padding: 10px;
@@ -589,12 +593,11 @@
   border: none;
   color: var(--text-muted);
   cursor: pointer;
-  flex-shrink: 0;
   opacity: 0;
  }
 
- .history-item:hover .history-delete,
- .history-item:focus-within .history-delete {
+ .history-item-wrapper:hover .history-delete,
+ .history-item-wrapper:focus-within .history-delete {
   opacity: 1;
  }
 
