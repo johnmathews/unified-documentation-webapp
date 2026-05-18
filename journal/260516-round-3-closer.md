@@ -143,6 +143,18 @@ sweep (round 3 hit five items but didn't take a position on a full
 WCAG audit), a small-feature round (B4/B5 + restored doc metadata), or
 a cross-repo `<mark>` highlight pass with the server team.
 
+## VO verification result
+
+A3 (`/status` aria-describedby) — verified working.
+
+A4 (ChatPanel `aria-live`) — does not announce new assistant
+messages in Safari VoiceOver. The DOM attribute is present and the
+`showHistory ? "off" : "polite"` narrowing was applied, but VO does
+not pick up the additions in practice. Accepted as a known
+limitation: chat is a low-traffic surface on a single-user app at
+this stage. Revisit if/when the app picks up additional users or
+the chat surface gets heavier use. Round-4 ledger.
+
 ## Wrap-up (during /done)
 
 After the five batches merged, the session wrap-up landed three small
