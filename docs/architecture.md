@@ -130,6 +130,31 @@ ChatPanel's `renderMarkdown` wraps both its return paths (link-rewrite via `rend
 is double-wrapped as defence-in-depth (DOMPurify is idempotent). Unit tests in `src/lib/sanitise.test.ts` cover the
 strip side, the preserve side, and idempotence.
 
+### Content-Security-Policy
+
+Every server response carries a `Content-Security-Policy` header, set in
+`src/hooks.server.ts` via `buildCspHeader()` (in `src/lib/server/csp.ts`).
+This is the second security layer — DOMPurify is the in-app sanitiser; CSP
+is what the browser enforces even if a sanitiser bypass shipped.
+
+The first-pass policy (round 4) is deliberately permissive:
+
+- `default-src 'self'` — no cross-origin loads by default.
+- `script-src 'self' 'unsafe-inline'` — SvelteKit hydration uses inline
+  bootstrap scripts; nonce-based tightening is a follow-up.
+- `style-src 'self' 'unsafe-inline'` — Svelte component scoped styles
+  render as inline `<style>`.
+- `img-src 'self' data:` — markdown can embed `data:` image URIs.
+- `connect-src 'self'` — backend lives behind the same-origin proxy.
+- `frame-src 'self'` — PDFs are embedded same-origin via `/api/files/...`.
+- `frame-ancestors 'none'` — no clickjacking.
+- `base-uri 'self'`, `form-action 'self'`, `object-src 'none'` — lock the
+  classic CSP escape hatches.
+
+The handler only sets the header if it's not already present on the
+response, so per-route overrides remain possible. Unit tests in
+`src/lib/server/csp.test.ts` lock the directive shape.
+
 ### Logging
 
 The webapp emits structured JSON logs to stdout (and stderr for errors), matching the backend's log shape so the

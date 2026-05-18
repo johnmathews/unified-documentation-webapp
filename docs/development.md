@@ -56,12 +56,17 @@ In Docker/production, this is overridden by the `environment` key in `docker-com
 ## Key commands
 
 ```bash
-npm run dev       # Start dev server
-npm run build     # Production build
-npm run preview   # Preview production build
-npm run test      # Run unit tests
-npm run test:e2e  # Run end-to-end tests
+npm run dev            # Start dev server
+npm run build          # Production build
+npm run preview        # Preview production build
+npm run test           # Run unit tests
+npm run test:coverage  # Run unit tests with coverage (HTML report at coverage/index.html)
+npm run test:e2e       # Run end-to-end tests
 ```
+
+`test:coverage` uses the `@vitest/coverage-v8` provider. The text summary
+prints to stdout and the HTML report is written to `coverage/`
+(gitignored). No thresholds are configured yet — visibility only.
 
 ## Project structure
 

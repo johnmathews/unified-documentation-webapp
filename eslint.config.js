@@ -45,7 +45,8 @@ export default defineConfig(
 			'dist/',
 			'node_modules/',
 			'package/',
-			'.engineering-team/'
+			'.engineering-team/',
+			'coverage/'
 		]
 	}
 );

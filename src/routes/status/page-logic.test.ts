@@ -60,6 +60,16 @@ describe("buildSortQuery", () => {
 			"?sort=file_count"
 		);
 	});
+
+	it("includes both sort and dir when key matches default but dir differs", () => {
+		// DEFAULT_SORT is { key: "last_indexed", asc: false }. Flipping direction
+		// alone must still emit the key — direction alone can't identify the sort.
+		// Locks the URL shape against a refactor of DEFAULT_SORT that might drop
+		// the redundant key.
+		expect(buildSortQuery({ key: "last_indexed", asc: true })).toBe(
+			"?sort=last_indexed&dir=asc"
+		);
+	});
 });
 
 describe("SORT_KEYS", () => {
