@@ -192,6 +192,7 @@
 
   <div class="status-header">
    <div class="status-badge"
+    role="status"
     class:ok={health.status === "healthy"}
     class:warn={health.status === "degraded"}
     class:err={health.status === "error"}

@@ -6,6 +6,13 @@ export default defineConfig({
 	plugins: [sveltekit(), svelteTesting()],
 	test: {
 		include: ['src/**/*.test.ts'],
-		environment: 'jsdom'
+		environment: 'jsdom',
+		coverage: {
+			provider: 'v8',
+			reporter: ['text', 'html'],
+			reportsDirectory: 'coverage',
+			include: ['src/**/*.{ts,svelte}'],
+			exclude: ['src/**/*.test.ts', 'src/**/*.d.ts', 'src/app.d.ts']
+		}
 	}
 });

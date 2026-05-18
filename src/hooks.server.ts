@@ -1,6 +1,7 @@
 import type { Handle, HandleServerError } from "@sveltejs/kit";
 import { getApiBase } from "$lib/server/api";
 import { logger, newRequestId } from "$lib/server/logger";
+import { buildCspHeader } from "$lib/server/csp";
 
 logger.info("Webapp starting", {
  event: "server_start",
@@ -15,6 +16,14 @@ export const handle: Handle = async ({ event, resolve }) => {
  event.locals.requestId = requestId;
 
  const response = await resolve(event);
+
+ // CSP is defence-in-depth on top of the DOMPurify sanitisation that runs
+ // on every {@html ...} render path (src/lib/sanitise.ts). The header
+ // constrains what the browser will execute even if a sanitiser bypass
+ // shipped. See docs/architecture.md for the policy rationale.
+ if (!response.headers.has("content-security-policy")) {
+  response.headers.set("content-security-policy", buildCspHeader());
+ }
 
  const duration_ms = Math.round(performance.now() - start);
  const status = response.status;
