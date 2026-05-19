@@ -14,8 +14,16 @@ component patterns — copy GOV.UK. Deviate only with a stated reason.
 
 Practical defaults that follow from this:
 
-- Max page content width ≈ 1020px; main-content column ≈ two-thirds (≈680px).
-  Do not let content stretch to fill the viewport.
+- Reading-column width is bounded (doc body ≈900px, ≈720px when the TOC rail
+  is shown) so prose keeps a comfortable measure — do not let the *text*
+  stretch to fill the viewport. **Deliberate divergence from GOV.UK:** the
+  header band, the service-nav band, and the `/chat` page are *full-bleed*
+  (no centred max-width cap) and the doc reading column is *left-aligned* at
+  the shared 30px inset rather than centred. This is intentional — it keeps
+  every band/column sharing one left edge instead of a narrow centred
+  1100px container floating mid-viewport on wide screens. Rationale and the
+  rejected alternative (cap chat to match the header) are in
+  [`journal/260519-full-bleed-layout-decision.md`](journal/260519-full-bleed-layout-decision.md).
 - Body text 17–19px, headings on the GOV.UK scale (48 / 36 / 24 / 19 desktop;
   32 / 27 / 21 / 19 mobile), line heights in multiples of 5px.
 - Links underlined and blue (`var(--link)`), with `var(--link-visited)` and
