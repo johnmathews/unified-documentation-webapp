@@ -1,5 +1,7 @@
 # Round 3 — Batch E (Polish) Implementation Plan
 
+**Status:** superseded — completed and shipped in round 3; see [journal/260516-round-3-closer.md](../../journal/260516-round-3-closer.md) (archived 2026-05-19).
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Ship the two near-trivial polish items deferred from round 2 — add `md` to the `displaySource` acronyms set, and align the home masthead's negative-margin breakpoint to the layout's content-padding breakpoint.

@@ -1,5 +1,7 @@
 # Round 3 — Batch B (Density / Layout) Implementation Plan
 
+**Status:** superseded — completed and shipped in round 3; see [journal/260516-round-3-closer.md](../../journal/260516-round-3-closer.md) (archived 2026-05-19).
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Land the three deferred density/layout items from round 2. Each item lands as its own commit on a single feature branch.

@@ -1,7 +1,7 @@
 # Round 3 — Deferred-items sweep (design)
 
 **Date:** 2026-05-16
-**Status:** draft, awaiting approval
+**Status:** superseded — round-3 sweep completed; see [journal/260516-round-3-closer.md](../../journal/260516-round-3-closer.md) (archived 2026-05-19). Note: B4 (tablet TOC drawer), B5 (`/status` disclosure), backend `<mark>` highlighting, and ChatPanel streaming styling were deferred out of round 3 and remain unimplemented.
 **Predecessor:** round 2 closed in `journal/260515-source-badge-cross-route.md`
 **Backend prerequisite:** server-side follow-ups shipped in `server/journal/260515-backend-followups-bookmarks-type-and-worker-classifier.md` and `server/journal/260516-document-types-rename-and-prod-bind-mount.md`
 

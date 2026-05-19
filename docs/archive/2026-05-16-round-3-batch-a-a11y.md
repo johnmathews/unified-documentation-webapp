@@ -1,5 +1,7 @@
 # Round 3 — Batch A (Accessibility) Implementation Plan
 
+**Status:** superseded — completed and shipped in round 3; see [journal/260516-round-3-closer.md](../../journal/260516-round-3-closer.md) (archived 2026-05-19).
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Land the five accessibility items deferred from round 2 — ChatPanel history-item nested-interactive fix, focus-visible audit/prune, `/status` aria-describedby, ChatPanel aria-live for new messages, FloatingDocControls 30 → 44px touch targets.
