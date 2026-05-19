@@ -14,6 +14,8 @@ export interface TreeDocument {
  created_at: string | null;
  modified_at: string | null;
  size_bytes: number | null;
+ // Derived from stored content by the backend; PDFs/empty docs → 0.
+ line_count?: number | null;
  type?: DocType;
 }
 

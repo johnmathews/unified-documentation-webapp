@@ -130,12 +130,13 @@
 {:else if doc}
  <div class="doc-layout" class:has-toc={!isPdf(doc) && !!doc.content && tocOpen.value && currentDocToc.value.length > 0}>
   <article class="document">
-   <Breadcrumbs
-    source={doc.source}
-    filePath={doc.file_path}
-    title={doc.title ? stripSourcePrefix(doc.title, doc.source) : doc.file_path.split("/").pop() || doc.file_path}
-   />
    <header class="doc-header">
+    <Breadcrumbs source={doc.source} filePath={doc.file_path} />
+    <h1 class="doc-title">
+     {doc.title
+      ? stripSourcePrefix(doc.title, doc.source)
+      : doc.file_path.split("/").pop() || doc.file_path}
+    </h1>
     <div class="doc-meta">
      <BookmarkButton docId={doc.doc_id} bind:bookmarked={isBookmarked} />
      <a href="/source/{encodeURIComponent(doc.source)}" class="source-badge">{displaySource(doc.source)}</a>
@@ -311,6 +312,31 @@
   padding-bottom: 15px;
   border-top: 1px solid var(--border);
   border-bottom: 1px solid var(--border);
+ }
+
+ /* Breadcrumbs now live inside the (sticky, opaque) header so the header
+    can no longer paint over them — they stay visible on every doc and
+    stay pinned alongside the title when scrolled. */
+ .doc-header :global(.govuk-breadcrumbs) {
+  margin-top: 0;
+  margin-bottom: 8px;
+ }
+
+ /* The document title is the single most important thing to keep visible
+    while scrolling, so it sits in the sticky header above the metadata. */
+ .doc-title {
+  font-size: 19px;
+  line-height: 1.25;
+  font-weight: 700;
+  margin: 0 0 8px;
+  color: var(--text);
+  overflow-wrap: anywhere;
+ }
+
+ @media (min-width: 641px) {
+  .doc-title {
+   font-size: 24px;
+  }
  }
 
  .source-badge {

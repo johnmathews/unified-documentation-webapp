@@ -100,11 +100,11 @@
 	<aside class="history" aria-label="Conversation history">
 		<div class="history-head">
 			<h1>Conversations</h1>
-			<button type="button" class="new-btn" onclick={newConversation}>
+			<button type="button" class="new-btn" onclick={newConversation} title="New conversation">
 				<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
 					<line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
 				</svg>
-				New conversation
+				New
 			</button>
 		</div>
 		<div class="history-list">
@@ -189,16 +189,19 @@
 	.new-btn {
 		display: flex;
 		align-items: center;
-		gap: 5px;
-		min-height: 44px;
-		padding: 8px 10px;
+		justify-content: center;
+		gap: 6px;
+		flex-shrink: 0;
+		min-height: 40px;
+		padding: 8px 16px;
 		background: none;
 		border: 1px solid var(--border-strong);
 		border-radius: 0;
 		color: var(--text);
 		font-family: inherit;
-		font-size: 14px;
+		font-size: 16px;
 		line-height: 20px;
+		white-space: nowrap;
 		cursor: pointer;
 	}
 

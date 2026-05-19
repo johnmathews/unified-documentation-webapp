@@ -1,11 +1,10 @@
 <script lang="ts">
 	import { page } from "$app/state";
 	import { fetchSourceTree, type SourceTree, type TreeDocument } from "$lib/api";
-	import { buildFolderTree, collectAllDocs, type FolderNode } from "$lib/tree";
 	import Breadcrumbs from "$lib/components/Breadcrumbs.svelte";
-	import TreeNode from "$lib/components/TreeNode.svelte";
 	import { currentDocId, currentPageContext } from "$lib/stores.svelte";
 	import { displayTitle, displaySource } from "$lib/titles";
+	import { formatDateTime } from "$lib/datetime";
 
 	let source = $state<SourceTree | null>(null);
 	let loading = $state(true);
@@ -13,41 +12,6 @@
 
 	type SortMode = "date" | "alpha";
 	let sortMode: SortMode = $state("date");
-
-	// One-shot expand/collapse override for the nested TreeNode folders.
-	// null = each TreeNode self-manages (collapsed by default). Mirrors
-	// Sidebar.svelte's pattern. The top-level concertina <details> elements
-	// are driven separately by `sectionOpen` (see below).
-	let forceExpanded: boolean | null = $state(null);
-
-	$effect(() => {
-		if (forceExpanded !== null) {
-			const pending = forceExpanded;
-			queueMicrotask(() => {
-				if (forceExpanded === pending) forceExpanded = null;
-			});
-		}
-	});
-
-	// Per-section open state for the top-level concertina. Index 0 is the
-	// root "Files" section (docs directly at the source root); indices
-	// 1..N map to rootNode.children[i-1]. All sections start open.
-	let sectionOpen = $state<boolean[]>([]);
-
-	function syncSectionOpen() {
-		const count = rootNode ? rootNode.children.length + 1 : 0;
-		sectionOpen = Array.from({ length: count }, () => true);
-	}
-
-	function expandAll() {
-		sectionOpen = sectionOpen.map(() => true);
-		forceExpanded = true;
-	}
-
-	function collapseAll() {
-		sectionOpen = sectionOpen.map(() => false);
-		forceExpanded = false;
-	}
 
 	let sourceName = $derived(decodeURIComponent(page.params.name ?? ""));
 
@@ -75,25 +39,26 @@
 		}
 	}
 
-	const rootNode = $derived<FolderNode | null>(
-		source ? buildFolderTree(source.files) : null,
-	);
+	// Directory of a file_path: everything before the last "/", or "" for
+	// files that live at the repo root.
+	function dirOf(filePath: string): string {
+		const i = filePath.lastIndexOf("/");
+		return i === -1 ? "" : filePath.slice(0, i);
+	}
 
-	const totalDocs = $derived(rootNode ? collectAllDocs(rootNode).length : 0);
-	const folderCount = $derived(rootNode ? rootNode.children.length : 0);
-	const rootDocs = $derived(rootNode ? rootNode.docs : []);
+	// "docs" → "Docs", "docs/archive" → "Docs / Archive". The repo root
+	// becomes the "Root Documents" group. Each directory is its own flat,
+	// non-indented group (e.g. "Docs" and "Docs / Archive" are siblings).
+	function groupLabel(dir: string): string {
+		if (dir === "") return "Root Documents";
+		return dir.split("/").filter(Boolean).map(displaySource).join(" / ");
+	}
 
-	// Keep the concertina open-state array sized to the current tree.
-	$effect(() => {
-		// reference rootNode so this re-runs when the tree changes
-		void rootNode;
-		syncSectionOpen();
-	});
-
-	const summaryLine = $derived(
-		`${totalDocs} ${totalDocs === 1 ? "document" : "documents"} in ` +
-			`${folderCount} ${folderCount === 1 ? "folder" : "folders"}`,
-	);
+	interface DocGroup {
+		label: string;
+		dir: string;
+		docs: TreeDocument[];
+	}
 
 	function sortDocs(docs: TreeDocument[]): TreeDocument[] {
 		const copy = [...docs];
@@ -108,6 +73,35 @@
 		}
 		return copy;
 	}
+
+	const groups = $derived.by<DocGroup[]>(() => {
+		if (!source) return [];
+		const byDir: Record<string, TreeDocument[]> = {};
+		for (const doc of source.files) {
+			const dir = dirOf(doc.file_path);
+			(byDir[dir] ??= []).push(doc);
+		}
+		const result: DocGroup[] = Object.entries(byDir).map(([dir, docs]) => ({
+			label: groupLabel(dir),
+			dir,
+			docs: sortDocs(docs),
+		}));
+		// Root Documents first, then directories alphabetically by label.
+		result.sort((a, b) => {
+			if (a.dir === "" && b.dir !== "") return -1;
+			if (b.dir === "" && a.dir !== "") return 1;
+			return a.label.localeCompare(b.label);
+		});
+		return result;
+	});
+
+	const totalDocs = $derived(source ? source.files.length : 0);
+	const folderCount = $derived(groups.filter((g) => g.dir !== "").length);
+
+	const summaryLine = $derived(
+		`${totalDocs} ${totalDocs === 1 ? "document" : "documents"} in ` +
+			`${folderCount} ${folderCount === 1 ? "folder" : "folders"}`,
+	);
 
 	function docUrl(docId: string): string {
 		return `/doc/${encodeURIComponent(docId)}`;
@@ -125,7 +119,7 @@
 		<p class="error">{error}</p>
 		<a href="/">Back to home</a>
 	</div>
-{:else if source && rootNode}
+{:else if source}
 	<!-- GOV.UK-style masthead hero (mirrors the home page) -->
 	<div class="masthead">
 		<div class="masthead__inner">
@@ -138,11 +132,6 @@
 		<Breadcrumbs source={source.source} />
 
 		<div class="controls-row">
-			<div class="expand-collapse">
-				<button class="tree-text-btn" onclick={expandAll}>expand all</button>
-				<span class="tree-text-sep">|</span>
-				<button class="tree-text-btn" onclick={collapseAll}>collapse all</button>
-			</div>
 			<div class="sort-toggle">
 				<button class:active={sortMode === "date"} onclick={() => (sortMode = "date")}
 					>Recent</button
@@ -153,82 +142,42 @@
 			</div>
 		</div>
 
-		<div class="concertina">
-			{#if rootDocs.length > 0}
-				<details class="section" bind:open={sectionOpen[0]}>
-					<summary class="section__summary">
-						<svg
-							class="section__chevron"
-							width="14"
-							height="14"
-							viewBox="0 0 24 24"
-							fill="none"
-							stroke="currentColor"
-							stroke-width="2"
-							aria-hidden="true"
-						>
-							<polyline points="9 18 15 12 9 6" />
-						</svg>
-						<h2 class="section__title">Root Documents</h2>
-						<span class="section__count">{rootDocs.length}</span>
-					</summary>
-					<div class="section__body">
-						{#each sortDocs(rootDocs) as doc (doc.doc_id)}
-							<a
-								href={docUrl(doc.doc_id)}
-								class="tree-leaf"
-								class:active={currentDocId.value === doc.doc_id}
-							>
-								<svg
-									width="14"
-									height="14"
-									viewBox="0 0 24 24"
-									fill="none"
-									stroke="currentColor"
-									stroke-width="1.5"
-									aria-hidden="true"
-								>
-									<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-									<polyline points="14 2 14 8 20 8" />
-								</svg>
-								<span class="leaf-title">{displayTitle(doc)}</span>
-							</a>
-						{/each}
-					</div>
-				</details>
-			{/if}
-
-			{#each rootNode.children as child, i (child.path)}
-				<details class="section" bind:open={sectionOpen[i + 1]}>
-					<summary class="section__summary">
-						<svg
-							class="section__chevron"
-							width="14"
-							height="14"
-							viewBox="0 0 24 24"
-							fill="none"
-							stroke="currentColor"
-							stroke-width="2"
-							aria-hidden="true"
-						>
-							<polyline points="9 18 15 12 9 6" />
-						</svg>
-						<h2 class="section__title">{displaySource(child.name)}</h2>
-						<span class="section__count">{collectAllDocs(child).length}</span>
-					</summary>
-					<div class="section__body">
-						<!-- name:"" makes TreeNode render the folder's CONTENTS without
-						     repeating the folder's own header (the <h2> already names it). -->
-						<TreeNode
-							node={{ name: "", path: child.path, children: child.children, docs: child.docs }}
-							depth={0}
-							expanded={forceExpanded}
-							{sortDocs}
-						/>
-					</div>
-				</details>
-			{/each}
-		</div>
+		{#each groups as group (group.dir)}
+			<section class="doc-group">
+				<div class="doc-group__head">
+					<h2 class="doc-group__title">{group.label}</h2>
+					<span class="doc-group__count">{group.docs.length}</span>
+				</div>
+				<div class="table-scroll">
+					<table class="doc-table">
+						<thead>
+							<tr>
+								<th scope="col">Title</th>
+								<th scope="col">Path</th>
+								<th scope="col">Modified</th>
+								<th scope="col" class="num">Lines</th>
+							</tr>
+						</thead>
+						<tbody>
+							{#each group.docs as doc (doc.doc_id)}
+								<tr class:active={currentDocId.value === doc.doc_id}>
+									<td class="cell-title">
+										<a href={docUrl(doc.doc_id)}>{displayTitle(doc)}</a>
+									</td>
+									<td class="cell-path">{doc.file_path}</td>
+									<td class="cell-date"
+										>{doc.modified_at ? formatDateTime(doc.modified_at) : "—"}</td
+									>
+									<td class="num"
+										>{doc.line_count == null ? "—" : doc.line_count.toLocaleString()}</td
+									>
+								</tr>
+							{/each}
+						</tbody>
+					</table>
+				</div>
+			</section>
+		{/each}
 	</div>
 {/if}
 
@@ -304,7 +253,7 @@
 
 	.controls-row {
 		display: flex;
-		justify-content: space-between;
+		justify-content: flex-end;
 		align-items: center;
 		margin-top: 10px;
 		margin-bottom: 20px;
@@ -340,154 +289,103 @@
 		background: var(--bg-hover);
 	}
 
-	.expand-collapse {
+	/* One flat (non-indented) group per directory. "Docs" and "Docs / Archive"
+	   are siblings, not nested. GOV.UK aesthetic: 1px borders, no shadows. */
+	.doc-group {
+		margin-bottom: 40px;
+	}
+
+	.doc-group__head {
 		display: flex;
-		align-items: center;
-		gap: 5px;
-		flex-shrink: 0;
-	}
-
-	.tree-text-btn {
-		background: none;
-		border: none;
-		padding: 5px;
-		font-size: 14px;
-		color: var(--text-muted);
-		cursor: pointer;
-		transition: color 0.15s;
-		text-transform: lowercase;
-	}
-
-	.tree-text-btn:hover {
-		color: var(--text);
-	}
-
-	.tree-text-sep {
-		font-size: 14px;
-		color: var(--text-muted);
-		user-select: none;
-	}
-
-	/* Concertina of top-level directories. 1px borders only — no shadows,
-	   gradients or rounded corners (GOV.UK aesthetic). */
-	.concertina {
-		border-top: 1px solid var(--border);
-	}
-
-	.section {
-		border-bottom: 1px solid var(--border);
-	}
-
-	.section__summary {
-		display: flex;
-		align-items: center;
+		align-items: baseline;
 		gap: 10px;
-		padding: 14px 0;
-		cursor: pointer;
-		list-style: none;
-		color: var(--text);
+		padding-bottom: 10px;
+		border-bottom: 2px solid var(--text);
+		margin-bottom: 0;
 	}
 
-	.section__summary::-webkit-details-marker {
-		display: none;
-	}
-
-	.section__summary:hover {
-		color: var(--brand);
-	}
-
-	.section__chevron {
-		flex-shrink: 0;
-		transition: transform 0.1s;
-		color: var(--text-secondary);
-	}
-
-	.section[open] .section__chevron {
-		transform: rotate(90deg);
-	}
-
-	.section__title {
+	.doc-group__title {
 		font-size: 21px;
 		font-weight: 700;
 		margin: 0;
-		flex: 1 1 auto;
-		min-width: 0;
-		overflow: hidden;
-		text-overflow: ellipsis;
-		white-space: nowrap;
 	}
 
 	@media (min-width: 641px) {
-		.section__title {
+		.doc-group__title {
 			font-size: 24px;
 		}
 	}
 
-	.section__count {
+	.doc-group__count {
 		font-size: 16px;
 		font-weight: 400;
 		color: var(--text-secondary);
-		flex-shrink: 0;
 	}
 
-	.section__body {
-		padding: 0 0 12px 0;
+	.table-scroll {
+		overflow-x: auto;
 	}
 
-	/* Root-level "Files" leaf links — mirror TreeNode's .tree-leaf look but
-	   at the GOV.UK ~19px reading scale used on this wide page. */
-	.tree-leaf {
-		display: flex;
-		align-items: center;
-		gap: 6px;
-		padding: 5px 8px 5px 0;
+	.doc-table {
+		width: 100%;
+		border-collapse: collapse;
+		font-size: 16px;
+	}
+
+	.doc-table th {
+		text-align: left;
+		font-weight: 700;
+		padding: 10px 20px 10px 0;
+		border-bottom: 1px solid var(--border);
 		color: var(--text);
-		font-size: 19px;
-		text-decoration: none;
-	}
-
-	.tree-leaf:hover {
-		background: var(--bg-hover);
-	}
-
-	.tree-leaf.active {
-		background: var(--accent-dim);
-		color: var(--accent);
-	}
-
-	.leaf-title {
-		overflow: hidden;
-		text-overflow: ellipsis;
 		white-space: nowrap;
 	}
 
-	/* TreeNode uses compact sizes tuned for the sidebar. On this wide page
-	   they read as too small, so bump them via scoped :global overrides —
-	   the sidebar is unaffected. GOV.UK ~19px body scale. */
-	.section__body :global(.leaf-title) {
-		font-size: 19px;
+	.doc-table td {
+		padding: 10px 20px 10px 0;
+		border-bottom: 1px solid var(--border);
+		color: var(--text);
+		vertical-align: top;
 	}
 
-	.section__body :global(.tree-leaf) {
-		font-size: 19px;
-		padding-top: 5px;
-		padding-bottom: 5px;
+	.doc-table tr.active td {
+		background: var(--accent-dim);
 	}
 
-	.section__body :global(.folder-toggle) {
-		font-size: 19px;
-		padding-top: 6px;
-		padding-bottom: 6px;
+	.doc-table tbody tr:hover td {
+		background: var(--bg-hover);
 	}
 
-	.section__body :global(.count) {
-		font-size: 15px;
+	.cell-title a {
+		font-weight: 600;
+	}
+
+	.cell-path {
+		font-family: var(--font-mono);
+		font-size: 14px;
+		color: var(--text-secondary);
+		word-break: break-all;
+	}
+
+	.cell-date {
+		white-space: nowrap;
+		color: var(--text-secondary);
+	}
+
+	.doc-table .num {
+		text-align: right;
+		white-space: nowrap;
+		font-variant-numeric: tabular-nums;
+		color: var(--text-secondary);
 	}
 
 	@media (max-width: 640px) {
-		.controls-row {
-			flex-direction: column;
-			align-items: flex-start;
+		.doc-table {
+			font-size: 15px;
+		}
+		.doc-table th,
+		.doc-table td {
+			padding-right: 12px;
 		}
 	}
 </style>

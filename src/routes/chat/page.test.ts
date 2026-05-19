@@ -74,7 +74,11 @@ describe("/chat page", () => {
 		const deletes = container.querySelectorAll(".history-delete");
 		expect(deletes.length).toBe(2);
 
-		// And a "New conversation" affordance exists.
-		expect(container.textContent).toContain("New conversation");
+		// And a "New conversation" affordance exists (compact "New" label,
+		// full description in the title attribute for accessibility).
+		const newBtn = container.querySelector("button.new-btn");
+		expect(newBtn).not.toBeNull();
+		expect(newBtn?.getAttribute("title")).toBe("New conversation");
+		expect(newBtn?.textContent).toContain("New");
 	});
 });

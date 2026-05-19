@@ -90,10 +90,12 @@ documentation.
   — that links to `/status`. Each row shows its per-source status badge plus a relative time-ago label beside the
   last-updated date. Health data is fetched in parallel with the tree and degrades gracefully if `/api/health` fails.
   Subtle zebra striping (`var(--bg-zebra)`) anchors row rhythm.
-- **Source Pages**: Per-source view at `/source/<name>` showing the full folder tree (expanded by default) rendered via
-  `TreeNode.svelte`. A row of type-filter chips (documentation / journal / prompt / not-docs) sits in the controls row
-  alongside the existing Recent / A-Z sort toggle, sharing state with the sidebar via the `typeFilters` store. Data comes
-  from `GET /api/sources/{name}/tree` (404 if the source is not configured).
+- **Source Pages**: Per-source view at `/source/<name>` rendering one flat (non-indented) table per directory. Each
+  directory is its own group — nested folders become sibling groups (e.g. `Docs` and `Docs / Archive`), not indented
+  children — with `Root Documents` (repo-root files) always first. Each table has Title / Path / Modified / Lines
+  columns; a Recent / A-Z toggle sorts within every group. Data comes from `GET /api/sources/{name}/tree` (404 if the
+  source is not configured); `line_count` is derived server-side from stored content. The recursive `TreeNode.svelte`
+  concertina is still used by the Sidebar and the folder-browse `/source/<name>/[...path]` route, not here.
 - **Server Status**: Admin page at `/status` showing backend health with per-source monitoring. Each source row shows:
   status (Healthy/Warning/Error/Unknown), file count, chunk count, last updated time, and last scanned time. Per-source
   status is computed from consecutive scan failures (1 = warning, 2+ = error) and staleness of last-checked relative to
