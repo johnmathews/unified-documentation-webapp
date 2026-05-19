@@ -63,8 +63,8 @@ describe("source/[name]/[...path] folder-browse page", () => {
 			container.querySelectorAll<HTMLHeadingElement>(".concertina h2"),
 		).map((h) => h.textContent?.trim());
 		// Child folders of `docs/`.
-		expect(headings).toContain("architecture");
-		expect(headings).toContain("runbooks");
+		expect(headings).toContain("Architecture");
+		expect(headings).toContain("Runbooks");
 		// docs/intro.md is a direct doc of this folder -> Files section.
 		expect(headings).toContain("Files");
 		// README.md (root-level) is NOT part of the docs/ subtree.
@@ -104,6 +104,6 @@ describe("source/[name]/[...path] folder-browse page", () => {
 		const headings = Array.from(
 			container.querySelectorAll<HTMLHeadingElement>(".concertina h2"),
 		).map((h) => h.textContent?.trim());
-		expect(headings).toContain("sub");
+		expect(headings).toContain("Sub");
 	});
 });

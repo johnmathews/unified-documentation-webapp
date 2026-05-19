@@ -60,12 +60,12 @@ describe("source/[name] page", () => {
 		const headings = Array.from(
 			container.querySelectorAll<HTMLHeadingElement>(".concertina h2"),
 		).map((h) => h.textContent?.trim());
-		expect(headings).toContain("guides");
-		expect(headings).toContain("reference");
+		expect(headings).toContain("Guides");
+		expect(headings).toContain("Reference");
 
 		// Each directory heading lives inside its own <details> section.
 		const sections = container.querySelectorAll("details.section");
-		// Files section + 2 folder sections.
+		// Root Documents section + 2 folder sections.
 		expect(sections.length).toBe(3);
 
 		// (b) The root-level file (README.md) still appears. Root-level docs
@@ -76,7 +76,7 @@ describe("source/[name] page", () => {
 		expect(readmeLink?.getAttribute("href")).toBe("/doc/demo-src%3AREADME.md");
 	});
 
-	it("shows no Files section when there are no root-level docs", async () => {
+	it("shows no Root Documents section when there are no root-level docs", async () => {
 		fetchSourceTree.mockResolvedValue({
 			source: "demo-src",
 			files: [doc("guides/intro.md", "Intro")],
@@ -91,7 +91,7 @@ describe("source/[name] page", () => {
 		const headings = Array.from(
 			container.querySelectorAll<HTMLHeadingElement>(".concertina h2"),
 		).map((h) => h.textContent?.trim());
-		expect(headings).not.toContain("Files");
-		expect(headings).toContain("guides");
+		expect(headings).not.toContain("Root Documents");
+		expect(headings).toContain("Guides");
 	});
 });

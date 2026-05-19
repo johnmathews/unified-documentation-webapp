@@ -121,7 +121,7 @@
        {#each group.entries as entry, i (entry.doc_id)}
         {@const day = formatDay(entryDate(entry))}
         {@const prevDay = i > 0 ? formatDay(entryDate(group.entries[i - 1])) : ""}
-        <li class="entry">
+        <li class="entry" class:filtered={activeSource}>
          <span class="entry-date" aria-hidden={day === prevDay}>
           {day === prevDay ? "" : day}
          </span>
@@ -206,7 +206,7 @@
  }
 
  .journal-page {
-  max-width: 720px;
+  max-width: 960px;
   margin: 0 auto;
   padding-top: 30px;
  }
@@ -294,14 +294,22 @@
   margin: 0;
  }
 
+ /* Three aligned columns: date | source | title. Fixed widths on the
+    first two columns keep the title start aligned across every row. When a
+    project filter is active the source span is not rendered, so the row
+    drops to a two-column grid (.entry.filtered). */
  .entry {
-  display: flex;
+  display: grid;
+  grid-template-columns: 3.5em 270px 1fr;
+  column-gap: 20px;
   align-items: baseline;
-  flex-wrap: wrap;
-  gap: 15px;
   min-height: 44px;
   padding: 8px 0;
   border-bottom: 1px solid var(--border);
+ }
+
+ .entry.filtered {
+  grid-template-columns: 3.5em 1fr;
  }
 
  .entry-date {
@@ -309,8 +317,6 @@
   line-height: 20px;
   color: var(--text-secondary);
   white-space: nowrap;
-  flex-shrink: 0;
-  min-width: 1.5em;
   text-align: right;
  }
 
@@ -319,7 +325,8 @@
   line-height: 20px;
   color: var(--text-secondary);
   white-space: nowrap;
-  flex-shrink: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
  }
 
  .entry-title {
@@ -331,7 +338,6 @@
   text-decoration-thickness: max(1px, 0.0625rem);
   text-underline-offset: 0.1578em;
   min-width: 0;
-  flex: 1;
  }
 
  .entry-title:visited {
@@ -349,15 +355,22 @@
    line-height: 25px;
   }
 
-  .entry {
-   gap: 10px;
+  /* Stack to a single column on phones — fixed source-column width
+     doesn't fit a 375px screen. */
+  .entry,
+  .entry.filtered {
+   grid-template-columns: 1fr;
+   row-gap: 4px;
    padding: 10px 0;
+  }
+
+  .entry-date {
+   text-align: left;
   }
 
   .entry-title {
    font-size: 16px;
    line-height: 20px;
-   flex-basis: 100%;
   }
 
   .entry-source {

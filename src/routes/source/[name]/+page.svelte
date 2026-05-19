@@ -169,7 +169,7 @@
 						>
 							<polyline points="9 18 15 12 9 6" />
 						</svg>
-						<h2 class="section__title">Files</h2>
+						<h2 class="section__title">Root Documents</h2>
 						<span class="section__count">{rootDocs.length}</span>
 					</summary>
 					<div class="section__body">
@@ -213,7 +213,7 @@
 						>
 							<polyline points="9 18 15 12 9 6" />
 						</svg>
-						<h2 class="section__title">{child.name}</h2>
+						<h2 class="section__title">{displaySource(child.name)}</h2>
 						<span class="section__count">{collectAllDocs(child).length}</span>
 					</summary>
 					<div class="section__body">
