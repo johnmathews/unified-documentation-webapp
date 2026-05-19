@@ -18,12 +18,16 @@ Practical defaults that follow from this:
   is shown) so prose keeps a comfortable measure — do not let the *text*
   stretch to fill the viewport. **Deliberate divergence from GOV.UK:** the
   header band, the service-nav band, and the `/chat` page are *full-bleed*
-  (no centred max-width cap) and the doc reading column is *left-aligned* at
-  the shared 30px inset rather than centred. This is intentional — it keeps
-  every band/column sharing one left edge instead of a narrow centred
-  1100px container floating mid-viewport on wide screens. Rationale and the
-  rejected alternative (cap chat to match the header) are in
-  [`journal/260519-full-bleed-layout-decision.md`](journal/260519-full-bleed-layout-decision.md).
+  (no centred max-width cap). Reading columns are *centred* (`margin: 0
+  auto`) so the doc, home, and journal pages share one visual rhythm on
+  wide displays — an earlier experiment left-aligning the doc column at the
+  30px inset (to make every band share one left edge) read as abandoned
+  rather than intentional once the column ran out and a viewport-wide empty
+  band opened on its right. Rationale for full-bleed bands and the rejected
+  alternative (cap chat to match the header) are in
+  [`journal/260519-full-bleed-layout-decision.md`](journal/260519-full-bleed-layout-decision.md);
+  the decision to re-centre the doc column is in
+  [`journal/260519-doc-page-centred-reading-column.md`](journal/260519-doc-page-centred-reading-column.md).
 - Body text 17–19px, headings on the GOV.UK scale (48 / 36 / 24 / 19 desktop;
   32 / 27 / 21 / 19 mobile), line heights in multiples of 5px.
 - Links underlined and blue (`var(--link)`), with `var(--link-visited)` and

@@ -180,10 +180,6 @@
      <a href="/source/{encodeURIComponent(doc.source)}" class="source-badge">{displaySource(doc.source)}</a>
      <span class="meta-sep" aria-hidden="true">/</span>
      <span class="file-path">{doc.file_path}</span>
-     {#if doc.type}
-      <span class="meta-sep" aria-hidden="true">·</span>
-      <span class="doc-type">{doc.type}</span>
-     {/if}
      {#if doc.modified_at}
       <span class="meta-sep" aria-hidden="true">·</span>
       <span>Modified {formatDate(doc.modified_at)}</span>
@@ -311,13 +307,14 @@
   }
  }
 
- /* Left-aligned (not centred) so the content's left edge lines up with the
-    service-nav's leftmost item — both now sit at the shared 30px inset.
-    Wider than the old 720px because without the TOC rail the reading
-    column felt cramped against all the empty space to its right. */
+ /* Centred reading column so the doc page matches the visual rhythm of the
+    home and journal pages on wide displays — left-aligning the column at
+    the 30px inset left an oceans-wide empty band on its right that felt
+    abandoned rather than intentional. The bands/chrome above stay
+    full-bleed (see +layout.svelte); only the reading column re-centres. */
  .doc-layout {
   max-width: 900px;
-  margin: 0;
+  margin: 0 auto;
  }
 
  .document {
@@ -414,12 +411,6 @@
 
  .meta-sep {
   color: var(--border-strong);
- }
-
- .doc-type {
-  font-weight: 700;
-  color: var(--text);
-  text-transform: capitalize;
  }
 
  .no-content {
