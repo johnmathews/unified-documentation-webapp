@@ -1,6 +1,12 @@
 <script lang="ts">
  import { page } from "$app/state";
- import { fetchDocument, checkBookmarks, type FullDocument } from "$lib/api";
+ import {
+  fetchDocument,
+  checkBookmarks,
+  fetchHealth,
+  githubFileUrl,
+  type FullDocument,
+ } from "$lib/api";
  import { currentDocId, currentDocToc, tocOpen } from "$lib/stores.svelte";
  import Breadcrumbs from "$lib/components/Breadcrumbs.svelte";
  import BookmarkButton from "$lib/components/BookmarkButton.svelte";
@@ -8,8 +14,9 @@
  import DocToc from "$lib/components/DocToc.svelte";
  import HighlightPopover from "$lib/components/HighlightPopover.svelte";
  import { displaySource, displayTitle, stripSourcePrefix } from "$lib/titles";
- import { renderMarkdownWithLinks, extractHeadings } from "$lib/links";
+ import { renderMarkdownWithLinks, extractHeadings, parseFrontmatter } from "$lib/links";
  import { countDocStats } from "$lib/docStats";
+ import { formatDateTime } from "$lib/datetime";
  import { applyHighlights, loadHighlights } from "$lib/highlights";
 
  let doc: FullDocument | null = $state(null);
@@ -17,11 +24,23 @@
  let error = $state("");
  let isBookmarked = $state(false);
  let mdEl = $state<HTMLElement | null>(null);
+ // "View on GitHub" target — null unless this doc's source is github-backed.
+ let githubUrl = $state<string | null>(null);
 
  let currentId = $derived(decodeURIComponent(page.params.id ?? ""));
+
+ // Frontmatter is split off the raw content so the body renders cleanly and
+ // the metadata shows as a tidy block instead of a bold blob.
+ let parsed = $derived.by(() => {
+  if (!doc || !doc.content || isPdf(doc)) {
+   return { entries: [], body: doc?.content ?? "" };
+  }
+  return parseFrontmatter(doc.content);
+ });
+
  let stats = $derived.by(() => {
   if (!doc || !doc.content) return null;
-  return countDocStats(doc.content);
+  return countDocStats(parsed.body);
  });
 
  $effect(() => {
@@ -42,12 +61,23 @@
   loading = true;
   error = "";
   doc = null;
+  githubUrl = null;
   currentDocToc.value = [];
 
   try {
    doc = await fetchDocument(docId);
    if (doc.content && !doc.file_path.toLowerCase().endsWith(".pdf")) {
-    currentDocToc.value = extractHeadings(doc.content);
+    currentDocToc.value = extractHeadings(parseFrontmatter(doc.content).body);
+   }
+   // Resolve a "View on GitHub" link from the source's repo metadata.
+   // Best-effort: a health-fetch failure must not break the doc view.
+   try {
+    const loaded = doc;
+    const health = await fetchHealth();
+    const src = health.sources.find((s) => s.source === loaded.source);
+    githubUrl = githubFileUrl(src?.repo_url, src?.branch, loaded.file_path);
+   } catch {
+    githubUrl = null;
    }
    // Check bookmark status
    const status = await checkBookmarks([docId]);
@@ -68,16 +98,7 @@
  }
 
  function formatDate(dateStr: string | null): string {
-  if (!dateStr) return "";
-  try {
-   return new Date(dateStr).toLocaleDateString("en-GB", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-   });
-  } catch {
-   return dateStr;
-  }
+  return formatDateTime(dateStr);
  }
 
  $effect(() => {
@@ -132,6 +153,12 @@
       <span class="meta-sep" aria-hidden="true">·</span>
       <span>{stats.words.toLocaleString()} words</span>
      {/if}
+     {#if githubUrl}
+      <span class="meta-sep" aria-hidden="true">·</span>
+      <a class="github-link" href={githubUrl} target="_blank" rel="noopener noreferrer">
+       View on GitHub
+      </a>
+     {/if}
     </div>
    </header>
 
@@ -144,9 +171,19 @@
      <iframe src={pdfUrl(doc.doc_id)} class="pdf-embed" title={doc.title || doc.file_path}></iframe>
     </div>
    {:else if doc.content}
+    {#if parsed.entries.length > 0}
+     <dl class="frontmatter">
+      {#each parsed.entries as entry (entry.key)}
+       <div class="frontmatter-row">
+        <dt>{entry.key}</dt>
+        <dd>{entry.value}</dd>
+       </div>
+      {/each}
+     </dl>
+    {/if}
     <div class="markdown-content" bind:this={mdEl}>
      <!-- eslint-disable-next-line svelte/no-at-html-tags -->
-     {@html renderMarkdownWithLinks(doc.content, doc.source, doc.file_path)}
+     {@html renderMarkdownWithLinks(parsed.body, doc.source, doc.file_path)}
     </div>
    {:else}
     <p class="no-content">This document has no content.</p>
@@ -167,6 +204,45 @@
 {/if}
 
 <style>
+ .frontmatter {
+  margin: 0 0 30px;
+  padding: 15px 20px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+ }
+
+ .frontmatter-row {
+  display: grid;
+  grid-template-columns: minmax(110px, max-content) 1fr;
+  gap: 6px 20px;
+  padding: 6px 0;
+ }
+
+ .frontmatter-row + .frontmatter-row {
+  border-top: 1px solid var(--border);
+ }
+
+ .frontmatter dt {
+  font-family: var(--font-mono);
+  font-size: 15px;
+  color: var(--text-secondary);
+  word-break: break-word;
+ }
+
+ .frontmatter dd {
+  margin: 0;
+  font-size: 17px;
+  color: var(--text);
+  overflow-wrap: anywhere;
+ }
+
+ @media (max-width: 480px) {
+  .frontmatter-row {
+   grid-template-columns: 1fr;
+   gap: 2px;
+  }
+ }
+
  .status-page {
   display: flex;
   flex-direction: column;
@@ -248,6 +324,11 @@
   color: var(--text-secondary);
   font-family: var(--font-mono);
   word-break: break-all;
+ }
+
+ .github-link {
+  font-size: 16px;
+  white-space: nowrap;
  }
 
  .doc-meta {

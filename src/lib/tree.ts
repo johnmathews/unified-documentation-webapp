@@ -38,6 +38,22 @@ function sortNode(node: FolderNode): void {
 	for (const child of node.children) sortNode(child);
 }
 
+/**
+ * Walk `/`-separated segments from `root` and return the matching child
+ * FolderNode. Returns `root` for an empty path, `null` if any segment is
+ * missing. Pure.
+ */
+export function findFolderNode(root: FolderNode, path: string): FolderNode | null {
+	const segments = path.split("/").filter(Boolean);
+	let current: FolderNode = root;
+	for (const segment of segments) {
+		const child = current.children.find((c) => c.name === segment);
+		if (!child) return null;
+		current = child;
+	}
+	return current;
+}
+
 export function collectAllDocs(node: FolderNode): TreeDocument[] {
 	const out: TreeDocument[] = [...node.docs];
 	for (const child of node.children) {

@@ -3,6 +3,7 @@
  import BookmarkButton from "$lib/components/BookmarkButton.svelte";
  import { currentDocId } from "$lib/stores.svelte";
  import { displayTitle, displaySource } from "$lib/titles";
+ import { formatDateTime } from "$lib/datetime";
  import { SvelteMap } from "svelte/reactivity";
 
  let bookmarks: BookmarkEntry[] = $state([]);
@@ -90,15 +91,7 @@
 
  function formatDate(dateStr: string | null): string {
   if (!dateStr) return "";
-  try {
-   return new Date(dateStr).toLocaleDateString("en-GB", {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-   });
-  } catch {
-   return dateStr;
-  }
+  return formatDateTime(dateStr);
  }
 
  function handleRemove(docId: string, bookmarked: boolean) {

@@ -8,6 +8,7 @@
  } from "$lib/journal";
  import { displayTitle, displaySource } from "$lib/titles";
  import { currentDocId } from "$lib/stores.svelte";
+ import Breadcrumbs from "$lib/components/Breadcrumbs.svelte";
  import { SvelteSet } from "svelte/reactivity";
 
  let allEntries: JournalEntry[] = $state([]);
@@ -86,11 +87,7 @@
  </div>
 
  <div class="journal-page">
-  <nav class="breadcrumbs" aria-label="Breadcrumb">
-   <a href="/">Home</a>
-   <span class="sep">/</span>
-   <span class="current">Journal</span>
-  </nav>
+  <Breadcrumbs crumbs={[{ label: "Journal" }]} />
 
   {#if sources.length > 1}
    <div class="source-filters" role="group" aria-label="Filter by project">
@@ -222,37 +219,6 @@
 
  .error {
   color: var(--error);
- }
-
- .breadcrumbs {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  font-size: 16px;
-  line-height: 1.25;
-  flex-wrap: wrap;
-  margin-bottom: 25px;
- }
-
- .breadcrumbs a {
-  color: var(--text);
-  text-decoration: none;
- }
-
- .breadcrumbs a:hover {
-  text-decoration: underline;
- }
-
- .breadcrumbs a:visited {
-  color: var(--text);
- }
-
- .sep {
-  color: var(--text-secondary);
- }
-
- .current {
-  color: var(--text);
  }
 
  .source-filters {

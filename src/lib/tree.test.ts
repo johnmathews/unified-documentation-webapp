@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import type { TreeDocument } from "$lib/api";
-import { buildFolderTree, collectAllDocs } from "$lib/tree";
+import { buildFolderTree, collectAllDocs, findFolderNode } from "$lib/tree";
 
 function doc(filePath: string, title = ""): TreeDocument {
 	return {
@@ -74,6 +74,45 @@ describe("buildFolderTree", () => {
 			doc("middle/a.md"),
 		]);
 		expect(root.children.map((c) => c.name)).toEqual(["alpha", "middle", "zeta"]);
+	});
+});
+
+describe("findFolderNode", () => {
+	it("returns the root for an empty path", () => {
+		const root = buildFolderTree([doc("docs/intro.md")]);
+		expect(findFolderNode(root, "")).toBe(root);
+	});
+
+	it("returns the root for a path of only slashes", () => {
+		const root = buildFolderTree([doc("docs/intro.md")]);
+		expect(findFolderNode(root, "//")).toBe(root);
+	});
+
+	it("descends to a nested folder node", () => {
+		const root = buildFolderTree([
+			doc("docs/architecture/overview.md"),
+			doc("docs/intro.md"),
+		]);
+		const node = findFolderNode(root, "docs/architecture");
+		expect(node).not.toBeNull();
+		expect(node?.name).toBe("architecture");
+		expect(node?.path).toBe("docs/architecture");
+		expect(node?.docs.map((d) => d.file_path)).toEqual([
+			"docs/architecture/overview.md",
+		]);
+	});
+
+	it("returns a single-level folder node", () => {
+		const root = buildFolderTree([doc("docs/intro.md")]);
+		const node = findFolderNode(root, "docs");
+		expect(node?.name).toBe("docs");
+	});
+
+	it("returns null when any segment is missing", () => {
+		const root = buildFolderTree([doc("docs/intro.md")]);
+		expect(findFolderNode(root, "docs/nope")).toBeNull();
+		expect(findFolderNode(root, "missing")).toBeNull();
+		expect(findFolderNode(root, "docs/intro.md")).toBeNull();
 	});
 });
 

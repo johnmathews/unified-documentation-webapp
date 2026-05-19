@@ -1,7 +1,12 @@
 <script lang="ts">
 	import { page } from "$app/state";
 	import { fetchSourceTree, type SourceTree, type TreeDocument } from "$lib/api";
-	import { buildFolderTree, collectAllDocs, type FolderNode } from "$lib/tree";
+	import {
+		buildFolderTree,
+		collectAllDocs,
+		findFolderNode,
+		type FolderNode,
+	} from "$lib/tree";
 	import Breadcrumbs from "$lib/components/Breadcrumbs.svelte";
 	import TreeNode from "$lib/components/TreeNode.svelte";
 	import { currentDocId, currentPageContext } from "$lib/stores.svelte";
@@ -15,9 +20,7 @@
 	let sortMode: SortMode = $state("date");
 
 	// One-shot expand/collapse override for the nested TreeNode folders.
-	// null = each TreeNode self-manages (collapsed by default). Mirrors
-	// Sidebar.svelte's pattern. The top-level concertina <details> elements
-	// are driven separately by `sectionOpen` (see below).
+	// Mirrors the source page's pattern.
 	let forceExpanded: boolean | null = $state(null);
 
 	$effect(() => {
@@ -30,12 +33,11 @@
 	});
 
 	// Per-section open state for the top-level concertina. Index 0 is the
-	// root "Files" section (docs directly at the source root); indices
-	// 1..N map to rootNode.children[i-1]. All sections start open.
+	// folder's own "Files" section; indices 1..N map to folderNode.children[i-1].
 	let sectionOpen = $state<boolean[]>([]);
 
 	function syncSectionOpen() {
-		const count = rootNode ? rootNode.children.length + 1 : 0;
+		const count = folderNode ? folderNode.children.length + 1 : 0;
 		sectionOpen = Array.from({ length: count }, () => true);
 	}
 
@@ -50,6 +52,23 @@
 	}
 
 	let sourceName = $derived(decodeURIComponent(page.params.name ?? ""));
+
+	// Route rest param is `/`-joined, each segment encodeURIComponent-encoded
+	// by Breadcrumbs. Decode per segment, re-join with literal `/`.
+	let folderPath = $derived(
+		(page.params.path ?? "")
+			.split("/")
+			.filter(Boolean)
+			.map(decodeURIComponent)
+			.join("/"),
+	);
+
+	// Parent path (folderPath minus its last segment). The breadcrumb shows
+	// ancestor folders as links and the current folder as the non-link
+	// current crumb — without this the current folder appears twice.
+	let parentPath = $derived(
+		folderPath.split("/").filter(Boolean).slice(0, -1).join("/"),
+	);
 
 	$effect(() => {
 		currentDocId.value = null;
@@ -79,20 +98,28 @@
 		source ? buildFolderTree(source.files) : null,
 	);
 
-	const totalDocs = $derived(rootNode ? collectAllDocs(rootNode).length : 0);
-	const folderCount = $derived(rootNode ? rootNode.children.length : 0);
-	const rootDocs = $derived(rootNode ? rootNode.docs : []);
+	const folderNode = $derived<FolderNode | null>(
+		rootNode ? findFolderNode(rootNode, folderPath) : null,
+	);
 
-	// Keep the concertina open-state array sized to the current tree.
+	const totalDocs = $derived(folderNode ? collectAllDocs(folderNode).length : 0);
+	const folderCount = $derived(folderNode ? folderNode.children.length : 0);
+	const folderDocs = $derived(folderNode ? folderNode.docs : []);
+
+	// Keep the concertina open-state array sized to the current subtree.
 	$effect(() => {
-		// reference rootNode so this re-runs when the tree changes
-		void rootNode;
+		void folderNode;
 		syncSectionOpen();
 	});
 
 	const summaryLine = $derived(
 		`${totalDocs} ${totalDocs === 1 ? "document" : "documents"} in ` +
 			`${folderCount} ${folderCount === 1 ? "folder" : "folders"}`,
+	);
+
+	// Title is the folder's own name; fall back to `source/path` for context.
+	const folderTitle = $derived(
+		folderNode && folderNode.name ? folderNode.name : `${sourceName}/${folderPath}`,
 	);
 
 	function sortDocs(docs: TreeDocument[]): TreeDocument[] {
@@ -115,7 +142,7 @@
 </script>
 
 <svelte:head>
-	<title>{displaySource(sourceName)} - Documentation Library</title>
+	<title>{folderTitle} - {displaySource(sourceName)} - Documentation Library</title>
 </svelte:head>
 
 {#if loading}
@@ -125,17 +152,21 @@
 		<p class="error">{error}</p>
 		<a href="/">Back to home</a>
 	</div>
-{:else if source && rootNode}
-	<!-- GOV.UK-style masthead hero (mirrors the home page) -->
+{:else if source && rootNode && folderNode}
+	<!-- GOV.UK-style masthead hero -->
 	<div class="masthead">
 		<div class="masthead__inner">
-			<h1 class="masthead__title">{displaySource(source.source)}</h1>
+			<h1 class="masthead__title">{folderTitle}</h1>
 			<p class="masthead__description">{summaryLine}</p>
 		</div>
 	</div>
 
 	<div class="source-page">
-		<Breadcrumbs source={source.source} />
+		<Breadcrumbs
+			source={source.source}
+			filePath={parentPath ? `${parentPath}/_` : undefined}
+			title={folderNode.name || folderPath}
+		/>
 
 		<div class="controls-row">
 			<div class="expand-collapse">
@@ -154,7 +185,7 @@
 		</div>
 
 		<div class="concertina">
-			{#if rootDocs.length > 0}
+			{#if folderDocs.length > 0}
 				<details class="section" bind:open={sectionOpen[0]}>
 					<summary class="section__summary">
 						<svg
@@ -170,10 +201,10 @@
 							<polyline points="9 18 15 12 9 6" />
 						</svg>
 						<h2 class="section__title">Files</h2>
-						<span class="section__count">{rootDocs.length}</span>
+						<span class="section__count">{folderDocs.length}</span>
 					</summary>
 					<div class="section__body">
-						{#each sortDocs(rootDocs) as doc (doc.doc_id)}
+						{#each sortDocs(folderDocs) as doc (doc.doc_id)}
 							<a
 								href={docUrl(doc.doc_id)}
 								class="tree-leaf"
@@ -198,7 +229,7 @@
 				</details>
 			{/if}
 
-			{#each rootNode.children as child, i (child.path)}
+			{#each folderNode.children as child, i (child.path)}
 				<details class="section" bind:open={sectionOpen[i + 1]}>
 					<summary class="section__summary">
 						<svg
@@ -230,10 +261,17 @@
 			{/each}
 		</div>
 	</div>
+{:else if source}
+	<div class="status">
+		<p class="error">Folder not found</p>
+		<a href="/source/{encodeURIComponent(sourceName)}"
+			>Back to {displaySource(sourceName)}</a
+		>
+	</div>
 {/if}
 
 <style>
-	/* GOV.UK masthead — blue hero section. Mirrors src/routes/+page.svelte. */
+	/* GOV.UK masthead — blue hero section. Mirrors the source page. */
 	.masthead {
 		padding: 30px 0;
 		border-bottom: 1px solid var(--brand-dark);
@@ -368,8 +406,6 @@
 		user-select: none;
 	}
 
-	/* Concertina of top-level directories. 1px borders only — no shadows,
-	   gradients or rounded corners (GOV.UK aesthetic). */
 	.concertina {
 		border-top: 1px solid var(--border);
 	}
@@ -434,8 +470,6 @@
 		padding: 0 0 12px 0;
 	}
 
-	/* Root-level "Files" leaf links — mirror TreeNode's .tree-leaf look but
-	   at the GOV.UK ~19px reading scale used on this wide page. */
 	.tree-leaf {
 		display: flex;
 		align-items: center;
@@ -461,9 +495,6 @@
 		white-space: nowrap;
 	}
 
-	/* TreeNode uses compact sizes tuned for the sidebar. On this wide page
-	   they read as too small, so bump them via scoped :global overrides —
-	   the sidebar is unaffected. GOV.UK ~19px body scale. */
 	.section__body :global(.leaf-title) {
 		font-size: 19px;
 	}

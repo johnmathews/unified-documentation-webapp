@@ -5,19 +5,35 @@
 		source,
 		filePath,
 		title,
+		crumbs,
 	}: {
-		source: string;
+		source?: string;
 		filePath?: string;
 		title?: string;
+		// Optional generic mode: when provided, renders Home + these crumbs
+		// (last one is the current page, no link) using the same markup.
+		// The source/filePath/title props are ignored in this mode.
+		crumbs?: { label: string; href?: string }[];
 	} = $props();
 
-	// File-path segments excluding the filename itself. Intermediate folder
-	// segments render as plain text (no route for arbitrary subpaths).
+	// File-path segments excluding the filename itself. Each renders as a
+	// clickable link into the folder-browse route.
 	const folderSegments = $derived.by(() => {
 		if (!filePath) return [];
 		const parts = filePath.split("/").filter(Boolean);
 		return parts.slice(0, -1);
 	});
+
+	// Href for the folder-browse route up to and including segment index `i`.
+	// Encode each segment but join with literal `/` so the route's [...path]
+	// rest param keeps its separators.
+	function folderHref(i: number): string {
+		const encoded = folderSegments
+			.slice(0, i + 1)
+			.map(encodeURIComponent)
+			.join("/");
+		return `/source/${encodeURIComponent(source ?? "")}/${encoded}`;
+	}
 </script>
 
 <nav class="govuk-breadcrumbs" aria-label="Breadcrumb">
@@ -25,24 +41,42 @@
 		<li class="govuk-breadcrumbs__list-item">
 			<a class="govuk-breadcrumbs__link" href="/">Home</a>
 		</li>
-		{#if title || folderSegments.length > 0}
-			<li class="govuk-breadcrumbs__list-item">
-				<a class="govuk-breadcrumbs__link" href="/source/{encodeURIComponent(source)}"
-					>{displaySource(source)}</a
-				>
-			</li>
+		{#if crumbs}
+			{#each crumbs as crumb, i (i)}
+				{#if i === crumbs.length - 1}
+					<li class="govuk-breadcrumbs__list-item" aria-current="page">
+						{crumb.label}
+					</li>
+				{:else}
+					<li class="govuk-breadcrumbs__list-item">
+						<a class="govuk-breadcrumbs__link" href={crumb.href ?? "#"}
+							>{crumb.label}</a
+						>
+					</li>
+				{/if}
+			{/each}
 		{:else}
-			<li class="govuk-breadcrumbs__list-item" aria-current="page">
-				{displaySource(source)}
-			</li>
-		{/if}
+			{#if title || folderSegments.length > 0}
+				<li class="govuk-breadcrumbs__list-item">
+					<a class="govuk-breadcrumbs__link" href="/source/{encodeURIComponent(source ?? '')}"
+						>{displaySource(source ?? "")}</a
+					>
+				</li>
+			{:else}
+				<li class="govuk-breadcrumbs__list-item" aria-current="page">
+					{displaySource(source ?? "")}
+				</li>
+			{/if}
 
-		{#each folderSegments as segment, i (i)}
-			<li class="govuk-breadcrumbs__list-item">{segment}</li>
-		{/each}
+			{#each folderSegments as segment, i (i)}
+				<li class="govuk-breadcrumbs__list-item">
+					<a class="govuk-breadcrumbs__link" href={folderHref(i)}>{segment}</a>
+				</li>
+			{/each}
 
-		{#if title}
-			<li class="govuk-breadcrumbs__list-item" aria-current="page">{title}</li>
+			{#if title}
+				<li class="govuk-breadcrumbs__list-item" aria-current="page">{title}</li>
+			{/if}
 		{/if}
 	</ol>
 </nav>

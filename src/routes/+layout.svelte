@@ -2,22 +2,20 @@
  import "../app.css";
  import favicon from "$lib/assets/favicon.svg";
  import Sidebar from "$lib/components/Sidebar.svelte";
- import ChatPanel from "$lib/components/ChatPanel.svelte";
  import SearchPanel from "$lib/components/SearchPanel.svelte";
  import KeyboardShortcutsModal from "$lib/components/KeyboardShortcutsModal.svelte";
  import Toaster from "$lib/components/Toaster.svelte";
- import { currentDocId, currentPageContext, tocOpen, scanTick } from "$lib/stores.svelte";
+ import { tocOpen, scanTick } from "$lib/stores.svelte";
  import { triggerScan, pollScan, type ScanProgress } from "$lib/api";
  import { toasts } from "$lib/toasts.svelte";
  import { page } from "$app/state";
+ import { goto } from "$app/navigation";
  import { MediaQuery } from "svelte/reactivity";
  import { onMount } from "svelte";
 
  let { children } = $props();
 
  let sidebarOpen = $state(false);
- let chatOpen = $state(false);
- let chatExpanded = $state(false);
  let searchOpen = $state(false);
  let shortcutsOpen = $state(false);
  // eslint-disable-next-line svelte/prefer-writable-derived
@@ -35,10 +33,6 @@
  const SEARCH_LARGE_DEFAULT_WIDTH = 384;
  let searchWidth = $state(SEARCH_DEFAULT_WIDTH);
  let isSearchResizing = $state(false);
-
- const CHAT_DEFAULT_WIDTH = 432;
- let chatWidth = $state(CHAT_DEFAULT_WIDTH);
- let isChatResizing = $state(false);
 
  function handleResizeStart(e: MouseEvent) {
   e.preventDefault();
@@ -82,27 +76,6 @@
   document.addEventListener("mouseup", onUp);
  }
 
- function handleChatResizeStart(e: MouseEvent) {
-  e.preventDefault();
-  isChatResizing = true;
-  const startX = e.clientX;
-  const startWidth = chatWidth;
-
-  function onMove(ev: MouseEvent) {
-   chatWidth = Math.max(300, Math.min(900, startWidth - (ev.clientX - startX)));
-  }
-
-  function onUp() {
-   isChatResizing = false;
-   document.removeEventListener("mousemove", onMove);
-   document.removeEventListener("mouseup", onUp);
-   localStorage.setItem("chat-width", String(chatWidth));
-  }
-
-  document.addEventListener("mousemove", onMove);
-  document.addEventListener("mouseup", onUp);
- }
-
  let touchStartX = 0;
  let touchStartY = 0;
  let touchStartTime = 0;
@@ -123,17 +96,12 @@
   if (Math.abs(dx) < SWIPE_THRESHOLD || Math.abs(dy) > Math.abs(dx) || dt > 500) return;
 
   if (dx > 0) {
-   if (chatOpen) {
-    chatOpen = false;
-    chatExpanded = false;
-   } else if (touchStartX < EDGE_ZONE && !sidebarOpen) {
+   if (touchStartX < EDGE_ZONE && !sidebarOpen) {
     sidebarOpen = true;
    }
   } else {
    if (sidebarOpen && isMobile.current) {
     sidebarOpen = false;
-   } else if (touchStartX > window.innerWidth - EDGE_ZONE && !chatOpen) {
-    chatOpen = true;
    }
   }
  }
@@ -157,10 +125,6 @@
    searchWidth = Math.max(250, Math.min(800, parseInt(savedSearch, 10) || SEARCH_DEFAULT_WIDTH));
   } else if (isLargeScreen.current) {
    searchWidth = SEARCH_LARGE_DEFAULT_WIDTH;
-  }
-  const savedChat = localStorage.getItem("chat-width");
-  if (savedChat) {
-   chatWidth = Math.max(300, Math.min(900, parseInt(savedChat, 10) || CHAT_DEFAULT_WIDTH));
   }
  });
 
@@ -325,20 +289,17 @@
       </svg>
       <span class="govuk-header__btn-label">Search</span>
      </button>
-     <button
+     <a
+      href="/chat"
       class="govuk-header__action-btn"
-      class:active={chatOpen}
-      onclick={() => {
-       chatOpen = !chatOpen;
-       if (!chatOpen) chatExpanded = false;
-      }}
-      title="Toggle chat"
+      class:active={currentPath === "/chat"}
+      title="Chat"
      >
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
       </svg>
       <span class="govuk-header__btn-label">Chat</span>
-     </button>
+     </a>
     </div>
     <div class="govuk-header__actions-utils">
      <button class="govuk-header__action-btn" onclick={toggleTheme} title={darkMode ? "Light mode" : "Dark mode"}>
@@ -429,13 +390,11 @@
   </div>
  </nav>
 
- {#if sidebarOpen || chatOpen || searchOpen}
+ {#if sidebarOpen || searchOpen}
   <button
    class="backdrop"
    onclick={() => {
     sidebarOpen = false;
-    chatOpen = false;
-    chatExpanded = false;
     searchOpen = false;
    }}
    aria-label="Close panel"
@@ -487,34 +446,11 @@
  {/if}
 </aside>
 
-<aside
- class="chat-panel"
- class:expanded={chatExpanded}
- class:hidden={!chatOpen}
- class:resizing={isChatResizing}
- style="width: {isMobile.current ? '100%' : chatExpanded ? 'var(--chat-width-expanded)' : chatWidth + 'px'}"
->
- {#if !isMobile.current && !chatExpanded}
-  <!-- svelte-ignore a11y_no_static_element_interactions -->
-  <div class="chat-resize-handle" onmousedown={handleChatResizeStart}></div>
- {/if}
- <ChatPanel
-  docId={currentDocId.value}
-  pageContext={currentPageContext.value}
-  expanded={chatExpanded}
-  visible={chatOpen}
-  onToggleExpand={() => (chatExpanded = !chatExpanded)}
- />
-</aside>
-
 <svelte:window
  onkeydown={(e) => {
   if (e.key === "Escape") {
    if (shortcutsOpen) {
     shortcutsOpen = false;
-   } else if (chatOpen) {
-    chatOpen = false;
-    chatExpanded = false;
    } else if (searchOpen) {
     searchOpen = false;
    } else if (sidebarOpen && isMobile.current) {
@@ -538,14 +474,15 @@
    }
   }
 
-  // Cmd/Ctrl + B/K/J/. — toggle Files, Search, Chat, TOC. Shift/Alt must NOT
+  // Cmd/Ctrl + \/K/J/. — Files, Search, Chat, TOC. Shift/Alt must NOT
   // be held so we don't collide with Cmd+Shift+K (Firefox dev tools) etc.
+  // Chat is a page now, so Cmd+J navigates to /chat rather than toggling.
   const mod = e.metaKey || e.ctrlKey;
   if (!mod || e.shiftKey || e.altKey) return;
   const k = e.key.toLowerCase();
-  if (k !== "b" && k !== "k" && k !== "j" && k !== ".") return;
+  if (k !== "\\" && k !== "k" && k !== "j" && k !== ".") return;
 
-  if (k === "b") {
+  if (k === "\\") {
    e.preventDefault();
    sidebarOpen = !sidebarOpen;
    if (sidebarOpen) searchOpen = false;
@@ -555,8 +492,7 @@
    if (searchOpen) sidebarOpen = false;
   } else if (k === "j") {
    e.preventDefault();
-   chatOpen = !chatOpen;
-   if (!chatOpen) chatExpanded = false;
+   goto("/chat");
   } else if (k === ".") {
    e.preventDefault();
    tocOpen.toggle();
@@ -883,43 +819,6 @@
   background: var(--bg-body);
  }
 
- .chat-panel {
-  position: fixed;
-  top: var(--header-height);
-  right: 0;
-  bottom: 0;
-  z-index: 200;
-  background: var(--bg-surface);
-  border-left: 1px solid var(--border);
-  overflow: hidden;
-  display: none;
-  flex-direction: column;
- }
-
- .chat-panel:not(.hidden) {
-  display: flex;
- }
-
- .chat-panel.resizing {
-  user-select: none;
- }
-
- .chat-resize-handle {
-  position: absolute;
-  top: 0;
-  left: -3px;
-  width: 6px;
-  height: 100%;
-  cursor: col-resize;
-  z-index: 201;
- }
-
- .chat-resize-handle:hover,
- .chat-panel.resizing .chat-resize-handle {
-  background: var(--brand);
-  opacity: 0.4;
- }
-
  .backdrop {
   position: fixed;
   inset: 0;
@@ -951,14 +850,6 @@
   .search-panel {
    width: 100%;
    max-width: none;
-  }
-
-  .chat-panel {
-   width: 100%;
-  }
-
-  .chat-panel.expanded {
-   width: 100%;
   }
 
   .content {
@@ -1027,9 +918,6 @@
   .sidebar {
    width: 100%;
    max-width: none;
-  }
-  .chat-panel {
-   width: 100%;
   }
  }
 </style>

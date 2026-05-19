@@ -90,11 +90,13 @@ src/
       TocPanel.svelte     # Table of contents for the current document (active heading tracking)
       FloatingDocControls.svelte  # Bottom-right pill: scroll progress + bookmark toggle (44px touch targets)
       SearchPanel.svelte   # Search with source and date filters
-      ChatPanel.svelte    # RAG chat interface (history rows are real <button>; .messages is aria-live)
-      Breadcrumbs.svelte  # Breadcrumb navigation
+      ChatPanel.svelte    # Conversation area used by the /chat page (.messages is aria-live)
+      Breadcrumbs.svelte  # Breadcrumb navigation (clickable folder segments; supports a generic `crumbs` prop)
       BookmarkButton.svelte  # Bookmark toggle (inline in the doc-meta bar)
   routes/
-    +layout.svelte        # Main layout (header, sidebar, search, chat panels)
+    +layout.svelte        # Main layout (header, sidebar, search drawer; Chat is a nav link to /chat)
+    chat/                 # Standalone /chat page (history list + conversation area)
+    source/[name]/[...path]/  # Folder-browse route (concertina subtree, shared with /source/[name])
     +page.svelte          # Home page (project list with metadata + summary bar)
     doc/[id]/
       +page.svelte        # Document viewer (single-line metadata bar, 75ch body measure)

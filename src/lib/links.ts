@@ -114,6 +114,61 @@ function plainText(raw: string): string {
   .replace(/\[([^\]]+)\]\([^)]*\)/g, "$1");
 }
 
+/** One key/value pair parsed from a document's YAML frontmatter. */
+export interface FrontmatterEntry {
+ key: string;
+ value: string;
+}
+
+/**
+ * Split a leading YAML frontmatter block off the markdown body.
+ *
+ * The backend serves raw file content, so a SKILL.md / doc that starts with
+ * a `---\n...\n---\n` block would otherwise be fed to Marked, which renders
+ * the `---` as a setext-heading rule and the `key: value` lines as one bold
+ * blob. We instead parse the block into ordered entries (rendered as a tidy
+ * metadata table by the doc page) and hand the clean body to the renderer.
+ *
+ * This is display-only: it handles the observed shapes — flat `key: value`,
+ * folded `>` and block `|` scalars (continuation lines are folded with
+ * spaces), and wrapped values. Nested maps / lists are stringified rather
+ * than structured. Detection is deliberately strict: the block is only
+ * recognised when the file *starts* with `---` and a closing `---` line
+ * follows AND at least one `key:` pair is present — so a `---` horizontal
+ * rule or a setext heading in the body is never misread as frontmatter.
+ */
+export function parseFrontmatter(content: string): {
+ entries: FrontmatterEntry[];
+ body: string;
+} {
+ const m = content.match(/^---\r?\n([\s\S]*?)\r?\n---[ \t]*\r?\n?/);
+ if (!m) return { entries: [], body: content };
+
+ const lines = m[1].split(/\r?\n/);
+ const entries: FrontmatterEntry[] = [];
+ let cur: FrontmatterEntry | null = null;
+ for (const line of lines) {
+  const kv = line.match(/^([A-Za-z0-9_.-]+):[ \t]?(.*)$/);
+  // A new key starts only at column 0 (no leading whitespace).
+  if (kv && !/^\s/.test(line)) {
+   if (cur) entries.push(cur);
+   let v = kv[2].trim();
+   if (v === ">" || v === "|" || v === ">-" || v === "|-" || v === "+") v = "";
+   cur = { key: kv[1], value: v };
+  } else if (cur) {
+   const t = line.trim();
+   if (t) cur.value = cur.value ? `${cur.value} ${t}` : t;
+  }
+ }
+ if (cur) entries.push(cur);
+
+ // No real pairs → almost certainly a horizontal-rule / setext document,
+ // not frontmatter. Leave the content untouched.
+ if (entries.length === 0) return { entries: [], body: content };
+
+ return { entries, body: content.slice(m[0].length) };
+}
+
 /**
  * Walk the markdown source and return a list of h1-h3 headings with stable slugs.
  * Slugs match the IDs injected by `renderMarkdownWithLinks` for the same input.

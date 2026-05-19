@@ -7,6 +7,7 @@
   type SearchFilters,
  } from "$lib/api";
  import { displaySource, displayTitle } from "$lib/titles";
+ import { formatDateTime } from "$lib/datetime";
  import { currentDocId, DOC_TYPES, excludeNotDocs } from "$lib/stores.svelte";
 
  let { onNavigate = () => {} }: { onNavigate?: () => void } = $props();
@@ -152,12 +153,7 @@
 
  function formatDate(dateStr: string | null): string {
   if (!dateStr) return "";
-  try {
-   const d = new Date(dateStr);
-   return d.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
-  } catch {
-   return "";
-  }
+  return formatDateTime(dateStr);
  }
 </script>
 

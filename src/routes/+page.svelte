@@ -2,6 +2,7 @@
  import { fetchAllSourcesTree, fetchHealth, type SourceTree, type HealthStatus, type HealthSource } from "$lib/api";
  import { currentDocId, scanTick } from "$lib/stores.svelte";
  import { displaySource } from "$lib/titles";
+ import { formatDateTime } from "$lib/datetime";
 
  let tree: SourceTree[] = $state([]);
  let health: HealthStatus | null = $state(null);
@@ -111,9 +112,7 @@
  }
 
  function formatDate(iso: string | null): string {
-  if (!iso) return "";
-  const d = new Date(iso);
-  return d.toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" });
+  return formatDateTime(iso);
  }
 
  function timeAgo(iso: string | null): string {

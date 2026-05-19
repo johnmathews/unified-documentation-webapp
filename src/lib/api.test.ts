@@ -1,5 +1,44 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { displayTitle } from "$lib/titles";
+import { githubFileUrl } from "$lib/api";
+
+describe("githubFileUrl", () => {
+ it("builds a blob URL from repo base, branch and path", () => {
+  expect(
+   githubFileUrl("https://github.com/johnmathews/relay", "main", "docs/readme.md"),
+  ).toBe("https://github.com/johnmathews/relay/blob/main/docs/readme.md");
+ });
+
+ it("defaults the ref to main when branch is null/empty", () => {
+  expect(githubFileUrl("https://github.com/o/r", null, "a.md")).toBe(
+   "https://github.com/o/r/blob/main/a.md",
+  );
+  expect(githubFileUrl("https://github.com/o/r", "  ", "a.md")).toBe(
+   "https://github.com/o/r/blob/main/a.md",
+  );
+ });
+
+ it("returns null when the source is not github-backed", () => {
+  expect(githubFileUrl(null, "main", "a.md")).toBeNull();
+  expect(githubFileUrl(undefined, "main", "a.md")).toBeNull();
+ });
+
+ it("returns null when there is no file path", () => {
+  expect(githubFileUrl("https://github.com/o/r", "main", "")).toBeNull();
+ });
+
+ it("encodes path segments but preserves separators", () => {
+  expect(
+   githubFileUrl("https://github.com/o/r", "feat/x", "a b/c#d.md"),
+  ).toBe("https://github.com/o/r/blob/feat%2Fx/a%20b/c%23d.md");
+ });
+
+ it("strips a trailing slash on the repo base", () => {
+  expect(githubFileUrl("https://github.com/o/r/", "main", "a.md")).toBe(
+   "https://github.com/o/r/blob/main/a.md",
+  );
+ });
+});
 
 // Test the pure utility logic that the API module and components share
 
@@ -52,31 +91,9 @@ describe("displayTitle", () => {
  });
 });
 
-describe("formatDate", () => {
- function formatDate(dateStr: string | null): string {
-  if (!dateStr) return "";
-  try {
-   return new Date(dateStr).toLocaleDateString("en-GB", {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-   });
-  } catch {
-   return dateStr;
-  }
- }
-
- it("returns empty string for null", () => {
-  expect(formatDate(null)).toBe("");
- });
-
- it("formats ISO date string", () => {
-  const result = formatDate("2025-03-21T00:00:00Z");
-  expect(result).toContain("2025");
-  expect(result).toContain("Mar");
-  expect(result).toContain("21");
- });
-});
+// Date formatting is now centralised in src/lib/datetime.ts and covered
+// by datetime.test.ts (the previous block here tested an inline copy that
+// duplicated — and has since diverged from — the real implementation).
 
 describe("searchDocuments with filters", () => {
  const mockResults = [

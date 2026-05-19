@@ -11,9 +11,9 @@
  const mod = isMac ? "⌘" : "Ctrl";
 
  const shortcuts: { keys: string[]; description: string }[] = [
-  { keys: [mod, "B"], description: "Toggle Files panel" },
+  { keys: [mod, "\\"], description: "Toggle Files panel" },
   { keys: [mod, "K"], description: "Toggle Search panel" },
-  { keys: [mod, "J"], description: "Toggle Chat panel" },
+  { keys: [mod, "J"], description: "Go to Chat" },
   { keys: [mod, "."], description: "Toggle table of contents" },
   { keys: ["?"], description: "Show this shortcuts dialog" },
   { keys: ["Esc"], description: "Close panel or dialog" },

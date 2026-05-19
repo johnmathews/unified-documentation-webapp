@@ -5,6 +5,7 @@ import {
  renderMarkdownWithLinks,
  extractHeadings,
  slugify,
+ parseFrontmatter,
 } from "$lib/links";
 
 describe("resolveDocLink", () => {
@@ -238,5 +239,62 @@ describe("extractHeadings", () => {
  it("returns empty array when there are no h1-h3 headings", () => {
   expect(extractHeadings("just a paragraph")).toEqual([]);
   expect(extractHeadings("#### only h4\n")).toEqual([]);
+ });
+});
+
+describe("parseFrontmatter", () => {
+ it("returns content unchanged when there is no frontmatter", () => {
+  const c = "# Title\n\nSome body text.";
+  expect(parseFrontmatter(c)).toEqual({ entries: [], body: c });
+ });
+
+ it("parses a flat key: value block and strips it from the body", () => {
+  const { entries, body } = parseFrontmatter(
+   "---\nname: engineering-team\ntitle: My Doc\n---\n# Heading\n\nBody.",
+  );
+  expect(entries).toEqual([
+   { key: "name", value: "engineering-team" },
+   { key: "title", value: "My Doc" },
+  ]);
+  expect(body).toBe("# Heading\n\nBody.");
+ });
+
+ it("folds a `>` folded scalar (the SKILL.md shape) into one value", () => {
+  const { entries, body } = parseFrontmatter(
+   "---\nname: engineering-team\ndescription: >\n  A senior team that\n  evaluates codebases.\n---\nReal body starts here.",
+  );
+  expect(entries[0]).toEqual({ key: "name", value: "engineering-team" });
+  expect(entries[1]).toEqual({
+   key: "description",
+   value: "A senior team that evaluates codebases.",
+  });
+  expect(body).toBe("Real body starts here.");
+ });
+
+ it("folds a `|` block scalar similarly (display-only)", () => {
+  const { entries } = parseFrontmatter(
+   "---\nnotes: |\n  line one\n  line two\n---\nbody",
+  );
+  expect(entries).toEqual([{ key: "notes", value: "line one line two" }]);
+ });
+
+ it("does NOT treat a horizontal rule / setext heading in the body as frontmatter", () => {
+  const hr = "Intro paragraph.\n\n---\n\nAfter the rule.";
+  expect(parseFrontmatter(hr)).toEqual({ entries: [], body: hr });
+  const setext = "Title\n---\n\nbody";
+  expect(parseFrontmatter(setext)).toEqual({ entries: [], body: setext });
+ });
+
+ it("does NOT misread a leading --- block with no key: pairs as frontmatter", () => {
+  const c = "---\nnot a key value line\njust prose\n---\nbody";
+  expect(parseFrontmatter(c)).toEqual({ entries: [], body: c });
+ });
+
+ it("handles CRLF line endings", () => {
+  const { entries, body } = parseFrontmatter(
+   "---\r\nname: x\r\n---\r\nbody\r\n",
+  );
+  expect(entries).toEqual([{ key: "name", value: "x" }]);
+  expect(body).toBe("body\r\n");
  });
 });

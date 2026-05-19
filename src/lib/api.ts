@@ -67,6 +67,11 @@ export interface HealthSource {
  last_error: string | null;
  last_error_at: string | null;
  consecutive_failures: number;
+ /** Browseable github base (https://github.com/owner/repo), or null for
+  * local-path / non-github sources. Powers the "View on GitHub" link. */
+ repo_url: string | null;
+ /** Branch the source is indexed from (used to build the github blob URL). */
+ branch: string | null;
 }
 
 export interface ScanStats {
@@ -115,6 +120,27 @@ async function apiFetch<T>(path: string, options?: RequestInit): Promise<T> {
 
 export async function fetchHealth(): Promise<HealthStatus> {
  return apiFetch<HealthStatus>("/api/health");
+}
+
+/**
+ * Build a GitHub blob URL for a file in a source, or null when the source
+ * isn't github-backed. `repoUrl` is the normalised base the backend sends
+ * (`https://github.com/owner/repo`); `filePath` is the doc's path within
+ * the repo. Path segments are encoded but `/` separators are preserved.
+ */
+export function githubFileUrl(
+ repoUrl: string | null | undefined,
+ branch: string | null | undefined,
+ filePath: string,
+): string | null {
+ if (!repoUrl || !filePath) return null;
+ const ref = branch && branch.trim() ? branch.trim() : "main";
+ const cleanPath = filePath
+  .split("/")
+  .filter(Boolean)
+  .map(encodeURIComponent)
+  .join("/");
+ return `${repoUrl.replace(/\/+$/, "")}/blob/${encodeURIComponent(ref)}/${cleanPath}`;
 }
 
 // ---- Manual scan trigger ----

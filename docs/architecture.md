@@ -10,9 +10,10 @@ documentation.
 
 ### Frontend (SvelteKit)
 
-- **Layout**: Three-panel layout with sidebar, content area, and collapsible chat panel. The header bar has the product
+- **Layout**: Sidebar + content area, with an optional Search drawer. Chat is no longer a docked panel — it is a
+  standalone `/chat` page (conversation history left, active conversation right). The header bar has the product
   name "Documentation Library" (shortened to "Library" on mobile) on the left and two icon groups on the right: utility
-  actions (theme toggle, scan now, server status, print) and panel toggles (Files, Search, Chat), separated by a
+  actions (theme toggle, scan now, server status, print) and the Files / Search toggles plus a Chat **nav link**, separated by a
   vertical border. The "scan now" button triggers an immediate ingestion via `POST /api/scan` — the icon (refresh-cw)
   spins while scanning, and a banner anchored to the top-right corner of the viewport shows live progress. The banner
   text walks through: "Checking sources for changes…" (sync), "Found N documents from M sources to update" or
@@ -41,13 +42,14 @@ documentation.
   sits a row of type-filter chips (documentation / journal / prompt / not-docs) backed by the `typeFilters`
   store; `TreeNode` hides leaves whose `type` is unchecked (docs with no type — e.g. predating Stage 2 — stay
   visible by default). Chip state persists to localStorage under `doc-type-filters`.
-- **Mobile Responsiveness**: Full-screen modal sidebar and chat panels on mobile (100% width in both portrait and
-  landscape) with slide-in/out animations for both panels, swipe gestures (edge-swipe to open/close panels), 44px minimum
+- **Mobile Responsiveness**: Full-screen modal sidebar/search drawer on mobile (100% width in both portrait and
+  landscape) with slide-in/out animations, swipe gestures (edge-swipe to open/close), 44px minimum
   touch targets, safe-area-inset handling for notched devices (top bar, content, sidebar, and chat input all respect
   `env(safe-area-inset-*)`), dynamic viewport height (`100dvh`), explicit 16px font size on mobile inputs to prevent iOS
   Safari auto-zoom, 16px base font size on mobile (up from 14px desktop default) for comfortable reading on phone
-  screens, and a landscape-phone breakpoint (`max-height: 500px`) ensuring panels remain full-screen modals on rotated
-  phones. The chat panel expand/collapse button is hidden on mobile since the panel is always full-width.
+  screens, and a landscape-phone breakpoint (`max-height: 500px`) ensuring drawers remain full-screen modals on rotated
+  phones. The `/chat` page stacks on mobile: the conversation list is shown by default and opening a conversation swaps
+  to the conversation view with a back affordance.
 - **Document Viewer**: Renders markdown documents with a single-line metadata bar (bookmark · source · path · type ·
   modified · words) that wraps naturally on narrow viewports. The body prose is capped at `var(--measure)` (75ch) as
   a defensive measure independent of the layout grid. Markdown is rendered via `marked` and passed through

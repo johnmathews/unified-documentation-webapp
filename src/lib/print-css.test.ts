@@ -42,7 +42,10 @@ describe("print CSS: @media print block exists", () => {
 });
 
 describe("print CSS: UI chrome is hidden", () => {
- const chromeSelectors = [".govuk-header", ".govuk-service-nav", ".sidebar", ".chat-panel", ".backdrop"];
+ // The chat panel was replaced by a standalone /chat page (.chat-page);
+ // it's full-bleed UI chrome, not document content, so it stays hidden
+ // in print like the other panels.
+ const chromeSelectors = [".govuk-header", ".govuk-service-nav", ".sidebar", ".chat-page", ".backdrop"];
 
  for (const selector of chromeSelectors) {
   it(`hides ${selector} with display: none !important`, () => {

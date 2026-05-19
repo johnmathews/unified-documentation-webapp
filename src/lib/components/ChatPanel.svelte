@@ -1,12 +1,8 @@
 <script lang="ts">
  import {
   streamChat,
-  listConversations,
-  getConversation,
-  deleteConversation,
   type ChatMessage,
   type PageContext,
-  type ConversationSummary,
  } from "$lib/api";
  import { tick } from "svelte";
  import { marked } from "marked";
@@ -16,24 +12,14 @@
  let {
   docId = null,
   pageContext = null,
-  expanded = false,
-  visible = false,
-  onToggleExpand = () => {},
+  onConversationChange = () => {},
  }: {
-  docId: string | null;
-  pageContext: PageContext | null;
-  expanded?: boolean;
-  visible?: boolean;
-  onToggleExpand?: () => void;
+  docId?: string | null;
+  pageContext?: PageContext | null;
+  /** Fires after a reply lands with the (possibly new) conversation id, so
+   * the page's history list can refresh. */
+  onConversationChange?: (id: string | null) => void;
  } = $props();
-
- // Focus textarea when panel becomes visible
- $effect(() => {
-  if (visible && textareaEl) {
-   // Small delay lets CSS transition start so the element is interactable
-   setTimeout(() => textareaEl?.focus(), 50);
-  }
- });
 
  let hasContext = $derived(!!docId || !!pageContext);
  let contextLabel = $derived(
@@ -52,7 +38,6 @@
  let sending = $state(false);
  let messagesEl: HTMLDivElement | undefined = $state();
  let textareaEl: HTMLTextAreaElement | undefined = $state();
- let confirmingClear = $state(false);
  let editingIndex: number | null = $state(null);
  let toolProgress: { index: number; tool: string; status: "calling" | "done"; summary?: string }[] = $state([]);
 
@@ -66,44 +51,26 @@
   return toolLabels[name] || name;
  }
 
- // Conversation history
- let showHistory = $state(false);
- let conversations: ConversationSummary[] = $state([]);
- let loadingHistory = $state(false);
-
- async function loadHistory() {
-  showHistory = !showHistory;
-  if (!showHistory) return;
-  loadingHistory = true;
-  try {
-   conversations = await listConversations();
-  } catch {
-   conversations = [];
-  } finally {
-   loadingHistory = false;
-  }
+ /** Imperative handle for the parent page: load a stored conversation into
+  * the conversation area, or reset to a fresh one. Streaming/markdown stays
+  * owned here so the page never duplicates it. */
+ export function loadConversation(loaded: ChatMessage[], id: string) {
+  messages = loaded;
+  conversationId = id;
+  editingIndex = null;
+  scrollToBottom();
  }
 
- async function resumeConversation(id: string) {
-  try {
-   const conv = await getConversation(id);
-   messages = conv.messages;
-   conversationId = conv.id;
-   showHistory = false;
-   await scrollToBottom();
-  } catch {
-   /* ignore */
-  }
+ export function startNewConversation() {
+  messages = [];
+  conversationId = null;
+  editingIndex = null;
+  input = "";
+  textareaEl?.focus();
  }
 
- async function removeConversation(e: Event, id: string) {
-  e.stopPropagation();
-  try {
-   await deleteConversation(id);
-   conversations = conversations.filter((c) => c.id !== id);
-  } catch {
-   /* ignore */
-  }
+ export function isEmpty(): boolean {
+  return messages.length === 0;
  }
 
  async function handleSubmit(e: Event) {
@@ -121,7 +88,6 @@
   input = "";
   messages.push({ role: "user", content: msg });
   sending = true;
-  showHistory = false;
   await scrollToBottom();
 
   try {
@@ -143,6 +109,7 @@
       messages.push({ role: "assistant", content: data.reply });
       conversationId = data.conversation_id;
       toolProgress = [];
+      onConversationChange(conversationId);
      },
      onError: (error) => {
       messages.push({ role: "assistant", content: `Error: ${error}` });
@@ -186,34 +153,6 @@
   }
  }
 
- function clearChat() {
-  messages = [];
-  conversationId = null;
-  confirmingClear = false;
- }
-
- function cancelClear() {
-  confirmingClear = false;
- }
-
- function formatDate(dateStr: string): string {
-  try {
-   const d = new Date(dateStr);
-   const now = new Date();
-   const diffMs = now.getTime() - d.getTime();
-   const diffMins = Math.floor(diffMs / 60000);
-   if (diffMins < 1) return "just now";
-   if (diffMins < 60) return `${diffMins}m ago`;
-   const diffHrs = Math.floor(diffMins / 60);
-   if (diffHrs < 24) return `${diffHrs}h ago`;
-   const diffDays = Math.floor(diffHrs / 24);
-   if (diffDays < 7) return `${diffDays}d ago`;
-   return d.toLocaleDateString("en-GB", { day: "numeric", month: "short" });
-  } catch {
-   return "";
-  }
- }
-
  function renderMarkdown(content: string): string {
   // When a document is in context, resolve relative links against it.
   // The outer sanitiseHtml() is intentional defence-in-depth — renderMarkdownWithLinks
@@ -232,9 +171,8 @@
 </script>
 
 <div class="chat-container">
- <div class="chat-header">
-  <h3>Chat</h3>
-  {#if hasContext}
+ {#if hasContext}
+  <div class="context-bar">
    <span class="context-badge" title={docId ? "The chat assistant can see the document you're currently viewing." : "The chat assistant knows which source you're browsing and can research documents within it."}>
     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
      <circle cx="12" cy="12" r="10" />
@@ -243,88 +181,11 @@
     </svg>
     {contextLabel}
    </span>
-  {/if}
-  <div class="header-actions">
-   {#if confirmingClear}
-    <span class="confirm-clear">
-     <span class="confirm-label">Clear?</span>
-     <button class="header-btn confirm-yes" onclick={clearChat} title="Confirm clear">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-       <polyline points="20 6 9 17 4 12" />
-      </svg>
-     </button>
-     <button class="header-btn confirm-no" onclick={cancelClear} title="Cancel">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-       <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
-      </svg>
-     </button>
-    </span>
-   {:else if messages.length > 0}
-    <button class="header-btn" onclick={() => (confirmingClear = true)} title="New chat">
-     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-      <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
-     </svg>
-    </button>
-   {/if}
-   <button class="header-btn" class:active={showHistory} onclick={loadHistory} title="Conversation history">
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-     <circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" />
-    </svg>
-   </button>
-   <button class="header-btn expand-btn" onclick={onToggleExpand} title={expanded ? "Collapse" : "Expand"}>
-    {#if expanded}
-     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-      <polyline points="4 14 10 14 10 20" /><polyline points="20 10 14 10 14 4" /><line
-       x1="14"
-       y1="10"
-       x2="21"
-       y2="3"
-      /><line x1="3" y1="21" x2="10" y2="14" />
-     </svg>
-    {:else}
-     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-      <polyline points="15 3 21 3 21 9" /><polyline points="9 21 3 21 3 15" /><line
-       x1="21"
-       y1="3"
-       x2="14"
-       y2="10"
-      /><line x1="3" y1="21" x2="10" y2="14" />
-     </svg>
-    {/if}
-   </button>
   </div>
- </div>
+ {/if}
 
- <div class="messages" bind:this={messagesEl} aria-live={showHistory ? "off" : "polite"} aria-relevant="additions" aria-atomic="false">
-  {#if showHistory}
-   <div class="history-list">
-    {#if loadingHistory}
-     <p class="history-loading">Loading...</p>
-    {:else if conversations.length === 0}
-     <p class="history-empty">No previous conversations.</p>
-    {:else}
-     {#each conversations as conv (conv.id)}
-      <div class="history-item-wrapper">
-       <button type="button" class="history-row" onclick={() => resumeConversation(conv.id)}>
-        <span class="history-title">{conv.title}</span>
-        <div class="history-meta">
-         <span>{conv.message_count} messages</span>
-         <span>{formatDate(conv.updated_at)}</span>
-        </div>
-        {#if conv.preview}
-         <p class="history-preview">{conv.preview}</p>
-        {/if}
-       </button>
-       <button type="button" class="history-delete" onclick={(e) => removeConversation(e, conv.id)} aria-label="Delete conversation: {conv.title}">
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-         <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
-        </svg>
-       </button>
-      </div>
-     {/each}
-    {/if}
-   </div>
-  {:else if messages.length === 0}
+ <div class="messages" bind:this={messagesEl} aria-live="polite" aria-relevant="additions" aria-atomic="false">
+  {#if messages.length === 0}
    <div class="empty-state">
     <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
@@ -367,7 +228,7 @@
        <div class="tool-progress">
         {#each toolProgress as tp (tp.index)}
          <div class="tool-step" class:done={tp.status === "done"}>
-          <span class="tool-icon">{tp.status === "done" ? "\u2713" : "\u21BB"}</span>
+          <span class="tool-icon">{tp.status === "done" ? "✓" : "↻"}</span>
           <span class="tool-name">{formatToolName(tp.tool)}</span>
           {#if tp.summary}
            <span class="tool-summary">&mdash; {tp.summary}</span>
@@ -431,21 +292,11 @@
   background: var(--bg-surface);
  }
 
- .chat-header {
+ .context-bar {
   display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 15px 20px;
+  padding: 10px 20px;
   border-bottom: 1px solid var(--border);
   flex-shrink: 0;
- }
-
- .chat-header h3 {
-  font-size: 19px;
-  line-height: 25px;
-  font-weight: 700;
-  margin: 0;
-  color: var(--text);
  }
 
  .context-badge {
@@ -460,52 +311,6 @@
   border-radius: 0;
   border: 1px solid var(--border);
   flex-shrink: 0;
- }
-
- .header-actions {
-  margin-left: auto;
-  display: flex;
-  gap: 5px;
- }
-
- .header-btn {
-  min-height: 44px;
-  min-width: 44px;
-  padding: 10px;
-  background: none;
-  border: none;
-  color: var(--text-secondary);
-  border-radius: 0;
- }
-
- .header-btn:hover {
-  background: var(--bg-hover);
-  color: var(--text);
- }
-
- .header-btn.active {
-  color: var(--brand);
- }
-
- .confirm-clear {
-  display: flex;
-  align-items: center;
-  gap: 5px;
- }
-
- .confirm-label {
-  font-size: 14px;
-  line-height: 20px;
-  color: var(--text-muted);
-  margin-right: 5px;
- }
-
- .confirm-yes:hover {
-  color: var(--error);
- }
-
- .confirm-no:hover {
-  color: var(--text);
  }
 
  .messages {
@@ -540,96 +345,6 @@
   color: var(--text-muted);
  }
 
- .history-list {
-  display: flex;
-  flex-direction: column;
-  gap: 0;
- }
-
- .history-loading,
- .history-empty {
-  text-align: center;
-  color: var(--text-muted);
-  padding: 40px 20px;
-  font-size: 16px;
-  line-height: 20px;
- }
-
- .history-item-wrapper {
-  position: relative;
-  display: flex;
-  align-items: flex-start;
-  gap: 0;
-  border-bottom: 1px solid var(--border);
- }
-
- .history-row {
-  flex: 1;
-  min-width: 0;
-  display: block;
-  text-align: left;
-  padding: 12px 15px;
-  background: none;
-  border: none;
-  font-family: inherit;
-  font-size: inherit;
-  cursor: pointer;
-  color: var(--text);
- }
-
- .history-row:hover {
-  background: var(--bg-hover);
- }
-
- .history-title {
-  display: block;
-  font-size: 16px;
-  line-height: 20px;
-  font-weight: 600;
- }
-
- .history-delete {
-  flex-shrink: 0;
-  min-height: 44px;
-  min-width: 44px;
-  padding: 10px;
-  background: none;
-  border: none;
-  color: var(--text-muted);
-  cursor: pointer;
-  opacity: 0;
- }
-
- .history-item-wrapper:hover .history-delete,
- .history-item-wrapper:focus-within .history-delete {
-  opacity: 1;
- }
-
- .history-delete:hover {
-  color: var(--error);
- }
-
- .history-meta {
-  display: flex;
-  gap: 10px;
-  font-size: 13px;
-  line-height: 20px;
-  color: var(--text-muted);
-  margin-top: 3px;
- }
-
- .history-preview {
-  font-size: 14px;
-  line-height: 20px;
-  color: var(--text-secondary);
-  margin: 4px 0 0;
-  display: -webkit-box;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
-  line-clamp: 2;
-  overflow: hidden;
- }
-
  .message {
   display: flex;
  }
@@ -656,9 +371,8 @@
   color: white;
  }
 
- /* Assistant bubbles cap at the 720 px reading column when the panel
-    is wide enough (expanded mode on wide displays, or drag-resized
-    past ~850 px). 85% is the cap on narrower panels. */
+ /* Assistant bubbles cap at the 720 px reading column when the
+    conversation area is wide enough; 85% is the cap on narrow widths. */
  .assistant .message-bubble {
   max-width: min(85%, 720px);
   background: var(--bg-body);
@@ -926,11 +640,6 @@
  }
 
  @media (max-width: 768px) {
-  /* Expand toggle is desktop-only — the panel is full-width on
-     mobile, so there's nothing to expand into. */
-  .header-btn.expand-btn {
-   display: none;
-  }
   /* Respect the iPhone notch / home-indicator safe area. */
   .chat-input {
    padding-bottom: calc(15px + env(safe-area-inset-bottom, 0));
@@ -938,7 +647,7 @@
  }
 
  /* Match the global .markdown-content @640 rule: bubble body
-    drops from 19/25 to 16/20 on phone-sized panels. */
+    drops from 19/25 to 16/20 on phone-sized widths. */
  @media (max-width: 640px) {
   .message-bubble {
    font-size: 16px;
