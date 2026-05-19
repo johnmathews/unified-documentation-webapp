@@ -531,8 +531,9 @@
   justify-content: space-between;
   flex-wrap: wrap;
   row-gap: 6px;
-  max-width: 1100px;
-  margin: 0 auto;
+  /* Full-bleed: no max-width cap, so the header content aligns with the
+     page body (incl. the full-width chat page) at the shared 15/30px
+     inset instead of a narrower centred 1100px column. */
   padding: 10px 15px;
  }
 
@@ -669,8 +670,7 @@
  }
 
  .govuk-service-nav__container {
-  max-width: 1100px;
-  margin: 0 auto;
+  /* Full-bleed to match the header band — see .govuk-header__container. */
   padding: 0 15px;
  }
 

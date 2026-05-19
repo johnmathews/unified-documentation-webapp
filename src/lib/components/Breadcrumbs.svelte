@@ -85,7 +85,10 @@
 	.govuk-breadcrumbs {
 		font-size: 1rem;
 		line-height: 1.25;
-		margin-top: 15px;
+		/* padding (not margin) so the breathing room survives the doc page's
+		   sticky-header override that zeroes margin-top — keeps the crumbs
+		   off the service-nav band on every page. */
+		padding-top: 15px;
 		margin-bottom: 10px;
 		color: var(--text);
 	}

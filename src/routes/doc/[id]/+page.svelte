@@ -24,6 +24,12 @@
  let error = $state("");
  let isBookmarked = $state(false);
  let mdEl = $state<HTMLElement | null>(null);
+ // The rendered markdown almost always opens with its own <h1> that repeats
+ // the page's .doc-title. Hide the (sticky-header) .doc-title while that
+ // in-body h1 is still on screen; reveal it only once the h1 has scrolled
+ // off the top, so the title stays pinned without showing twice. Docs with
+ // no leading h1 keep the title visible (no duplicate to suppress).
+ let titleHidden = $state(false);
  // "View on GitHub" target — null unless this doc's source is github-backed.
  let githubUrl = $state<string | null>(null);
 
@@ -111,6 +117,38 @@
   if (!root || !content || !docId) return;
   applyHighlights(root, loadHighlights(docId));
  });
+
+ $effect(() => {
+  // Re-run whenever the rendered body changes or the element rebinds.
+  const root = mdEl;
+  const content = doc?.content;
+  if (!root || !content) {
+   titleHidden = false;
+   return;
+  }
+  const h1 = root.querySelector("h1");
+  if (!h1) {
+   // No in-body title to collide with — show .doc-title normally.
+   titleHidden = false;
+   return;
+  }
+  titleHidden = true;
+  // Negative top margin ≈ the sticky doc-header's own height, so the
+  // swap happens as the real h1 slides under the pinned header rather
+  // than at the raw viewport edge. Known limitation: toggling .doc-title
+  // changes the sticky header's height, nudging the observed h1 — at the
+  // exact transition point a stationary scroll can flicker. Acceptable
+  // for momentum scrolling; revisit with dual-threshold hysteresis only
+  // if it proves annoying in practice.
+  const observer = new IntersectionObserver(
+   ([entry]) => {
+    titleHidden = entry.isIntersecting;
+   },
+   { rootMargin: "-100px 0px 0px 0px", threshold: 0 },
+  );
+  observer.observe(h1);
+  return () => observer.disconnect();
+ });
 </script>
 
 <svelte:head>
@@ -132,7 +170,7 @@
   <article class="document">
    <header class="doc-header">
     <Breadcrumbs source={doc.source} filePath={doc.file_path} />
-    <h1 class="doc-title">
+    <h1 class="doc-title" class:is-hidden={titleHidden}>
      {doc.title
       ? stripSourcePrefix(doc.title, doc.source)
       : doc.file_path.split("/").pop() || doc.file_path}
@@ -273,9 +311,13 @@
   }
  }
 
+ /* Left-aligned (not centred) so the content's left edge lines up with the
+    service-nav's leftmost item — both now sit at the shared 30px inset.
+    Wider than the old 720px because without the TOC rail the reading
+    column felt cramped against all the empty space to its right. */
  .doc-layout {
-  max-width: 720px;
-  margin: 0 auto;
+  max-width: 900px;
+  margin: 0;
  }
 
  .document {
@@ -331,6 +373,10 @@
   margin: 0 0 8px;
   color: var(--text);
   overflow-wrap: anywhere;
+ }
+
+ .doc-title.is-hidden {
+  display: none;
  }
 
  @media (min-width: 641px) {
