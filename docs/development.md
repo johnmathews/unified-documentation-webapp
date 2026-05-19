@@ -27,6 +27,24 @@ The backend starts on **port 8080** by default.
 - `DOCSERVER_DATA_DIR=./local-data` is required because the default `/data` path only exists inside the Docker container.
 - `DOCSERVER_CONFIG=./config/sources.local.yaml` points to a local sources config. See the backend repo's README for how to configure sources.
 
+**Fast path for UI work.** By default the backend runs an ingestion cycle on
+startup and again every 30 minutes — it loads the embedding model, git-fetches
+every configured repo, and re-embeds changed docs. That makes laptops hot and
+slow for no benefit when you're only iterating on the frontend against an
+already-indexed corpus. Since `local-data` persists across runs, add
+`DOCSERVER_POLL_INTERVAL=0 DOCSERVER_INGEST_ON_START=0` to serve the existing
+corpus and skip all automatic ingestion:
+
+```bash
+DOCSERVER_DATA_DIR=./local-data DOCSERVER_CONFIG=./config/sources.local.yaml \
+DOCSERVER_POLL_INTERVAL=0 DOCSERVER_INGEST_ON_START=0 \
+uv run python -m docserver
+```
+
+The server boots instantly and stays cool. When you do need fresh docs, POST
+`/rescan` on the backend (or omit the two flags for one run). See the backend
+repo's `docs/operations.md` → *Fast local development*.
+
 ### 2. Start the frontend
 
 ```bash

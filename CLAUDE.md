@@ -63,3 +63,5 @@ Practical defaults that follow from this:
 This app requires the documentation MCP server running. In Docker, it connects via `http://docserver:8080`. For local dev, the `.env` file sets `API_URL=http://localhost:8080` (the backend's default port). See `docs/development.md` for full local setup instructions.
 
 **Any time you start a local frontend instance — `npm run dev`, Playwright runs, UI change verification, screenshots, etc. — you must also start a local backend** (`uv run python -m docserver` from `../server/`, or `docker compose up -d` for the full stack). There is no mock data layer; every route proxies to the docserver, so a frontend without a backend renders empty / error states and is not a faithful test of the UI.
+
+For UI work, start the backend with `DOCSERVER_POLL_INTERVAL=0 DOCSERVER_INGEST_ON_START=0` so it serves the persisted corpus instead of re-ingesting on every boot (hot/slow laptop). Full recipe in `docs/development.md`.
