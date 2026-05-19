@@ -22,7 +22,11 @@ vi.mock("$lib/api", async (importOriginal) => {
 
 import Page from "./+page.svelte";
 
-function doc(filePath: string, title: string | null = null): TreeDocument {
+function doc(
+	filePath: string,
+	title: string | null = null,
+	lineCount: number | null = null,
+): TreeDocument {
 	return {
 		doc_id: `demo-src:${filePath}`,
 		source: "demo-src",
@@ -31,7 +35,14 @@ function doc(filePath: string, title: string | null = null): TreeDocument {
 		created_at: null,
 		modified_at: null,
 		size_bytes: null,
+		line_count: lineCount,
 	};
+}
+
+function groupTitles(container: HTMLElement): (string | undefined)[] {
+	return Array.from(
+		container.querySelectorAll<HTMLHeadingElement>(".doc-group__title"),
+	).map((h) => h.textContent?.trim());
 }
 
 beforeEach(() => {
@@ -39,44 +50,47 @@ beforeEach(() => {
 });
 
 describe("source/[name] page", () => {
-	it("renders each top-level directory as an <h2> in the concertina, and keeps a root-level file", async () => {
+	it("renders one flat (non-indented) table group per directory, root files first", async () => {
 		fetchSourceTree.mockResolvedValue({
 			source: "demo-src",
 			files: [
-				doc("README.md", "README"),
-				doc("guides/intro.md", "Intro"),
-				doc("reference/api.md", "API"),
+				doc("README.md", "README", 12),
+				doc("guides/intro.md", "Intro", 40),
+				doc("docs/archive/old.md", "Old", 7),
 			],
 		});
 
-		const { container, findByText } = render(Page);
+		const { container } = render(Page);
 
-		// Wait for the async load to resolve and the concertina to render.
 		await waitFor(() => {
-			expect(container.querySelector(".concertina")).not.toBeNull();
+			expect(container.querySelector(".doc-table")).not.toBeNull();
 		});
 
-		// (a) Top-level directories render as <h2> elements inside the concertina.
-		const headings = Array.from(
-			container.querySelectorAll<HTMLHeadingElement>(".concertina h2"),
-		).map((h) => h.textContent?.trim());
-		expect(headings).toContain("Guides");
-		expect(headings).toContain("Reference");
+		// (a) Each directory is its own flat group; nested folders become
+		// sibling groups (e.g. "Docs / Archive"), not indented children.
+		const titles = groupTitles(container);
+		expect(titles[0]).toBe("Root Documents"); // root files always first
+		expect(titles).toContain("Guides");
+		expect(titles).toContain("Docs / Archive");
 
-		// Each directory heading lives inside its own <details> section.
-		const sections = container.querySelectorAll("details.section");
-		// Root Documents section + 2 folder sections.
-		expect(sections.length).toBe(3);
+		// One <section.doc-group> + table per directory (root + 2 dirs).
+		expect(container.querySelectorAll("section.doc-group").length).toBe(3);
+		expect(container.querySelectorAll("table.doc-table").length).toBe(3);
 
-		// (b) The root-level file (README.md) still appears. Root-level docs
-		// render via displayTitle, which uses the bare filename.
-		const readme = await findByText("README.md");
-		expect(readme).toBeInTheDocument();
-		const readmeLink = readme.closest("a");
-		expect(readmeLink?.getAttribute("href")).toBe("/doc/demo-src%3AREADME.md");
+		// (b) The root-level file still appears, linking to its doc.
+		const readmeLink = container.querySelector<HTMLAnchorElement>(
+			'.cell-title a[href="/doc/demo-src%3AREADME.md"]',
+		);
+		expect(readmeLink).not.toBeNull();
+
+		// (c) Line count is rendered in the table's numeric column.
+		const lineCells = Array.from(
+			container.querySelectorAll<HTMLTableCellElement>("td.num"),
+		).map((c) => c.textContent?.trim());
+		expect(lineCells).toContain("40");
 	});
 
-	it("shows no Root Documents section when there are no root-level docs", async () => {
+	it("shows no Root Documents group when there are no root-level docs", async () => {
 		fetchSourceTree.mockResolvedValue({
 			source: "demo-src",
 			files: [doc("guides/intro.md", "Intro")],
@@ -85,13 +99,27 @@ describe("source/[name] page", () => {
 		const { container } = render(Page);
 
 		await waitFor(() => {
-			expect(container.querySelector(".concertina")).not.toBeNull();
+			expect(container.querySelector(".doc-table")).not.toBeNull();
 		});
 
-		const headings = Array.from(
-			container.querySelectorAll<HTMLHeadingElement>(".concertina h2"),
-		).map((h) => h.textContent?.trim());
-		expect(headings).not.toContain("Root Documents");
-		expect(headings).toContain("Guides");
+		const titles = groupTitles(container);
+		expect(titles).not.toContain("Root Documents");
+		expect(titles).toContain("Guides");
+	});
+
+	it("renders an em-dash when a doc has no line count", async () => {
+		fetchSourceTree.mockResolvedValue({
+			source: "demo-src",
+			files: [doc("guides/intro.md", "Intro", null)],
+		});
+
+		const { container } = render(Page);
+
+		await waitFor(() => {
+			expect(container.querySelector(".doc-table")).not.toBeNull();
+		});
+
+		const lineCell = container.querySelector<HTMLTableCellElement>("td.num");
+		expect(lineCell?.textContent?.trim()).toBe("—");
 	});
 });

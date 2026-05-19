@@ -609,6 +609,16 @@
   color: #fff;
   font-size: 16px;
   cursor: pointer;
+  /* "Chat" is an <a>; Files/Search are <button>s. Without this the anchor
+     picks up the global underlined-link style and looks inconsistent. */
+  text-decoration: none;
+ }
+
+ .govuk-header__action-btn:link,
+ .govuk-header__action-btn:visited,
+ .govuk-header__action-btn:hover {
+  color: #fff;
+  text-decoration: none;
  }
 
  .govuk-header__action-btn:hover {
