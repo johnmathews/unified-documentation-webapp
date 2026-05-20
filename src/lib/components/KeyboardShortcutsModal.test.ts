@@ -4,7 +4,7 @@ import "@testing-library/jest-dom/vitest";
 import KeyboardShortcutsModal from "./KeyboardShortcutsModal.svelte";
 
 describe("KeyboardShortcutsModal", () => {
-	it("lists the Files panel shortcut as mod + backslash, not B", () => {
+	it("lists the Files panel shortcut as mod + B", () => {
 		const { getByText, container } = render(KeyboardShortcutsModal, {
 			props: { open: true, onClose: () => {} },
 		});
@@ -12,9 +12,7 @@ describe("KeyboardShortcutsModal", () => {
 		const row = getByText("Toggle Files panel").closest(".shortcut-row");
 		expect(row).not.toBeNull();
 		const keys = Array.from(row!.querySelectorAll("kbd")).map((k) => k.textContent);
-		// cmd+F stays the browser's find-in-page; Files moved off cmd+B to cmd+\.
-		expect(keys).toContain("\\");
-		expect(keys).not.toContain("B");
+		expect(keys).toContain("B");
 
 		// Sanity: Search is still listed (unchanged binding).
 		expect(container.textContent).toContain("Toggle Search panel");

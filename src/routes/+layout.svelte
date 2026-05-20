@@ -474,15 +474,15 @@
    }
   }
 
-  // Cmd/Ctrl + \/K/J/. — Files, Search, Chat, TOC. Shift/Alt must NOT
+  // Cmd/Ctrl + B/K/J/. — Files, Search, Chat, TOC. Shift/Alt must NOT
   // be held so we don't collide with Cmd+Shift+K (Firefox dev tools) etc.
   // Chat is a page now, so Cmd+J navigates to /chat rather than toggling.
   const mod = e.metaKey || e.ctrlKey;
   if (!mod || e.shiftKey || e.altKey) return;
   const k = e.key.toLowerCase();
-  if (k !== "\\" && k !== "k" && k !== "j" && k !== ".") return;
+  if (k !== "b" && k !== "k" && k !== "j" && k !== ".") return;
 
-  if (k === "\\") {
+  if (k === "b") {
    e.preventDefault();
    sidebarOpen = !sidebarOpen;
    if (sidebarOpen) searchOpen = false;

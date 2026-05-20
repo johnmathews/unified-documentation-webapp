@@ -175,27 +175,27 @@
       ? stripSourcePrefix(doc.title, doc.source)
       : doc.file_path.split("/").pop() || doc.file_path}
     </h1>
-    <div class="doc-meta">
-     <BookmarkButton docId={doc.doc_id} bind:bookmarked={isBookmarked} />
-     <a href="/source/{encodeURIComponent(doc.source)}" class="source-badge">{displaySource(doc.source)}</a>
-     <span class="meta-sep" aria-hidden="true">/</span>
-     <span class="file-path">{doc.file_path}</span>
-     {#if doc.modified_at}
-      <span class="meta-sep" aria-hidden="true">·</span>
-      <span>Modified {formatDate(doc.modified_at)}</span>
-     {/if}
-     {#if stats}
-      <span class="meta-sep" aria-hidden="true">·</span>
-      <span>{stats.words.toLocaleString()} words</span>
-     {/if}
-     {#if githubUrl}
-      <span class="meta-sep" aria-hidden="true">·</span>
-      <a class="github-link" href={githubUrl} target="_blank" rel="noopener noreferrer">
-       View on GitHub
-      </a>
-     {/if}
-    </div>
    </header>
+   <div class="doc-meta">
+    <BookmarkButton docId={doc.doc_id} bind:bookmarked={isBookmarked} />
+    <a href="/source/{encodeURIComponent(doc.source)}" class="source-badge">{displaySource(doc.source)}</a>
+    <span class="meta-sep" aria-hidden="true">/</span>
+    <span class="file-path">{doc.file_path}</span>
+    {#if doc.modified_at}
+     <span class="meta-sep" aria-hidden="true">·</span>
+     <span>Modified {formatDate(doc.modified_at)}</span>
+    {/if}
+    {#if stats}
+     <span class="meta-sep" aria-hidden="true">·</span>
+     <span>{stats.words.toLocaleString()} words</span>
+    {/if}
+    {#if githubUrl}
+     <span class="meta-sep" aria-hidden="true">·</span>
+     <a class="github-link" href={githubUrl} target="_blank" rel="noopener noreferrer">
+      View on GitHub
+     </a>
+    {/if}
+   </div>
 
    {#if isPdf(doc)}
     <div class="pdf-viewer">
@@ -347,7 +347,7 @@
  }
 
  .doc-header {
-  margin-bottom: 30px;
+  margin-bottom: 15px;
   padding-bottom: 15px;
   border-top: 1px solid var(--border);
   border-bottom: 1px solid var(--border);
@@ -405,6 +405,7 @@
   flex-wrap: wrap;
   align-items: baseline;
   gap: 0 10px;
+  margin-bottom: 30px;
   font-size: 15px;
   color: var(--text-secondary);
  }

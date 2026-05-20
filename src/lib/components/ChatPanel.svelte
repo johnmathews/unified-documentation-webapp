@@ -4,7 +4,7 @@
   type ChatMessage,
   type PageContext,
  } from "$lib/api";
- import { tick } from "svelte";
+ import { onMount, tick } from "svelte";
  import { marked } from "marked";
  import { renderMarkdownWithLinks } from "$lib/links";
  import { sanitiseHtml } from "$lib/sanitise";
@@ -73,6 +73,10 @@
   return messages.length === 0;
  }
 
+ onMount(() => {
+  textareaEl?.focus();
+ });
+
  async function handleSubmit(e: Event) {
   e.preventDefault();
   const msg = input.trim();
@@ -130,6 +134,11 @@
   } finally {
    sending = false;
    await scrollToBottom();
+   // Return focus to the input so the user can keep typing without
+   // clicking back — the textarea is disabled while sending, so wait a
+   // tick for it to re-enable before focusing.
+   await tick();
+   textareaEl?.focus();
   }
  }
 
@@ -204,7 +213,8 @@
      class:editing={editingIndex === i}
      class:will-remove={editingIndex !== null && i > editingIndex}
     >
-     <div class="message-bubble" class:markdown-content={msg.role === "assistant"}>
+     <div class="message-role">{msg.role === "user" ? "You" : "Agent"}</div>
+     <div class="message-body" class:markdown-content={msg.role === "assistant"}>
       {#if msg.role === "assistant"}
        <!-- eslint-disable-next-line svelte/no-at-html-tags -->
        {@html renderMarkdown(msg.content)}
@@ -223,7 +233,8 @@
    {/each}
    {#if sending}
     <div class="message assistant">
-     <div class="message-bubble typing-progress">
+     <div class="message-role">Agent</div>
+     <div class="message-body typing-progress">
       {#if toolProgress.length > 0}
        <div class="tool-progress">
         {#each toolProgress as tp (tp.index)}
@@ -313,13 +324,24 @@
   flex-shrink: 0;
  }
 
+ /* Document-style transcript: a single centred reading column, messages
+    flow top-to-bottom with a "You" / "Agent" role label above each, no
+    bubbles, no left/right alignment. Matches the reading rhythm of the
+    doc viewer (≈900px column) so longer answers stay scannable. */
  .messages {
   flex: 1;
   overflow-y: auto;
-  padding: 20px;
+  padding: 30px 20px;
   display: flex;
   flex-direction: column;
-  gap: 15px;
+  gap: 25px;
+ }
+
+ .messages > * {
+  width: 100%;
+  max-width: 900px;
+  margin-left: auto;
+  margin-right: auto;
  }
 
  .empty-state {
@@ -346,71 +368,71 @@
  }
 
  .message {
-  display: flex;
+  position: relative;
  }
 
- .message.user {
-  flex-direction: column;
-  align-items: flex-end;
+ .message-role {
+  font-size: 13px;
+  line-height: 20px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--brand);
+  margin-bottom: 6px;
  }
 
- /* Bubbles use GOV.UK body (19/25) for both roles. Assistant bubble
-    also carries .markdown-content so its inner h1/h2/h3/pre/code
-    inherit the global doc-viewer scale. */
- .message-bubble {
-  padding: 15px;
-  border-radius: 0;
+ /* Both roles use the GOV.UK body scale (19/25). Assistant content also
+    carries .markdown-content so headings/code inherit the doc-viewer
+    styles. User content is plain text — preserve newlines the user
+    typed. */
+ .message-body {
   font-size: 19px;
   line-height: 25px;
+  color: var(--text);
   word-break: break-word;
  }
 
- .user .message-bubble {
-  max-width: 85%;
-  background: var(--brand);
-  color: white;
+ .user .message-body {
+  white-space: pre-wrap;
+  padding: 10px 15px;
+  background: var(--accent-dim);
  }
 
- /* Assistant bubbles cap at the 720 px reading column when the
-    conversation area is wide enough; 85% is the cap on narrow widths. */
- .assistant .message-bubble {
-  max-width: min(85%, 720px);
-  background: var(--bg-body);
-  color: var(--text);
-  border: none;
-  border-left: 5px solid var(--border);
+ .assistant .message-body {
+  background: none;
+  padding: 0;
  }
 
- /* Compact margins for chat bubbles — same scale as the doc viewer,
-    but tighter inter-paragraph spacing so the transcript stays
+ /* Compact margins for transcript paragraphs — same scale as the doc
+    viewer, but tighter inter-paragraph spacing so the transcript stays
     scannable. */
- .message-bubble :global(p:first-child) {
+ .message-body :global(p:first-child) {
   margin-top: 0;
  }
- .message-bubble :global(p:last-child) {
+ .message-body :global(p:last-child) {
   margin-bottom: 0;
  }
- .message-bubble :global(p) {
+ .message-body :global(p) {
   margin: 10px 0;
  }
- .message-bubble :global(h1),
- .message-bubble :global(h2),
- .message-bubble :global(h3) {
+ .message-body :global(h1),
+ .message-body :global(h2),
+ .message-body :global(h3) {
   margin: 15px 0 5px;
  }
- .message-bubble :global(ul),
- .message-bubble :global(ol) {
+ .message-body :global(ul),
+ .message-body :global(ol) {
   margin: 5px 0;
   padding-left: 20px;
  }
- .message-bubble :global(li) {
+ .message-body :global(li) {
   margin: 5px 0;
  }
- .message-bubble :global(pre) {
+ .message-body :global(pre) {
   margin: 10px 0;
   overflow-x: auto;
  }
- .message-bubble :global(blockquote) {
+ .message-body :global(blockquote) {
   margin: 10px 0;
   padding-left: 15px;
   border-left: 5px solid var(--border);
@@ -598,9 +620,15 @@
   opacity: 1;
  }
 
- .message.editing .message-bubble {
+ .message.editing .message-body {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
+ }
+
+ .edit-btn {
+  position: absolute;
+  top: 0;
+  right: 0;
  }
 
  .message.will-remove {
@@ -646,10 +674,10 @@
   }
  }
 
- /* Match the global .markdown-content @640 rule: bubble body
+ /* Match the global .markdown-content @640 rule: body text
     drops from 19/25 to 16/20 on phone-sized widths. */
  @media (max-width: 640px) {
-  .message-bubble {
+  .message-body {
    font-size: 16px;
    line-height: 20px;
   }
