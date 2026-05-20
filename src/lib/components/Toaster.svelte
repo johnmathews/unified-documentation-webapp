@@ -27,15 +27,18 @@
 </div>
 
 <style>
+ /* Anchored top-right just under the GOV.UK header (header + service-nav
+    band). Small 4px gap so the toast reads as a header-adjacent overlay
+    rather than floating in the page body. */
  .toaster {
   position: fixed;
-  top: calc(var(--header-height, 80px) + 8px);
-  right: 30px;
+  top: calc(var(--header-height, 80px) + 4px);
+  right: 12px;
   z-index: 300;
   display: flex;
   flex-direction: column;
   gap: 8px;
-  max-width: min(360px, calc(100vw - 60px));
+  max-width: min(360px, calc(100vw - 24px));
   pointer-events: none;
  }
 
@@ -103,6 +106,7 @@
   .toaster {
    left: 8px;
    right: 8px;
+   top: calc(var(--header-height, 80px) + 4px);
    max-width: none;
   }
  }

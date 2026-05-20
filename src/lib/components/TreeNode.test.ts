@@ -33,10 +33,12 @@ describe("TreeNode", () => {
 	});
 
 	it("renders a folder button with the segment name", () => {
+		// "docs" is the on-disk folder; the tree label is rewritten to
+		// "Documentation" via displayFolderName for display only.
 		const root = buildFolderTree([doc("docs/intro.md")]);
 		const { container } = render(TreeNode, { props: { node: root, depth: 0 } });
 		const folderBtn = container.querySelector(".folder-toggle");
-		expect(folderBtn?.textContent).toContain("docs");
+		expect(folderBtn?.textContent).toContain("Documentation");
 	});
 
 	it("starts every folder collapsed", () => {

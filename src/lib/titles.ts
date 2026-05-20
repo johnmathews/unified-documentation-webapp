@@ -24,6 +24,20 @@ const ACRONYMS = new Set([
   "vm",
 ]);
 
+/**
+ * Display label for a single folder path segment. Currently only rewrites
+ * the literal `docs` directory to "Documentation"; everything else is
+ * returned unchanged so case-sensitive folder names render verbatim in
+ * breadcrumbs and the file tree.
+ */
+const FOLDER_LABEL_OVERRIDES: Record<string, string> = {
+  docs: "Documentation",
+};
+
+export function displayFolderName(name: string): string {
+  return FOLDER_LABEL_OVERRIDES[name.toLowerCase()] ?? name;
+}
+
 export function displaySource(name: string): string {
   let display = name.replace(/[_-]/g, " ").replace(/\s+/g, " ").trim();
 

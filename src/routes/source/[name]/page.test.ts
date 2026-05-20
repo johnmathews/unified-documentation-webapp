@@ -67,11 +67,14 @@ describe("source/[name] page", () => {
 		});
 
 		// (a) Each directory is its own flat group; nested folders become
-		// sibling groups (e.g. "Docs / Archive"), not indented children.
+		// sibling groups (e.g. "Documentation / Archive"), not indented
+		// children. The literal `docs/` folder is relabelled to
+		// "Documentation" via displayFolderName; sub-segments stay
+		// Title-Cased via displaySource.
 		const titles = groupTitles(container);
 		expect(titles[0]).toBe("Root Documents"); // root files always first
 		expect(titles).toContain("Guides");
-		expect(titles).toContain("Docs / Archive");
+		expect(titles).toContain("Documentation / Archive");
 
 		// One <section.doc-group> + table per directory (root + 2 dirs).
 		expect(container.querySelectorAll("section.doc-group").length).toBe(3);

@@ -28,6 +28,18 @@
  // Doc type filter — Stage 2 types only. Empty string = no type filter.
  let selectedDocType: DocType | "" = $state("");
 
+ // Two-paragraph help text for the "exclude non-documentation files" toggle.
+ // Lives here (not inline) so eslint's no-useless-mustaches rule is happy
+ // with a string-only `title=` attribute while we still get the \n\n break
+ // that browsers honour inside title tooltips.
+ const excludeNonDocsHelp =
+  "Hides files the indexer classifies as “Not documentation” — " +
+  "by default that's lock files (*.lock) and .DS_Store, plus anything explicitly " +
+  "flagged in document-types.yml (e.g. notebooks, generated output, vendored assets)." +
+  "\n\nThis is the same set as the “Not documentation” option in the Type " +
+  "dropdown above — just inverted: the checkbox HIDES them; choosing the type " +
+  "from the dropdown SHOWS ONLY them.";
+
  // Date filters
  let createdAfterDay = $state("");
  let createdAfterMonth = $state("");
@@ -230,7 +242,14 @@
       if (searchQuery.trim()) handleSearch();
      }}
     />
-    Exclude non-documentation files from results
+    <span>Exclude non-documentation files from results</span>
+    <span
+     class="info-icon"
+     tabindex="0"
+     role="img"
+     aria-label="What does this exclude?"
+     title={excludeNonDocsHelp}
+    >?</span>
    </label>
   </fieldset>
  </div>
@@ -604,6 +623,28 @@
 
  .exclude-toggle input {
   accent-color: var(--accent);
+ }
+
+ .info-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border: 1px solid var(--text-secondary);
+  border-radius: 50%;
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
+  cursor: help;
+  flex-shrink: 0;
+ }
+
+ .info-icon:hover,
+ .info-icon:focus-visible {
+  color: var(--text);
+  border-color: var(--text);
  }
 
  /* Filter section */

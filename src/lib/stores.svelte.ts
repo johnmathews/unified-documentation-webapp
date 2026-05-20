@@ -53,7 +53,7 @@ export const DOC_TYPES = [
  { key: "documentation", label: "Documentation" },
  { key: "journal", label: "Journal" },
  { key: "prompt", label: "Prompt" },
- { key: "not-docs", label: "Not docs" },
+ { key: "not-docs", label: "Not documentation" },
 ] as const;
 
 export type DocTypeKey = (typeof DOC_TYPES)[number]["key"];

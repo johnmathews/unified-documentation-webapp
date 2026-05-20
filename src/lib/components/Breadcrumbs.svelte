@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { displaySource } from "$lib/titles";
+	import { displaySource, displayFolderName } from "$lib/titles";
 
 	let {
 		source,
@@ -70,7 +70,7 @@
 
 			{#each folderSegments as segment, i (i)}
 				<li class="govuk-breadcrumbs__list-item">
-					<a class="govuk-breadcrumbs__link" href={folderHref(i)}>{segment}</a>
+					<a class="govuk-breadcrumbs__link" href={folderHref(i)}>{displayFolderName(segment)}</a>
 				</li>
 			{/each}
 

@@ -35,10 +35,13 @@ describe("Breadcrumbs", () => {
 			},
 		});
 		const items = container.querySelectorAll(".govuk-breadcrumbs__list-item");
-		// Home > Pi Harness > docs > runbooks > Oncall guide
+		// Home > Pi Harness > Documentation > runbooks > Oncall guide.
+		// "docs" is the on-disk folder name; the breadcrumb label is rewritten
+		// to "Documentation" via displayFolderName. The href still points at
+		// /source/pi-harness/docs because that's the real route segment.
 		expect(items).toHaveLength(5);
 		const docsLink = items[2].querySelector("a");
-		expect(docsLink?.textContent?.trim()).toBe("docs");
+		expect(docsLink?.textContent?.trim()).toBe("Documentation");
 		expect(docsLink?.getAttribute("href")).toBe("/source/pi-harness/docs");
 		const runbooksLink = items[3].querySelector("a");
 		expect(runbooksLink?.textContent?.trim()).toBe("runbooks");

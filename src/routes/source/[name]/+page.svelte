@@ -3,7 +3,7 @@
 	import { fetchSourceTree, type SourceTree, type TreeDocument } from "$lib/api";
 	import Breadcrumbs from "$lib/components/Breadcrumbs.svelte";
 	import { currentDocId, currentPageContext } from "$lib/stores.svelte";
-	import { displayTitle, displaySource } from "$lib/titles";
+	import { displayTitle, displaySource, displayFolderName } from "$lib/titles";
 	import { formatDateTime } from "$lib/datetime";
 
 	let source = $state<SourceTree | null>(null);
@@ -46,12 +46,22 @@
 		return i === -1 ? "" : filePath.slice(0, i);
 	}
 
-	// "docs" → "Docs", "docs/archive" → "Docs / Archive". The repo root
-	// becomes the "Root Documents" group. Each directory is its own flat,
-	// non-indented group (e.g. "Docs" and "Docs / Archive" are siblings).
+	// "docs" → "Documentation", "docs/archive" → "Documentation / Archive".
+	// The repo root becomes the "Root Documents" group. Each directory is
+	// its own flat, non-indented group (e.g. "Documentation" and
+	// "Documentation / Archive" are siblings). `displayFolderName` handles
+	// the docs→Documentation rewrite; non-overridden segments fall back to
+	// `displaySource` for Title Case.
 	function groupLabel(dir: string): string {
 		if (dir === "") return "Root Documents";
-		return dir.split("/").filter(Boolean).map(displaySource).join(" / ");
+		return dir
+			.split("/")
+			.filter(Boolean)
+			.map((seg) => {
+				const overridden = displayFolderName(seg);
+				return overridden === seg ? displaySource(seg) : overridden;
+			})
+			.join(" / ");
 	}
 
 	interface DocGroup {

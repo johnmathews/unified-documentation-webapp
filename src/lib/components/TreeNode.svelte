@@ -1,7 +1,7 @@
 <script lang="ts">
 	import type { FolderNode } from "$lib/tree";
 	import type { TreeDocument } from "$lib/api";
-	import { displayTitle } from "$lib/titles";
+	import { displayTitle, displayFolderName } from "$lib/titles";
 	import { currentDocId } from "$lib/stores.svelte";
 	import TreeNode from "./TreeNode.svelte";
 
@@ -67,7 +67,7 @@
 			<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
 				<path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
 			</svg>
-			<span class="folder-name">{node.name}</span>
+			<span class="folder-name">{displayFolderName(node.name)}</span>
 			<span class="count">{node.docs.length + node.children.length}</span>
 		</button>
 	{/if}
