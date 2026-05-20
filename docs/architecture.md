@@ -50,8 +50,10 @@ documentation.
   screens, and a landscape-phone breakpoint (`max-height: 500px`) ensuring drawers remain full-screen modals on rotated
   phones. The `/chat` page stacks on mobile: the conversation list is shown by default and opening a conversation swaps
   to the conversation view with a back affordance.
-- **Document Viewer**: Renders markdown documents with a single-line metadata bar (bookmark · source · path · type ·
-  modified · words) that wraps naturally on narrow viewports. The body prose is capped at `var(--measure)` (75ch) as
+- **Document Viewer**: Renders markdown documents with a metadata bar (bookmark · source · path · modified · words ·
+  "View on GitHub") that wraps naturally on narrow viewports. The breadcrumbs + title sit in the sticky `.doc-header`;
+  the metadata bar lives just below as normal flow content and scrolls off the top with the body so it doesn't take
+  up viewport real estate while reading. The body prose is capped at `var(--measure)` (75ch) as
   a defensive measure independent of the layout grid. Markdown is rendered via `marked` and passed through
   `sanitiseHtml` (DOMPurify) before reaching `{@html}` — see "Markdown rendering & XSS hardening" below. Relative
   links between documents (e.g. `[text](other.md)`) are automatically rewritten at
@@ -70,16 +72,25 @@ documentation.
   "Download" action buttons above the viewer. A print button in the top bar triggers `window.print()` with `@media print`
   styles that hide all UI chrome, force light colours, use compact 10pt typography with pre-wrap for code blocks, and
   render the metadata bar in a print-friendly layout. Print styles use `!important` to override Svelte-scoped styles.
-- **Chat Panel**: Real-time chat with Claude, aware of the currently viewed page. Supports multiline input (Shift+Enter
-  for newlines, Enter to send) and message editing (pencil icon below sent user messages — clicking loads the text into
-  the input, truncates from the edit point on submit). On desktop, the panel is resizable via a drag handle on its left
-  edge (300–900px range, persisted to localStorage). Default width is 432px.
+- **Chat Panel**: `src/lib/components/ChatPanel.svelte` is the conversation
+  area embedded inside the standalone `/chat` page (no longer a docked
+  right-side panel). Messages render as a document-style transcript — a
+  centred reading column with `YOU` / `AGENT` uppercase labels above each
+  message, user content in a light `--accent-dim` tint, assistant content
+  as plain markdown — replacing the prior chat-bubble layout. Supports
+  multiline input (Shift+Enter for newlines, Enter to send) and message
+  editing (pencil icon below sent user messages — clicking loads the text
+  into the input, truncates from the edit point on submit). The textarea
+  auto-focuses on mount and is re-focused after each reply so the user can
+  keep typing without clicking back.
 - **Search**: Dedicated search panel (separate from sidebar) with debounced search combining semantic (ChromaDB) and
   keyword (title/file_path) matching. Always-visible source and document-type filters (the type dropdown lists the
-  Stage 2 vocabulary: documentation, journal, prompt, not-docs) above a collapsible date-range section, plus an
-  **Exclude non-documentation files** checkbox bound to the `excludeNotDocs` store (persists to `exclude-not-docs`).
-  When enabled, the search request adds `exclude_type=not-docs` so the backend filters at SQL/Chroma level. Results
-  show source tags, type badges, file paths, and date metadata. The panel has mutual
+  Stage 2 vocabulary as "Documentation", "Journal", "Prompt", "Not documentation") above a collapsible date-range
+  section, plus an **Exclude non-documentation files** checkbox bound to the `excludeNotDocs` store (persists to
+  `exclude-not-docs`). The checkbox has a `(?)` info icon whose `title` tooltip explains what `not-docs` means and
+  that the dropdown's "Not documentation" option shows the inverse set. When enabled, the search request adds
+  `exclude_type=not-docs` so the backend filters at SQL/Chroma level. Results show source tags, type badges, file
+  paths, and date metadata. The panel has mutual
   exclusion with the file picker sidebar — opening one closes the other, but search state (query, filters, results) is
   preserved when the panel is toggled closed and reopened. On desktop, the panel is resizable via a drag handle on its
   right edge (250–800px range, persisted to localStorage as `search-width`). Default width is 320px (384px on large
