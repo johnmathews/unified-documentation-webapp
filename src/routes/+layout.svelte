@@ -436,6 +436,7 @@
  aria-hidden={!searchOpen}
 >
  <SearchPanel
+  open={searchOpen}
   onNavigate={() => {
    if (window.innerWidth <= 768) searchOpen = false;
   }}

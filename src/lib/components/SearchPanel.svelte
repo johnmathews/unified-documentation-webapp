@@ -10,7 +10,18 @@
  import { formatDateTime } from "$lib/datetime";
  import { currentDocId, DOC_TYPES, excludeNotDocs } from "$lib/stores.svelte";
 
- let { onNavigate = () => {} }: { onNavigate?: () => void } = $props();
+ let {
+  onNavigate = () => {},
+  open = true,
+ }: { onNavigate?: () => void; open?: boolean } = $props();
+
+ let searchInput: HTMLInputElement | undefined = $state();
+
+ $effect(() => {
+  if (open && searchInput) {
+   searchInput.focus();
+  }
+ });
 
  let searchQuery = $state("");
  let searchResults: SearchResult[] = $state([]);
@@ -60,7 +71,10 @@
 
  async function loadSources() {
   try {
-   availableSources = await fetchSources();
+   const sources = await fetchSources();
+   availableSources = sources.slice().sort((a, b) =>
+    displaySource(a).localeCompare(displaySource(b), undefined, { sensitivity: "base" }),
+   );
   } catch {
    availableSources = [];
   } finally {
@@ -179,6 +193,7 @@
     type="search"
     placeholder="Search by keyword..."
     bind:value={searchQuery}
+    bind:this={searchInput}
     oninput={handleSearch}
     enterkeyhint="search"
     autocomplete="off"
@@ -502,6 +517,7 @@
      <span class="result-title">{displayTitle(result)}</span>
      <div class="result-meta">
       <span class="source-tag">{displaySource(result.source)}</span>
+      <span class="result-path" title={result.file_path}>{result.file_path}</span>
       {#if result.created_at}
        <span class="result-date">Created {formatDate(result.created_at)}</span>
       {/if}
@@ -933,6 +949,14 @@
   font-size: 14px;
   line-height: 20px;
   color: var(--text-muted);
+ }
+
+ .result-path {
+  font-size: 14px;
+  line-height: 20px;
+  color: var(--text-muted);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  word-break: break-all;
  }
 
  .result-snippet {
