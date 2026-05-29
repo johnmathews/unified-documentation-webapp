@@ -163,8 +163,9 @@
 						<thead>
 							<tr>
 								<th scope="col">Title</th>
-								<th scope="col">Path</th>
+								<th scope="col">Filename</th>
 								<th scope="col">Modified</th>
+								<th scope="col">Created</th>
 								<th scope="col" class="num">Lines</th>
 							</tr>
 						</thead>
@@ -174,9 +175,12 @@
 									<td class="cell-title">
 										<a href={docUrl(doc.doc_id)}>{displayTitle(doc)}</a>
 									</td>
-									<td class="cell-path">{doc.file_path}</td>
+									<td class="cell-path">{doc.file_path.split("/").pop() ?? doc.file_path}</td>
 									<td class="cell-date"
 										>{doc.modified_at ? formatDateTime(doc.modified_at) : "—"}</td
+									>
+									<td class="cell-date"
+										>{doc.created_at ? formatDateTime(doc.created_at) : "—"}</td
 									>
 									<td class="num"
 										>{doc.line_count == null ? "—" : doc.line_count.toLocaleString()}</td

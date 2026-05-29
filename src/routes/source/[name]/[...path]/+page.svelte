@@ -8,9 +8,9 @@
 		type FolderNode,
 	} from "$lib/tree";
 	import Breadcrumbs from "$lib/components/Breadcrumbs.svelte";
-	import TreeNode from "$lib/components/TreeNode.svelte";
 	import { currentDocId, currentPageContext } from "$lib/stores.svelte";
-	import { displayTitle, displaySource } from "$lib/titles";
+	import { displayTitle, displaySource, displayFolderName } from "$lib/titles";
+	import { formatDateTime } from "$lib/datetime";
 
 	let source = $state<SourceTree | null>(null);
 	let loading = $state(true);
@@ -18,38 +18,6 @@
 
 	type SortMode = "date" | "alpha";
 	let sortMode: SortMode = $state("date");
-
-	// One-shot expand/collapse override for the nested TreeNode folders.
-	// Mirrors the source page's pattern.
-	let forceExpanded: boolean | null = $state(null);
-
-	$effect(() => {
-		if (forceExpanded !== null) {
-			const pending = forceExpanded;
-			queueMicrotask(() => {
-				if (forceExpanded === pending) forceExpanded = null;
-			});
-		}
-	});
-
-	// Per-section open state for the top-level concertina. Index 0 is the
-	// folder's own "Files" section; indices 1..N map to folderNode.children[i-1].
-	let sectionOpen = $state<boolean[]>([]);
-
-	function syncSectionOpen() {
-		const count = folderNode ? folderNode.children.length + 1 : 0;
-		sectionOpen = Array.from({ length: count }, () => true);
-	}
-
-	function expandAll() {
-		sectionOpen = sectionOpen.map(() => true);
-		forceExpanded = true;
-	}
-
-	function collapseAll() {
-		sectionOpen = sectionOpen.map(() => false);
-		forceExpanded = false;
-	}
 
 	let sourceName = $derived(decodeURIComponent(page.params.name ?? ""));
 
@@ -63,9 +31,9 @@
 			.join("/"),
 	);
 
-	// Parent path (folderPath minus its last segment). The breadcrumb shows
-	// ancestor folders as links and the current folder as the non-link
-	// current crumb — without this the current folder appears twice.
+	// Parent path (folderPath minus its last segment). Drives the masthead
+	// caption ("Relay › Documentation") and the Breadcrumbs current-crumb
+	// suppression below.
 	let parentPath = $derived(
 		folderPath.split("/").filter(Boolean).slice(0, -1).join("/"),
 	);
@@ -103,24 +71,55 @@
 	);
 
 	const totalDocs = $derived(folderNode ? collectAllDocs(folderNode).length : 0);
+	// "Subfolders" = number of immediate child directories under this folder
+	// (recursive descendants are surfaced as sibling table groups below).
 	const folderCount = $derived(folderNode ? folderNode.children.length : 0);
-	const folderDocs = $derived(folderNode ? folderNode.docs : []);
-
-	// Keep the concertina open-state array sized to the current subtree.
-	$effect(() => {
-		void folderNode;
-		syncSectionOpen();
-	});
 
 	const summaryLine = $derived(
 		`${totalDocs} ${totalDocs === 1 ? "document" : "documents"} in ` +
-			`${folderCount} ${folderCount === 1 ? "folder" : "folders"}`,
+			`${folderCount} ${folderCount === 1 ? "subfolder" : "subfolders"}`,
 	);
 
-	// Title is the folder's own name; fall back to `source/path` for context.
-	const folderTitle = $derived(
-		folderNode && folderNode.name ? folderNode.name : `${sourceName}/${folderPath}`,
-	);
+	// Format a single path segment the way breadcrumbs / table-group headings
+	// do: rewrite `docs` → "Documentation", Title-Case everything else.
+	function labelSegment(seg: string): string {
+		const overridden = displayFolderName(seg);
+		return overridden === seg ? displaySource(seg) : overridden;
+	}
+
+	// Format a `/`-joined relative path as "Documentation / Archive".
+	function groupLabel(dir: string): string {
+		if (dir === "") return "Files";
+		return dir.split("/").filter(Boolean).map(labelSegment).join(" / ");
+	}
+
+	// Folder H1: format the current folder's own segment, falling back to the
+	// source name for the (unusual) zero-segment case.
+	const folderTitle = $derived.by(() => {
+		if (!folderNode) return "";
+		const name = folderNode.name;
+		if (!name) return displaySource(sourceName);
+		return labelSegment(name);
+	});
+
+	// Caption-xl above the H1: the chain of ancestor labels, separated by
+	// the GOV.UK chevron glyph. "Relay › Documentation" for /source/relay/
+	// docs/proposals. Always at least the source name; never the current
+	// folder (that's the H1).
+	const mastheadCaption = $derived.by(() => {
+		const segs: string[] = [];
+		segs.push(displaySource(source?.source ?? sourceName));
+		for (const seg of parentPath.split("/").filter(Boolean)) {
+			segs.push(labelSegment(seg));
+		}
+		return segs.join(" › ");
+	});
+
+	interface DocGroup {
+		label: string;
+		dir: string;
+		docs: TreeDocument[];
+	}
 
 	function sortDocs(docs: TreeDocument[]): TreeDocument[] {
 		const copy = [...docs];
@@ -135,6 +134,37 @@
 		}
 		return copy;
 	}
+
+	// Walk the FolderNode subtree under the current folder and emit one group
+	// per directory that contains docs. `dir` is `/`-joined relative to the
+	// current folder ("" for the current folder's own docs).
+	function collectGroups(node: FolderNode, prefix: string): DocGroup[] {
+		const out: DocGroup[] = [];
+		if (node.docs.length > 0) {
+			out.push({
+				dir: prefix,
+				label: groupLabel(prefix),
+				docs: sortDocs(node.docs),
+			});
+		}
+		for (const child of node.children) {
+			const childDir = prefix === "" ? child.name : `${prefix}/${child.name}`;
+			out.push(...collectGroups(child, childDir));
+		}
+		return out;
+	}
+
+	const groups = $derived.by<DocGroup[]>(() => {
+		if (!folderNode) return [];
+		const result = collectGroups(folderNode, "");
+		// Current folder's "Files" group first, then descendants alphabetically.
+		result.sort((a, b) => {
+			if (a.dir === "" && b.dir !== "") return -1;
+			if (b.dir === "" && a.dir !== "") return 1;
+			return a.label.localeCompare(b.label);
+		});
+		return result;
+	});
 
 	function docUrl(docId: string): string {
 		return `/doc/${encodeURIComponent(docId)}`;
@@ -153,9 +183,12 @@
 		<a href="/">Back to home</a>
 	</div>
 {:else if source && rootNode && folderNode}
-	<!-- GOV.UK-style masthead hero -->
+	<!-- GOV.UK-style masthead hero. The caption-xl above the H1 gives the
+	     parent-folder context at a glance; the breadcrumb below still
+	     provides clickable navigation. -->
 	<div class="masthead">
 		<div class="masthead__inner">
+			<span class="masthead__caption">{mastheadCaption}</span>
 			<h1 class="masthead__title">{folderTitle}</h1>
 			<p class="masthead__description">{summaryLine}</p>
 		</div>
@@ -165,15 +198,10 @@
 		<Breadcrumbs
 			source={source.source}
 			filePath={parentPath ? `${parentPath}/_` : undefined}
-			title={folderNode.name || folderPath}
+			title={folderTitle}
 		/>
 
 		<div class="controls-row">
-			<div class="expand-collapse">
-				<button class="tree-text-btn" onclick={expandAll}>expand all</button>
-				<span class="tree-text-sep">|</span>
-				<button class="tree-text-btn" onclick={collapseAll}>collapse all</button>
-			</div>
 			<div class="sort-toggle">
 				<button class:active={sortMode === "date"} onclick={() => (sortMode = "date")}
 					>Recent</button
@@ -184,82 +212,46 @@
 			</div>
 		</div>
 
-		<div class="concertina">
-			{#if folderDocs.length > 0}
-				<details class="section" bind:open={sectionOpen[0]}>
-					<summary class="section__summary">
-						<svg
-							class="section__chevron"
-							width="14"
-							height="14"
-							viewBox="0 0 24 24"
-							fill="none"
-							stroke="currentColor"
-							stroke-width="2"
-							aria-hidden="true"
-						>
-							<polyline points="9 18 15 12 9 6" />
-						</svg>
-						<h2 class="section__title">Files</h2>
-						<span class="section__count">{folderDocs.length}</span>
-					</summary>
-					<div class="section__body">
-						{#each sortDocs(folderDocs) as doc (doc.doc_id)}
-							<a
-								href={docUrl(doc.doc_id)}
-								class="tree-leaf"
-								class:active={currentDocId.value === doc.doc_id}
-							>
-								<svg
-									width="14"
-									height="14"
-									viewBox="0 0 24 24"
-									fill="none"
-									stroke="currentColor"
-									stroke-width="1.5"
-									aria-hidden="true"
-								>
-									<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-									<polyline points="14 2 14 8 20 8" />
-								</svg>
-								<span class="leaf-title">{displayTitle(doc)}</span>
-							</a>
-						{/each}
-					</div>
-				</details>
-			{/if}
-
-			{#each folderNode.children as child, i (child.path)}
-				<details class="section" bind:open={sectionOpen[i + 1]}>
-					<summary class="section__summary">
-						<svg
-							class="section__chevron"
-							width="14"
-							height="14"
-							viewBox="0 0 24 24"
-							fill="none"
-							stroke="currentColor"
-							stroke-width="2"
-							aria-hidden="true"
-						>
-							<polyline points="9 18 15 12 9 6" />
-						</svg>
-						<h2 class="section__title">{displaySource(child.name)}</h2>
-						<span class="section__count">{collectAllDocs(child).length}</span>
-					</summary>
-					<div class="section__body">
-						<!-- name:"" makes TreeNode render the folder's CONTENTS without
-						     repeating the folder's own header (the <h2> already names it). -->
-						<TreeNode
-							node={{ name: "", path: child.path, children: child.children, docs: child.docs }}
-							depth={0}
-							expanded={forceExpanded}
-							{sortDocs}
-						/>
-					</div>
-				</details>
-			{/each}
-		</div>
+		{#each groups as group (group.dir)}
+			<section class="doc-group">
+				<div class="doc-group__head">
+					<h2 class="doc-group__title">{group.label}</h2>
+					<span class="doc-group__count">{group.docs.length}</span>
+				</div>
+				<div class="table-scroll">
+					<table class="doc-table">
+						<thead>
+							<tr>
+								<th scope="col">Title</th>
+								<th scope="col">Filename</th>
+								<th scope="col">Modified</th>
+								<th scope="col">Created</th>
+								<th scope="col" class="num">Lines</th>
+							</tr>
+						</thead>
+						<tbody>
+							{#each group.docs as doc (doc.doc_id)}
+								<tr class:active={currentDocId.value === doc.doc_id}>
+									<td class="cell-title">
+										<a href={docUrl(doc.doc_id)}>{displayTitle(doc)}</a>
+									</td>
+									<td class="cell-path">{doc.file_path.split("/").pop() ?? doc.file_path}</td>
+									<td class="cell-date"
+										>{doc.modified_at ? formatDateTime(doc.modified_at) : "—"}</td
+									>
+									<td class="cell-date"
+										>{doc.created_at ? formatDateTime(doc.created_at) : "—"}</td
+									>
+									<td class="num"
+										>{doc.line_count == null ? "—" : doc.line_count.toLocaleString()}</td
+									>
+								</tr>
+							{/each}
+						</tbody>
+					</table>
+				</div>
+			</section>
+		{/each}
 	</div>
 {:else if source}
 	<div class="status">
@@ -292,6 +284,27 @@
 	.masthead__inner {
 		max-width: 960px;
 		margin: 0 auto;
+	}
+
+	/* GOV.UK caption-xl overline. Renders the chain of parent folder labels
+	   above the H1 so each page asserts its position in the source tree at
+	   masthead size without making the user re-read the breadcrumb. */
+	.masthead__caption {
+		display: block;
+		color: #ffffff;
+		font-size: 1.125rem;
+		line-height: 1.1111111111;
+		font-weight: 400;
+		opacity: 0.85;
+		margin-bottom: 5px;
+	}
+
+	@media (min-width: 768px) {
+		.masthead__caption {
+			font-size: 1.5rem;
+			line-height: 1.25;
+			margin-bottom: 10px;
+		}
 	}
 
 	.masthead__title {
@@ -342,7 +355,7 @@
 
 	.controls-row {
 		display: flex;
-		justify-content: space-between;
+		justify-content: flex-end;
 		align-items: center;
 		margin-top: 10px;
 		margin-bottom: 20px;
@@ -378,147 +391,104 @@
 		background: var(--bg-hover);
 	}
 
-	.expand-collapse {
+	/* One flat (non-indented) group per directory. Current folder's docs
+	   render in a "Files" group; each descendant directory becomes a
+	   sibling group (e.g. "Archive"), not an indented child. */
+	.doc-group {
+		margin-bottom: 40px;
+	}
+
+	.doc-group__head {
 		display: flex;
-		align-items: center;
-		gap: 5px;
-		flex-shrink: 0;
-	}
-
-	.tree-text-btn {
-		background: none;
-		border: none;
-		padding: 5px;
-		font-size: 14px;
-		color: var(--text-muted);
-		cursor: pointer;
-		transition: color 0.15s;
-		text-transform: lowercase;
-	}
-
-	.tree-text-btn:hover {
-		color: var(--text);
-	}
-
-	.tree-text-sep {
-		font-size: 14px;
-		color: var(--text-muted);
-		user-select: none;
-	}
-
-	.concertina {
-		border-top: 1px solid var(--border);
-	}
-
-	.section {
-		border-bottom: 1px solid var(--border);
-	}
-
-	.section__summary {
-		display: flex;
-		align-items: center;
+		align-items: baseline;
 		gap: 10px;
-		padding: 14px 0;
-		cursor: pointer;
-		list-style: none;
-		color: var(--text);
+		padding-bottom: 10px;
+		border-bottom: 2px solid var(--text);
+		margin-bottom: 0;
 	}
 
-	.section__summary::-webkit-details-marker {
-		display: none;
-	}
-
-	.section__summary:hover {
-		color: var(--brand);
-	}
-
-	.section__chevron {
-		flex-shrink: 0;
-		transition: transform 0.1s;
-		color: var(--text-secondary);
-	}
-
-	.section[open] .section__chevron {
-		transform: rotate(90deg);
-	}
-
-	.section__title {
+	.doc-group__title {
 		font-size: 21px;
 		font-weight: 700;
 		margin: 0;
-		flex: 1 1 auto;
-		min-width: 0;
-		overflow: hidden;
-		text-overflow: ellipsis;
-		white-space: nowrap;
 	}
 
 	@media (min-width: 641px) {
-		.section__title {
+		.doc-group__title {
 			font-size: 24px;
 		}
 	}
 
-	.section__count {
+	.doc-group__count {
 		font-size: 16px;
 		font-weight: 400;
 		color: var(--text-secondary);
-		flex-shrink: 0;
 	}
 
-	.section__body {
-		padding: 0 0 12px 0;
+	.table-scroll {
+		overflow-x: auto;
 	}
 
-	.tree-leaf {
-		display: flex;
-		align-items: center;
-		gap: 6px;
-		padding: 5px 8px 5px 0;
+	.doc-table {
+		width: 100%;
+		border-collapse: collapse;
+		font-size: 16px;
+	}
+
+	.doc-table th {
+		text-align: left;
+		font-weight: 700;
+		padding: 10px 20px 10px 0;
+		border-bottom: 1px solid var(--border);
 		color: var(--text);
-		font-size: 19px;
-		text-decoration: none;
-	}
-
-	.tree-leaf:hover {
-		background: var(--bg-hover);
-	}
-
-	.tree-leaf.active {
-		background: var(--accent-dim);
-		color: var(--accent);
-	}
-
-	.leaf-title {
-		overflow: hidden;
-		text-overflow: ellipsis;
 		white-space: nowrap;
 	}
 
-	.section__body :global(.leaf-title) {
-		font-size: 19px;
+	.doc-table td {
+		padding: 10px 20px 10px 0;
+		border-bottom: 1px solid var(--border);
+		color: var(--text);
+		vertical-align: top;
 	}
 
-	.section__body :global(.tree-leaf) {
-		font-size: 19px;
-		padding-top: 5px;
-		padding-bottom: 5px;
+	.doc-table tr.active td {
+		background: var(--accent-dim);
 	}
 
-	.section__body :global(.folder-toggle) {
-		font-size: 19px;
-		padding-top: 6px;
-		padding-bottom: 6px;
+	.doc-table tbody tr:hover td {
+		background: var(--bg-hover);
 	}
 
-	.section__body :global(.count) {
-		font-size: 15px;
+	.cell-title a {
+		font-weight: 600;
+	}
+
+	.cell-path {
+		font-family: var(--font-mono);
+		font-size: 14px;
+		color: var(--text-secondary);
+		word-break: break-all;
+	}
+
+	.cell-date {
+		white-space: nowrap;
+		color: var(--text-secondary);
+	}
+
+	.doc-table .num {
+		text-align: right;
+		white-space: nowrap;
+		font-variant-numeric: tabular-nums;
+		color: var(--text-secondary);
 	}
 
 	@media (max-width: 640px) {
-		.controls-row {
-			flex-direction: column;
-			align-items: flex-start;
+		.doc-table {
+			font-size: 15px;
+		}
+		.doc-table th,
+		.doc-table td {
+			padding-right: 12px;
 		}
 	}
 </style>

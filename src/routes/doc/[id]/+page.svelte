@@ -170,6 +170,7 @@
   <article class="document">
    <header class="doc-header">
     <Breadcrumbs source={doc.source} filePath={doc.file_path} />
+    <span class="doc-caption">{doc.file_path}</span>
     <h1 class="doc-title" class:is-hidden={titleHidden}>
      {doc.title
       ? stripSourcePrefix(doc.title, doc.source)
@@ -179,8 +180,6 @@
    <div class="doc-meta">
     <BookmarkButton docId={doc.doc_id} bind:bookmarked={isBookmarked} />
     <a href="/source/{encodeURIComponent(doc.source)}" class="source-badge">{displaySource(doc.source)}</a>
-    <span class="meta-sep" aria-hidden="true">/</span>
-    <span class="file-path">{doc.file_path}</span>
     {#if doc.modified_at}
      <span class="meta-sep" aria-hidden="true">·</span>
      <span>Modified {formatDate(doc.modified_at)}</span>
@@ -361,6 +360,26 @@
   margin-bottom: 8px;
  }
 
+ /* GOV.UK caption-xl: small monospace overline above the H1 that names the
+    file on disk. The doc's H1 comes from the markdown source and the author
+    controls it, so the caption is how the page asserts which file you're
+    actually looking at. */
+ .doc-caption {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 14px;
+  line-height: 1.25;
+  color: var(--text-secondary);
+  word-break: break-all;
+  margin: 0 0 6px;
+ }
+
+ @media (min-width: 641px) {
+  .doc-caption {
+   font-size: 16px;
+  }
+ }
+
  /* The document title is the single most important thing to keep visible
     while scrolling, so it sits in the sticky header above the metadata. */
  .doc-title {
@@ -386,13 +405,6 @@
   font-size: 16px;
   font-weight: bold;
   white-space: nowrap;
- }
-
- .file-path {
-  font-size: 16px;
-  color: var(--text-secondary);
-  font-family: var(--font-mono);
-  word-break: break-all;
  }
 
  .github-link {
@@ -462,9 +474,6 @@
    min-height: 44px;
    display: inline-flex;
    align-items: center;
-  }
-  .file-path {
-   font-size: 14px;
   }
  }
 </style>

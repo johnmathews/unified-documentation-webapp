@@ -35,6 +35,12 @@ function doc(filePath: string, title: string | null = null): TreeDocument {
 	};
 }
 
+function groupTitles(container: HTMLElement): (string | undefined)[] {
+	return Array.from(
+		container.querySelectorAll<HTMLHeadingElement>(".doc-group__title"),
+	).map((h) => h.textContent?.trim());
+}
+
 beforeEach(() => {
 	fetchSourceTree.mockReset();
 	params.name = "demo-src";
@@ -42,7 +48,7 @@ beforeEach(() => {
 });
 
 describe("source/[name]/[...path] folder-browse page", () => {
-	it("renders the subtree's child folders as <h2> and a Files section", async () => {
+	it("renders one flat table group per descendant directory plus a Files group for the current folder", async () => {
 		fetchSourceTree.mockResolvedValue({
 			source: "demo-src",
 			files: [
@@ -56,19 +62,39 @@ describe("source/[name]/[...path] folder-browse page", () => {
 		const { container } = render(Page);
 
 		await waitFor(() => {
-			expect(container.querySelector(".concertina")).not.toBeNull();
+			expect(container.querySelector(".doc-table")).not.toBeNull();
 		});
 
-		const headings = Array.from(
-			container.querySelectorAll<HTMLHeadingElement>(".concertina h2"),
-		).map((h) => h.textContent?.trim());
-		// Child folders of `docs/`.
-		expect(headings).toContain("Architecture");
-		expect(headings).toContain("Runbooks");
-		// docs/intro.md is a direct doc of this folder -> Files section.
-		expect(headings).toContain("Files");
+		const titles = groupTitles(container);
+		expect(titles[0]).toBe("Files"); // current folder's own docs first
+		expect(titles).toContain("Architecture");
+		expect(titles).toContain("Runbooks");
 		// README.md (root-level) is NOT part of the docs/ subtree.
-		expect(headings).not.toContain("README.md");
+		expect(titles).not.toContain("README.md");
+
+		// Three groups → three tables.
+		expect(container.querySelectorAll("section.doc-group").length).toBe(3);
+		expect(container.querySelectorAll("table.doc-table").length).toBe(3);
+	});
+
+	it("renders the masthead caption with the parent-folder chain", async () => {
+		params.path = "docs/proposals";
+		fetchSourceTree.mockResolvedValue({
+			source: "demo-src",
+			files: [doc("docs/proposals/run-detail-layout.md", "Layout")],
+		});
+
+		const { container } = render(Page);
+
+		await waitFor(() => {
+			expect(container.querySelector(".doc-table")).not.toBeNull();
+		});
+
+		const caption = container.querySelector(".masthead__caption");
+		expect(caption?.textContent?.trim()).toBe("Demo Src › Documentation");
+
+		const h1 = container.querySelector(".masthead__title");
+		expect(h1?.textContent?.trim()).toBe("Proposals");
 	});
 
 	it("shows a Folder not found state for a bogus path", async () => {
@@ -82,7 +108,7 @@ describe("source/[name]/[...path] folder-browse page", () => {
 
 		const notFound = await findByText("Folder not found");
 		expect(notFound).toBeInTheDocument();
-		expect(container.querySelector(".concertina")).toBeNull();
+		expect(container.querySelector(".doc-table")).toBeNull();
 
 		const back = container.querySelector("a[href='/source/demo-src']");
 		expect(back).not.toBeNull();
@@ -98,12 +124,45 @@ describe("source/[name]/[...path] folder-browse page", () => {
 		const { container } = render(Page);
 
 		await waitFor(() => {
-			expect(container.querySelector(".concertina")).not.toBeNull();
+			expect(container.querySelector(".doc-table")).not.toBeNull();
 		});
 
-		const headings = Array.from(
-			container.querySelectorAll<HTMLHeadingElement>(".concertina h2"),
-		).map((h) => h.textContent?.trim());
-		expect(headings).toContain("Sub");
+		const titles = groupTitles(container);
+		expect(titles).toContain("Sub");
+	});
+
+	it("renders Modified / Created columns and the basename in the Filename column", async () => {
+		params.path = "docs";
+		fetchSourceTree.mockResolvedValue({
+			source: "demo-src",
+			files: [
+				{
+					doc_id: "demo-src:docs/intro.md",
+					source: "demo-src",
+					file_path: "docs/intro.md",
+					title: "Intro",
+					created_at: "2026-01-01T00:00:00Z",
+					modified_at: "2026-05-01T00:00:00Z",
+					size_bytes: null,
+					line_count: 12,
+				} satisfies TreeDocument,
+			],
+		});
+
+		const { container } = render(Page);
+
+		await waitFor(() => {
+			expect(container.querySelector(".doc-table")).not.toBeNull();
+		});
+
+		// Header order: Title | Filename | Modified | Created | Lines.
+		const headers = Array.from(
+			container.querySelectorAll<HTMLTableCellElement>("table.doc-table th"),
+		).map((th) => th.textContent?.trim());
+		expect(headers).toEqual(["Title", "Filename", "Modified", "Created", "Lines"]);
+
+		// Filename column shows the basename, not the full repo path.
+		const cellPath = container.querySelector(".cell-path");
+		expect(cellPath?.textContent?.trim()).toBe("intro.md");
 	});
 });

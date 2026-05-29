@@ -50,8 +50,9 @@ documentation.
   screens, and a landscape-phone breakpoint (`max-height: 500px`) ensuring drawers remain full-screen modals on rotated
   phones. The `/chat` page stacks on mobile: the conversation list is shown by default and opening a conversation swaps
   to the conversation view with a back affordance.
-- **Document Viewer**: Renders markdown documents with a metadata bar (bookmark · source · path · modified · words ·
-  "View on GitHub") that wraps naturally on narrow viewports. The breadcrumbs + title sit in the sticky `.doc-header`;
+- **Document Viewer**: Renders markdown documents with a GOV.UK caption-xl (`.doc-caption`) above the H1 showing the
+  document's repo-relative file path in monospace, and a metadata bar below (bookmark · source · modified · words ·
+  "View on GitHub") that wraps naturally on narrow viewports. The breadcrumbs + caption + title sit in the sticky `.doc-header`;
   the metadata bar lives just below as normal flow content and scrolls off the top with the body so it doesn't take
   up viewport real estate while reading. The body prose is capped at `var(--measure)` (75ch) as
   a defensive measure independent of the layout grid. Markdown is rendered via `marked` and passed through
@@ -101,12 +102,16 @@ documentation.
   — that links to `/status`. Each row shows its per-source status badge plus a relative time-ago label beside the
   last-updated date. Health data is fetched in parallel with the tree and degrades gracefully if `/api/health` fails.
   Subtle zebra striping (`var(--bg-zebra)`) anchors row rhythm.
-- **Source Pages**: Per-source view at `/source/<name>` rendering one flat (non-indented) table per directory. Each
-  directory is its own group — nested folders become sibling groups (e.g. `Docs` and `Docs / Archive`), not indented
-  children — with `Root Documents` (repo-root files) always first. Each table has Title / Path / Modified / Lines
-  columns; a Recent / A-Z toggle sorts within every group. Data comes from `GET /api/sources/{name}/tree` (404 if the
-  source is not configured); `line_count` is derived server-side from stored content. The recursive `TreeNode.svelte`
-  concertina is still used by the Sidebar and the folder-browse `/source/<name>/[...path]` route, not here.
+- **Source Pages**: Per-source view at `/source/<name>` and per-folder view at `/source/<name>/[...path]`, both
+  rendering one flat (non-indented) table per directory. On the root view each directory is its own group with
+  `Root Documents` (repo-root files) first; on the folder view the current folder's docs render in a `Files` group
+  and any descendant directories become sibling groups (e.g. `Files`, `Archive`). Each table has **Title /
+  Filename (basename) / Modified / Created / Lines** columns; a Recent / A-Z toggle sorts within every group. The
+  folder view's masthead carries a GOV.UK caption-xl above the H1 chaining the source + parent folder labels
+  (e.g. "SRE Agent › Documentation"); the H1 itself is the formatted current folder. Data comes from
+  `GET /api/sources/{name}/tree` (404 if the source is not configured); `line_count` is derived server-side from
+  stored content. The recursive `TreeNode.svelte` concertina is no longer used by the folder-browse route — it
+  remains only in the Sidebar.
 - **Server Status**: Admin page at `/status` showing backend health with per-source monitoring. Each source row shows:
   status (Healthy/Warning/Error/Unknown), file count, chunk count, last updated time, and last scanned time. Per-source
   status is computed from consecutive scan failures (1 = warning, 2+ = error) and staleness of last-checked relative to
